@@ -31,7 +31,7 @@ def load_data_model():
     
 if __name__ == '__main__':
 
-    print(f"Application ...")
+    print(f"Application on test dataset...")
     
     input_data_dir = os.path.join(project_root, f'analysis/dataset')
     input_model_dir = os.path.join(project_root, f'training/models')
@@ -55,7 +55,13 @@ if __name__ == '__main__':
         print(info)
 
         if (category == category_type[1]):
+
+            # Load test dataset and all_df
             all_df, model, X_test, y_test = load_data_model()
+
+            # Selection cut (chi2, E_dela, opening angle, beta)
+
+            # Check kine
 
             ## Plot confusion matrix
             fig_cm = plot_nm(X_test, y_test, model, br_title)
@@ -73,6 +79,9 @@ if __name__ == '__main__':
             fig_roc = plot_roc(score_list, rf'ROC Curve - $\pi^{0}$ Classifier (test, {br_title})')
             fig_roc.savefig(f'./{plot_dir}/roc_curv_{data_type}.png', dpi=300, bbox_inches='tight')
             plt.close(fig_roc)
+
+            ## Plot kine. var after the pi0 identification
+
         else:
             print("No true labels")
 

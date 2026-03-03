@@ -287,7 +287,7 @@ if __name__ == '__main__':
         #print(i, br_nm)
 
         # Fill phys_map entries
-        phys_map[br_nm] = {
+        phys_map[base_br_nm] = {
             #'br_nm': base_br_nm,
             'br_title': br_title,
             'category': category
@@ -359,7 +359,8 @@ if __name__ == '__main__':
         br_title = info['br_title']
         
         ##
-        if (data_type.split(';')[0] == "TISR3PI_SIG"):
+        data_nm = data_type.split(';')[0]
+        if (data_nm == "TISR3PI_SIG"):
         #if (data_type == "TISR3PI_SIG"):
 
             print("="*50)
@@ -378,20 +379,20 @@ if __name__ == '__main__':
             # Data splitting
             all_df_train, all_df_val, all_df_test, X_train, y_train, X_val, y_val, X_test, y_test = data_splitting(all_df)
 
-            joblib.dump(all_df, f'{data_dir}/all_df_{data_type}.pkl')
-            joblib.dump(pi0_all_df, f'{data_dir}/pi0_all_df_{data_type}.pkl')
+            joblib.dump(all_df, f'{data_dir}/all_df_{data_nm}.pkl')
+            joblib.dump(pi0_all_df, f'{data_dir}/pi0_all_df_{data_nm}.pkl')
 
-            joblib.dump(all_df_train, f'{data_dir}/all_df_train_{data_type}.pkl')
-            joblib.dump(all_df_val, f'{data_dir}/all_df_val_{data_type}.pkl')
-            joblib.dump(all_df_test, f'{data_dir}/all_df_test_{data_type}.pkl')
+            joblib.dump(all_df_train, f'{data_dir}/all_df_train_{data_nm}.pkl')
+            joblib.dump(all_df_val, f'{data_dir}/all_df_val_{data_nm}.pkl')
+            joblib.dump(all_df_test, f'{data_dir}/all_df_test_{data_nm}.pkl')
 
-            joblib.dump(X_train, f'{data_dir}/X_train_{data_type}.pkl')
-            joblib.dump(X_val, f'{data_dir}/X_val_{data_type}.pkl')
-            joblib.dump(X_test, f'{data_dir}/X_test_{data_type}.pkl')
+            joblib.dump(X_train, f'{data_dir}/X_train_{data_nm}.pkl')
+            joblib.dump(X_val, f'{data_dir}/X_val_{data_nm}.pkl')
+            joblib.dump(X_test, f'{data_dir}/X_test_{data_nm}.pkl')
 
-            joblib.dump(y_train, f'{data_dir}/y_train_{data_type}.pkl')
-            joblib.dump(y_val, f'{data_dir}/y_val_{data_type}.pkl')
-            joblib.dump(y_test, f'{data_dir}/y_test_{data_type}.pkl')
+            joblib.dump(y_train, f'{data_dir}/y_train_{data_nm}.pkl')
+            joblib.dump(y_val, f'{data_dir}/y_val_{data_nm}.pkl')
+            joblib.dump(y_test, f'{data_dir}/y_test_{data_nm}.pkl')
 
             # Combine dataset
             all_df_list.append(all_df)
