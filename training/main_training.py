@@ -58,7 +58,7 @@ if __name__ == '__main__':
             print(f"X_train columns: {X_train.columns}")
             params = baye_opti(X_train, y_train) # Find best model parameters
             #params = set_model_params(X_train, y_train) # Initial model parameters
-            #params['early_stopping_rounds'] = 50 # Add early stop parameter (avoid early stop for model version saved in ROOT)
+            params['early_stopping_rounds'] = 50 # Add early stop parameter (avoid early stop for model version saved in ROOT)
             #print("\nModel parameters:", params)
 
             # Create a model

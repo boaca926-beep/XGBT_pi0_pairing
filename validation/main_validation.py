@@ -8,6 +8,11 @@ project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 from analysis.plots import plot_learning_curves, plot_roc
 from metrics import eval_performance, event_performance
 
+import matplotlib
+matplotlib.use('TkAgg')  # or 'Qt5Agg' if you have Qt installed
+import matplotlib.pyplot as plt
+plt.show(block=False)
+
 r'''
 def load_data_model():
     """
@@ -58,28 +63,33 @@ def load_data():
 if __name__ == '__main__':
     print(f"Validation ...")
 
+    input_data_dir = os.path.join(project_root, f'analysis/dataset')
+    phys_map = joblib.load(os.path.join(input_data_dir, f'phys_map.pkl'))
+    
+    print(phys_map)
+
     ## Load dataset
-    data_type = 'ksl' #'TETAGAM', 'TISR3PI_SIG', 'TKSL'd
+    phys_ch = ['TISR3PI_SIG', 'signal']
+    #data_type = 'TISR3PI_SIG' #'TETAGAM', 'TISR3PI_SIG', 'TKSL'd
     #input_data_dir = os.path.join(project_root, f'output_data_{input_str}')
-    input_data_dir = '../analysis/dataset'
+    #input_data_dir = '../analysis/dataset'
 
     # Load phys_map
-    phys_map = joblib.load(os.path.join(input_data_dir, 'phys_map_indiv.pkl'))
-    phys_ch = phys_map.get(data_type, "")
-    print(phys_ch)
-    br_nm = phys_ch['br_nm']
-    br_title = phys_ch['br_title']
+    #phys_map = joblib.load(os.path.join(input_data_dir, 'phys_map.pkl'))
+    br_nm = phys_ch[0]
+    info = phys_map.get(br_nm, "")
+    print(info)
+    br_title = info['br_title']
 
     X_val, y_val, all_df = load_data()
+    model = joblib.load(os.path.join('../training/models', f'pi0_classifier_model_{br_nm}.pkl'))
 
-    plot_dir = f'plots_val_{br_nm}'
+    plot_dir = f'plots'
     os.makedirs(plot_dir, exist_ok=True)
 
     features = X_val.columns
     #print(model.get_params())
 
-    ## Load model
-    model = joblib.load(os.path.join('../training/models', f'pi0_classifier_model_{br_nm}.pkl'))
     
     ## Evaluate validation set
     eval_performance(model, X_val, y_val)
