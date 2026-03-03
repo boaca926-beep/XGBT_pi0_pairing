@@ -1,0 +1,30 @@
+# Your workflow for e+e- → π+π-π0γ analysis:
+
+# 1. Run your model to identify π⁰s
+for event in data:
+    # You have 3 photons - which pair is the π⁰?
+    best_pair, score, mass = find_best_pi0_candidate(event.photons, model)
+    
+    # The remaining photon is the ISR photon!
+    if best_pair == (0,1):
+        isr_photon = event.photons[2]  # photon 3 is ISR
+        pi0_photons = [event.photons[0], event.photons[1]]
+    elif best_pair == (0,2):
+        isr_photon = event.photons[1]  # photon 2 is ISR
+        pi0_photons = [event.photons[0], event.photons[2]]
+    else:  # (1,2)
+        isr_photon = event.photons[0]  # photon 1 is ISR
+        pi0_photons = [event.photons[1], event.photons[2]]
+    
+    # Now reconstruct the full event!
+    pi0_4vec = pi0_photons[0] + pi0_photons[1]  # π⁰ 4-momentum
+    pip = event.pip_4vec  # π⁺
+    pim = event.pim_4vec  # π⁻
+    
+    # 3π system (what you measure)
+    three_pi = pip + pim + pi0_4vec
+    m_3pi = three_pi.M()  # Invariant mass of π⁺π⁻π⁰
+    
+    # ISR photon gives you center-of-mass energy
+    # Using initial-state radiation technique
+    s = 4 * (three_pi + isr_photon).M()**2  # e+e- CM energy
