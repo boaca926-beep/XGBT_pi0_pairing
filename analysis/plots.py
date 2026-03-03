@@ -56,16 +56,18 @@ def plot_compr_hist(df_set, rows, bins, plot_title):
     for i, label in enumerate(columns):
         #print(i, label)
         # desity=True normalized
-        positive_good_df = good_df[good_df[label] > 0.2][label]
-        positive_bad_df = bad_df[bad_df[label] > 0.2][label]
-        positive_all_df = all_df[all_df[label] > 0.2][label]
+        positive_good_df = good_df[label] #good_df[good_df[label] > 0.2][label]
+        positive_bad_df = bad_df[label] #bad_df[bad_df[label] > 0.2][label]
+        positive_all_df = all_df[label] #all_df[all_df[label] > 0.2][label]
 
-        if label in ['Br_E1', 'Br_E2', 'Br_E3']:
+        if label in ['Br_E1', 'Br_E2', 'Br_E3', 'Br_deltaE']:
             unit = fr'[$\mathrm{{MeV}}$]'
-        elif label in ['m_gg']:
+        elif label in ['Br_m_gg', 'Br_m3pi', 'Br_ppIM']:
             unit = fr'[$\mathrm{{MeV}}/\mathrm{{c}}^{2}$]'
         elif label in ['Br_px1', 'Br_py1', 'Br_pz1', 'Br_px2', 'Br_py2', 'Br_pz2', 'Br_px3', 'Br_py3', 'Br_pz3']:
             unit = fr'[$\mathrm{{MeV}}/\mathrm{{c}}$]'
+        elif label in ['Br_angle_pi0gam12']:
+            unit = fr'[$\circ$]'
         else:
             unit = ""
             #rint("AU")
@@ -147,16 +149,15 @@ def plot_var(array, var_nm, phys_ch):
 # =================================================================
 # Plot feature-feature
 # =================================================================
-def plot_feature_pairs(df, plot_title):
+def plot_feature_pairs(df, plot_title, hue_tmp):
     print('Plotting feature pairs')
-    df_tmp = df.drop(['event', 'cos_theta', 'pair_id'], axis=1)
-    feature_columns = df_tmp.columns
+    feature_columns = df.columns
     print(feature_columns)
     #print(df.describe())
 
 
-    g = sns.pairplot(df_tmp[feature_columns], # Data
-                     hue = 'is_pi0', # Color grouping, points by the values in the 'is_pi0' column
+    g = sns.pairplot(df[feature_columns], # Data
+                     hue = hue_tmp, # Color grouping, points by the values in the 'is_pi0' column
                      palette={1: 'blue', 0: 'red'}, # 3. colors     
                      diag_kind='hist', # Diagonal plot type
                      plot_kws={'alpha': 0.5, 's': 10}, # Scatter plot options

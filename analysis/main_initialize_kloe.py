@@ -19,22 +19,16 @@ def create_dataset(df): # For photon 4-momentum
     br_nm = ['Br_E1', 'Br_px1', 'Br_py1', 'Br_pz1', 
              'Br_E2', 'Br_px2', 'Br_py2', 'Br_pz2', 
              'Br_E3', 'Br_px3', 'Br_py3', 'Br_pz3',
-             'Br_m3pi', 'Br_lagvalue_min_7C', 'Br_recon_indx', 'Br_bkg_indx']
-    
-    #para_nm = ['E1', 'px1', 'py1', 'pz1', 
-    #           'E2', 'px2', 'py2', 'pz2', 
-    #           'E3', 'px3', 'py3', 'pz3', 
-    #           'm3pi', 'lagvalue_min_7C', 'recon_indx', 'bkg_indx']
+             'Br_m3pi', 'Br_lagvalue_min_7C', 'Br_deltaE',
+             'Br_angle_pi0gam12', 'Br_ppIM', 'Br_betapi0',
+             'Br_recon_indx', 'Br_bkg_indx']
     
     # Selection cut
     df = df[(df['Br_lagvalue_min_7C'] < 100)][br_nm]
 
-    # Create all_df, pos_df, neg_df for signal events
-    # Create all_df for background events
+    # Create all_df, pos_df, neg_df for signal and background events
     if len(br_nm): # Check para length and br_nm length are consistent
         
-        #df.columns = para_nm # Change column names
-
         if info['category'] == 'signal':
             print(f"Creating all_df for {info['category']} {df.columns}...")
 
@@ -89,58 +83,6 @@ def create_dataset(df): # For photon 4-momentum
     return all_df, pi0_all_df
 
 ##
-def load_signal_dataset(df):
-    print("Loading signal dataset ...")
-
-    # True positive and true negative events after selection
-    br_nm = ['Br_E1', 'Br_px1', 'Br_py1', 'Br_pz1', 
-             'Br_E2', 'Br_px2', 'Br_py2', 'Br_pz2', 
-             'Br_E3', 'Br_px3', 'Br_py3', 'Br_pz3',
-             'Br_m3pi', 'Br_lagvalue_min_7C']
-
-    # Selection cut
-    pos_df = df[(df['Br_lagvalue_min_7C'] < 43) & (df['Br_recon_indx'] == 2) & (df['Br_bkg_indx'])][br_nm]
-    neg_df = df[(df['Br_lagvalue_min_7C'] < 43) & ~((df['Br_recon_indx'] == 2) & (df['Br_bkg_indx']))][br_nm]
-    #print(pos_df.columns)
-    
-    para_nm = ['E1', 'px1', 'py1', 'pz1', 
-               'E2', 'px2', 'py2', 'pz2', 
-               'E3', 'px3', 'py3', 'pz3', 
-               'm3pi', 'lagvalue_min_7C']
-    
-    # Combine postive and negative dataset to all_df
-    if len(br_nm) == len(para_nm):
-        
-        # Change column names
-        pos_df.columns = para_nm
-        neg_df.columns = para_nm
-    
-        # True positive
-        nb_pos = [i for i in range(len(pos_df))]  
-        pos_df.insert(0, 'event', nb_pos)  # Add event column
-
-        is_signal_indx = [1] * len(nb_pos) 
-        pos_df['is_signal'] = is_signal_indx # Add is_signal column
-
-        true_pi0_index = [(0, 1)] * len(nb_pos)
-        pos_df['true_pi0_pair'] = true_pi0_index  # Add true_pi0_pair column
-        
-        # True negative
-        nb_neg = [i for i in range(len(neg_df))]
-        neg_df.insert(0, 'event', nb_neg) # Add event column 
-
-        is_signal_indx = [0] * len(nb_neg) 
-        neg_df['is_signal'] = is_signal_indx # Add is_signal column
-
-        true_pi0_index  = [(-1, -1)] * len(nb_neg)
-        neg_df['true_pi0_pair'] = true_pi0_index # Add true_pi0_pair column
-
-    else:
-        raise ValueError("Array length mismatch - cannot proceed")
-
-    return pos_df, neg_df
-
-##
 def data_splitting(all_df):
     print(f'\n✅ Splitting dataset ...')
 
@@ -190,7 +132,7 @@ if __name__ == '__main__':
     #============================================================
     # LOAD INPUT ROOT FILES
     #============================================================
-    f_nm = "../data/kloe_sample.root"
+    f_nm = "../data/kloe_small_sample.root"
 
     # Create ooutput directory
     data_dir = rf'./dataset' 
@@ -198,60 +140,6 @@ if __name__ == '__main__':
         
     os.makedirs(data_dir , exist_ok=True)
     os.makedirs(plot_dir , exist_ok=True)
-
-    #============================================================
-    # CREATE PHYS. MAP
-    #============================================================
-    #try:
-    #    # Open the root file
-    #    signal_root_file = uproot.open(f_nm)
-    #    print('All keys:', signal_root_file.keys())
-
-        # Create phys. map
-        #phys_map = {
-        #    # Signal channels
-        #    'etagam':{
-        #    'br_nm': 'TETAGAM',
-        #    'br_title': rf"$e^{{+}}e^{{-}}\to\phi\to\eta\gamma$",
-        #    'category': 'signal'
-        #    },
-
-            #'isr3pi':{
-            #'br_nm': 'TISR3PI_SIG',
-            #'br_title': rf"$e^{{+}}e^{{-}}\to\pi^{{+}}\pi^{{-}}\pi^{{0}}\gamma$",
-            #'category': 'signal'
-            #},
-
-            # Background channels
-            #'ksl':{
-            #'br_nm': 'TKSL',
-            #'br_title': rf"$e^{{+}}e^{{-}}\to\phi\to K_{{S}}K_{{L}}$",
-            #'category': 'signal'
-            #},
-
-            #'combined':{
-            #'br_nm': 'TCOMB',
-            #'br_title': rf"$\pi^{{+}}\pi^{{-}}\pi^{{0}}\gamma+\eta\gamma$",
-            #'category': 'combined'
-            #}
-        #}
-
-        #phys_map_comb = {
-        # Combined channels
-        #'combined':{
-        #    'br_nm': 'TCOMB',
-        #    'br_title': rf"$\pi^{{+}}\pi^{{-}}\pi^{{0}}\gamma+\eta\gamma$",
-        #    'category': 'combined'
-        #   }
-        #}
-
-        #joblib.dump(phys_map, f'{data_dir}/phys_map_indiv.pkl')
-        #joblib.dump(phys_map_comb, f'{data_dir}/phys_map_comb.pkl')
-       
-    #except Exception as e:
-    #    print('Error opening file: ', e)
-
-    #print(rf"Opening {f_nm} ...")
 
     ## Loop over branches and create phys_map dynamically
     try:
