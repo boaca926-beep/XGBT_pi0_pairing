@@ -73,7 +73,7 @@ if __name__ == '__main__':
             plt.close(fig_compr_hist)
             #print(kine_all_df.columns)
 
-            # 4. Plot pi0 features
+            ## 4. Plot pi0 features
             drop_columns = ['event', 'pair_id', 'is_pi0']
             pi0_df_set = [pi0_all_df.drop(drop_columns, axis=1),
                           pi0_pos_df.drop(drop_columns, axis=1),
@@ -82,16 +82,16 @@ if __name__ == '__main__':
             fig_compr_hist.savefig(f'./{plot_dir}/Pi0_compr_{br_nm}.png', dpi=300, bbox_inches='tight')
             plt.close(fig_compr_hist)    
 
-            # 5. Plot pi0 feature-feature correlations
+            ## 5. Plot pi0 feature-feature correlations
             fig_feature_pairs = plot_feature_pairs(pi0_all_df, rf"$\pi^{0}$ Candidates Feature-feature (Signal=Blue, Background=Red) ({br_title})")
-            #fig_feature_pairs.savefig(f'./{plot_dir}/FF_correlation_{br_nm}.png', dpi=300, bbox_inches='tight')
-            #plt.close(fig_feature_pairs.fig)
+            fig_feature_pairs.savefig(f'./{plot_dir}/FF_correlation_{br_nm}.png', dpi=300, bbox_inches='tight')
+            plt.close(fig_feature_pairs.fig)
 
-            # 6. Plot pi0 feature-target correlations
+            ## 6. Plot pi0 feature-target correlations
             features = ['m_gg', 'opening_angle', 'cos_theta', 'E_asym', 'e_min_x_angle', 'E1', 'E2', 'E3', 'asym_x_angle', 'E_diff', 'is_pi0']
             target_corr = pi0_all_df[features].corr()['is_pi0'].drop('is_pi0') #.sort_values(ascending=False)
             sorted_by_abs = target_corr.abs().sort_values(ascending=False)
-            #fig_feature_target = plot_feature_target(target_corr, rf'Feature Importance: Correlation with true $\pi^{0}$ ({br_title})')
-            #fig_feature_target.savefig(f'./{plot_dir}/feature_target_correlation_{br_nm}.png', dpi=300, bbox_inches='tight')
-            #plt.close(fig_feature_target)
+            fig_feature_target = plot_feature_target(target_corr, rf'Feature Importance: Correlation with true $\pi^{0}$ ({br_title})')
+            fig_feature_target.savefig(f'./{plot_dir}/feature_target_correlation_{br_nm}.png', dpi=300, bbox_inches='tight')
+            plt.close(fig_feature_target)
       
