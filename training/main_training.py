@@ -61,13 +61,24 @@ if __name__ == '__main__':
             params['early_stopping_rounds'] = 50 # Add early stop parameter (avoid early stop for model version saved in ROOT)
             #print("\nModel parameters:", params)
 
+            # CONVERT TO NUMPY ARRAYS (THIS IS THE KEY FIX!)
+            # Define training columns (exclude target)
+            # To avoid problems in saving models with .root file style
+            training_cols = [col for col in X_train.columns if col != 'is_pi0']
+
+            X_train_np = X_train[training_cols].to_numpy()
+            X_val_np = X_val[training_cols].to_numpy()
+            y_train_np = y_train.to_numpy().ravel()  # Ensure 1D
+            y_val_np = y_val.to_numpy().ravel()
+
             # Create a model
             model = xgb.XGBClassifier(**params) 
 
             # Fit with the model
             model.fit(X_train, y_train,
-                    eval_set = [(X_train, y_train), (X_val, y_val)],
-                    verbose=False
+                    eval_set = [(X_train_np, y_train_np), (X_val_np, y_val_np)],
+                    verbose=False,
+                    feature_names=None
             )
 
             # Save the model
