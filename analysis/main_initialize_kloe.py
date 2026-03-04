@@ -214,8 +214,6 @@ if __name__ == '__main__':
             if "Br_mpi0" not in ak_array.fields:
                 print("Br_mpi0 is missing !!! Need to add this branch into the root file !!!")
             
-            
-
             print(f"\nAwkward array fields: {ak_array.fields}")
             print(f"Number of fields: {len(ak_array.fields)}")
             exclude_fields = ['Br_pull_E1', 'Br_pull_x1', 'Br_pull_y1', 'Br_pull_z1', 'Br_pull_t1']
@@ -240,7 +238,7 @@ if __name__ == '__main__':
     #============================================================
     # CREATE DATASET
     #============================================================
-    all_df_list = [] # List for storing all dataset
+    all_df_list = [] # List for storing all dataset for combining
 
     for data_type, info in phys_map.items():
         #info_br = info['br_nm']
@@ -288,7 +286,7 @@ if __name__ == '__main__':
             continue
 
         ##
-        #if all_df_list:
+        #if all_df_list: # combining dataset
         #    all_df_comb = pd.concat(all_df_list, ignore_index=True)
         #    shuffled_idx = np.random.permutation(len(all_df_comb))
         #    all_df_comb = all_df_comb.iloc[shuffled_idx].reset_index(drop=True)
@@ -299,6 +297,7 @@ if __name__ == '__main__':
     # shuffle comb. dataset, using small sample,
     # split comb. dataset
     # save the comb. data set
+    
     r'''
     # Combining dataset 
     # (later, after signal and background are separated)

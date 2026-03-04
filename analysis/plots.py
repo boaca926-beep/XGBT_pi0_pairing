@@ -8,11 +8,12 @@ from sklearn.metrics import confusion_matrix, classification_report
 # =================================================================
 # Plot (all, positive, negative) comparison
 # =================================================================
-def plot_compr_hist(df_set, rows, bins, plot_title):
-
-    all_df = df_set[0]
-    good_df = df_set[1]
-    bad_df = df_set[2]
+def plot_compr_hist(df_set, drop_columns, rows, bins, plot_title):
+                   
+                   
+    all_df = df_set[0].drop(drop_columns, axis=1)
+    good_df = df_set[1].drop(drop_columns, axis=1)
+    bad_df = df_set[2].drop(drop_columns, axis=1)
 
     ##  S/B ratio
     S = len(good_df)
@@ -149,13 +150,11 @@ def plot_var(array, var_nm, phys_ch):
 # =================================================================
 # Plot feature-feature
 # =================================================================
-def plot_feature_pairs(df, plot_title, hue_tmp):
+def plot_feature_pairs(df, drop_columns, plot_title, hue_tmp):
     print('Plotting feature pairs')
-    feature_columns = df.columns
-    print(feature_columns)
-    #print(df.describe())
 
-
+    feature_columns = [col for col in df.columns if col not in drop_columns]
+    
     g = sns.pairplot(df[feature_columns], # Data
                      hue = hue_tmp, # Color grouping, points by the values in the 'is_pi0' column
                      palette={1: 'blue', 0: 'red'}, # 3. colors     
