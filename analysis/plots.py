@@ -346,14 +346,14 @@ def plot_learning_curves(model, plot_title):
     #axes.set_ylim(0.8, 1) # Set y-axis range from 0 to 1
     axes.set_xlabel('Boosting Round', fontsize=14)
     axes.set_ylabel('AUC', fontsize=14)
-    axes.set_title(rf'Learning Curves - AUC', fontsize=14)
+    #axes.set_title(rf'Learning Curves - AUC', fontsize=14)
     axes.axvline(x=early_stop, color='black', linestyle='--', linewidth=2, 
                label=f'Early stop (iteration {early_stop})')
     axes.legend()
     axes.grid(True, alpha=0.3)
 
 
-    plt.suptitle(plot_title, fontsize=16)
+    plt.suptitle(plot_title, fontsize=14)
     plt.tight_layout()
     #plt.savefig(f'./plots/{plot_nm}.png', dpi=300)
     plt.show(block=False)

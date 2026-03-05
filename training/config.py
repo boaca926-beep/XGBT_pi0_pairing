@@ -137,12 +137,12 @@ def prepare_3photon_paris(df_events):
     #
     E_asym_values = [pair['E_asym'] for pair in pairs]
     E_asym_df = pd.DataFrame(E_asym_values, columns=['E_asym'])
-    print(E_asym_df.describe())
+    #print(E_asym_df.describe())
 
     #
     asym_x_angle_values = [pair['asym_x_angle'] for pair in pairs]
     asym_x_angle_df = pd.DataFrame(asym_x_angle_values, columns=['asym_x_angle'])
-    print(asym_x_angle_df.describe())
+    #print(asym_x_angle_df.describe())
     
         
     #print('m_gg', pi0_all_df['m_gg'].describe())

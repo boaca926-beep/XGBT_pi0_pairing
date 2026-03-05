@@ -23,8 +23,12 @@ def create_dataset(df): # For photon 4-momentum
              'Br_angle_pi0gam12', 'Br_ppIM', 'Br_betapi0',
              'Br_recon_indx', 'Br_bkg_indx']
     
-    # Selection cut
-    df = df[(df['Br_lagvalue_min_7C'] < 100)][br_nm]
+    # Selection cut, ensure physical region
+    cut_region = (df['Br_lagvalue_min_7C'] < 100) # Selection cuts
+    phys_region = (df['Br_betapi0'] < 1) & (df['Br_betapi0'] > 0) # Physical region
+
+    #df = df[(df['Br_lagvalue_min_7C'] < 100) & (df['Br_betapi0'] < 1) & (df['Br_betapi0'] > 0)][br_nm]
+    df = df[cut_region & phys_region][br_nm]
 
     # Create all_df, pos_df, neg_df for signal and background events
     if len(br_nm): # Check para length and br_nm length are consistent
@@ -257,10 +261,15 @@ if __name__ == '__main__':
 
             # Check for any missing values
             print(f"\nMissing values per column:")
-            print(df.isnull().sum())
+            #print(df.isnull().sum())
 
             # Create pho4mom_all_df for signal and bkg separately
             all_df, pi0_all_df = create_dataset(df)
+            
+            # Check for anomalies
+            print(all_df.columns)
+            betapi0_values = all_df['Br_betapi0']
+            print(betapi0_values.describe())
 
             # Data splitting
             all_df_train, all_df_val, all_df_test, X_train, y_train, X_val, y_val, X_test, y_test = data_splitting(all_df)

@@ -69,7 +69,8 @@ if __name__ == '__main__':
     print(phys_map)
 
     ## Load dataset
-    phys_ch = ['TISR3PI_SIG', 'signal']
+    #phys_ch = ['TISR3PI_SIG', 'signal']
+    phys_ch = ['TETAGAM', 'signal']
     #data_type = 'TISR3PI_SIG' #'TETAGAM', 'TISR3PI_SIG', 'TKSL'd
     #input_data_dir = os.path.join(project_root, f'output_data_{input_str}')
     #input_data_dir = '../analysis/dataset'
@@ -100,7 +101,7 @@ if __name__ == '__main__':
         print(f"    {f}: {imp:.03f}")
 
     ## Learning curves
-    fig_learning = plot_learning_curves(model, rf'Model Validation (validation, {br_title})')
+    fig_learning = plot_learning_curves(model, rf'Learning Curve (validation, {br_title})')
     fig_learning.savefig(f'./{plot_dir}/learning_curves_{br_nm}.png', dpi=300, bbox_inches='tight')
 
     ## Accuracy metrics, event basis
