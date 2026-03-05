@@ -772,3 +772,630 @@ void apply_xgboost_model(const char* model_filename = "bdt_pi0_yourtype.root",
     file->Close();
     std::cout << "\n✓ Application complete!" << std::endl;
 }
+
+
+===========================================================================================
+#!/bin/bash
+# rebuild_root.sh
+
+cd /home/bo/Cern_root
+
+# Remove old build directory
+rm -rf root_build_fresh
+mkdir root_build_fresh
+cd root_build_fresh
+
+echo "Configuring ROOT with TMVA CPU and Sofie support..."
+
+cmake -DCMAKE_INSTALL_PREFIX=/home/bo/Cern_root/root_install \
+      -Dtmva=ON \
+      -Dtmva-cpu=ON \
+      -Dtmva-pymva=ON \
+      -Dtmva-rmva=ON \
+      -Dtmva-sofie=ON \
+      -Dcuda=OFF \
+      ../root_src
+
+# Check configuration
+echo "TMVA configuration:"
+cmake -L | grep -E "tmva|sofie"
+
+echo "Starting build (this will take 15-30 minutes)..."
+make -j$(nproc)
+
+echo "Installing..."
+make install
+
+echo "Sourcing new ROOT..."
+source /home/bo/Cern_root/root_install/bin/thisroot.sh
+
+echo "Done!"
+
+===========================================================================================
+#include <TMVA/RBDT.hxx>
+#include <TMVA/RTensor.hxx>
+#include <ROOT/RDataFrame.hxx>
+#include <TFile.h>
+#include <TTree.h>
+#include <TSystem.h>
+#include <iostream>
+#include <vector>
+
+void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.root",
+                const char* data_filename = "../data/kloe_small_sample.root"){
+
+    // Manually load libraries
+    gSystem->Load("libTMVA");
+    gSystem->Load("libTMVAUtils");
+    
+    std::cout << "Testing model_KLOE ..." << std::endl;
+
+    // 1. Check if model file exists
+    if (gSystem->AccessPathName(model_filename)) {
+        std::cout << model_filename << " does not exist!" << std::endl;
+        return;
+    }
+
+    // 2. Load the BDT model
+    std::cout << "Loading model from " << model_filename << std::endl;
+    TMVA::Experimental::RBDT bdt("BDT_pi0", model_filename);
+
+    std::cout << "✓ Model loaded successfully!" << std::endl;
+    
+    // 3. Test with dummy data (using 10 features from your training)
+    const int n_features = 10;  // You know this from your training!
+    std::vector<float> dummy(n_features, 0.5);
+    
+    // Create input tensor (1 event, n_features)
+    TMVA::Experimental::RTensor<float> input(dummy.data(), {1, (size_t)n_features});
+    
+    // Compute BDT response
+    auto output = bdt.Compute(input);
+    
+    std::cout << "Test response: " << output(0,0) << std::endl;
+    
+    // 4. If data file exists, process it with RDataFrame
+    if (!gSystem->AccessPathName(data_filename)) {
+        std::cout << "\nProcessing data file: " << data_filename << std::endl;
+        
+        ROOT::RDataFrame df("tree", data_filename);
+        
+        // Define BDT response column
+        auto df_with_bdt = df.Define("bdt_response",
+            [&bdt](float m_gg, float opening_angle, float cos_theta,
+                   float E_asym, float e_min_x_angle, float E1, float E2,
+                   float E3, float asym_x_angle, float E_diff) {
+                std::vector<float> features = {
+                    m_gg, opening_angle, cos_theta, E_asym, e_min_x_angle,
+                    E1, E2, E3, asym_x_angle, E_diff
+                };
+                TMVA::Experimental::RTensor<float> input(features.data(), {1, features.size()});
+                auto result = bdt.Compute(input);
+                return result(0,0);
+            },
+            {"m_gg", "opening_angle", "cos_theta", "E_asym", "e_min_x_angle",
+             "E1", "E2", "E3", "asym_x_angle", "E_diff"});
+        
+        // Show some stats
+        auto mean_response = df_with_bdt.Mean("bdt_response");
+        std::cout << "Mean BDT response on data: " << *mean_response << std::endl;
+        
+        // Optionally save results
+        // df_with_bdt.Snapshot("new_tree", "output_with_bdt.root");
+    }
+}
+
+========================================================================
+void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.root",
+                const char* data_filename = "../data/kloe_small_sample.root"){
+
+    // Manually load libraries
+    gSystem->Load("libTMVA");
+    gSystem->Load("libTMVAUtils");
+    
+    std::cout << "Testing model_KLOE ..." << std::endl;
+
+    // 1. Check if model file exists
+    if (gSystem->AccessPathName(model_filename)) {
+        std::cout << model_filename << " does not exist!" << std::endl;
+        return;
+    }
+
+    // 2. Load the BDT model
+    std::cout << "Loading model from " << model_filename << std::endl;
+    TMVA::Experimental::RBDT bdt("BDT_pi0", model_filename);
+
+    std::cout << "✓ Model loaded successfully!" << std::endl;
+
+    // Test with dummy data
+    const int n_features = 10;
+    std::vector<float> dummy(n_features, 0.5);
+    TMVA::Experimental::RTensor<float> input(dummy.data(), {1, (size_t)n_features});
+    auto output = bdt.Compute(input);
+    std::cout << "\nTest response: " << output(0, 0) << std::endl;
+
+    // ===== Process data file with photon 4-momenta =====
+    if (!gSystem->AccessPathName(data_filename)) {
+        std::cout << "\nProcessing data file: " << data_filename << std::endl;
+        
+        TFile* file = TFile::Open(data_filename);
+        if (!file || file->IsZombie()) {
+            std::cerr << "Error: Cannot open file " << data_filename << std::endl;
+            return;
+        }
+        
+        TTree* tree = (TTree*)file->Get("tree");
+        if (!tree) {
+            std::cerr << "Error: Cannot find tree 'tree' in file" << std::endl;
+            file->Close();
+            return;
+        }
+        
+        std::cout << "Tree has " << tree->GetEntries() << " entries" << std::endl;
+        
+        // Variables for photon 4-momenta (assuming this is how they're stored)
+        // Adjust these names to match your tree!
+        float px1, py1, pz1, E1;  // photon 1
+        float px2, py2, pz2, E2;  // photon 2
+        float px3, py3, pz3, E3;  // photon 3
+        
+        // Set branch addresses - adjust names to match your tree!
+        tree->SetBranchAddress("px1", &px1);
+        tree->SetBranchAddress("py1", &py1);
+        tree->SetBranchAddress("pz1", &pz1);
+        tree->SetBranchAddress("E1", &E1);
+        
+        tree->SetBranchAddress("px2", &px2);
+        tree->SetBranchAddress("py2", &py2);
+        tree->SetBranchAddress("pz2", &pz2);
+        tree->SetBranchAddress("E2", &E2);
+        
+        tree->SetBranchAddress("px3", &px3);
+        tree->SetBranchAddress("py3", &py3);
+        tree->SetBranchAddress("pz3", &pz3);
+        tree->SetBranchAddress("E3", &E3);
+        
+        // Create output file
+        TFile* outfile = TFile::Open("output_with_bdt.root", "RECREATE");
+        TTree* outtree = new TTree("new_tree", "Tree with BDT response");
+        
+        // Variables for calculated features
+        float m_gg, opening_angle, cos_theta, E_asym, e_min_x_angle;
+        float E_min, E_mid, E_max, asym_x_angle, E_diff;
+        float bdt_response;
+        
+        // Branch for BDT response
+        outtree->Branch("bdt_response", &bdt_response);
+        
+        // Optional: also save calculated features
+        outtree->Branch("m_gg", &m_gg);
+        outtree->Branch("opening_angle", &opening_angle);
+        outtree->Branch("cos_theta", &cos_theta);
+        outtree->Branch("E_asym", &E_asym);
+        outtree->Branch("e_min_x_angle", &e_min_x_angle);
+        outtree->Branch("E_min", &E_min);
+        outtree->Branch("E_mid", &E_mid);
+        outtree->Branch("E_max", &E_max);
+        outtree->Branch("asym_x_angle", &asym_x_angle);
+        outtree->Branch("E_diff", &E_diff);
+        
+        // Loop over entries
+        Long64_t nentries = tree->GetEntries();
+        std::cout << "Processing " << nentries << " events..." << std::endl;
+        
+        double sum_response = 0;
+        
+        for (Long64_t i = 0; i < nentries; i++) {
+            tree->GetEntry(i);
+            
+            // ===== Calculate the 10 features from photon 4-momenta =====
+            
+            // 1. m_gg - invariant mass of the two photons that form pi0
+            // You need to identify which two photons are from pi0
+            // This might be the pair with mass closest to pi0 mass
+            float m12 = calculate_invariant_mass(px1, py1, pz1, E1, px2, py2, pz2, E2);
+            float m13 = calculate_invariant_mass(px1, py1, pz1, E1, px3, py3, pz3, E3);
+            float m23 = calculate_invariant_mass(px2, py2, pz2, E2, px3, py3, pz3, E3);
+            
+            // Find the pair closest to pi0 mass (135 MeV)
+            float pi0_mass = 0.135; // GeV
+            float diff12 = fabs(m12 - pi0_mass);
+            float diff13 = fabs(m13 - pi0_mass);
+            float diff23 = fabs(m23 - pi0_mass);
+            
+            if (diff12 <= diff13 && diff12 <= diff23) {
+                m_gg = m12;
+                // Photons 1 and 2 are the pi0 candidates
+                E_min = std::min(E1, E2);
+                E_max = std::max(E1, E2);
+                // The third photon is the prompt photon
+                float E_prompt = E3;
+                float px_prompt = px3, py_prompt = py3, pz_prompt = pz3;
+                
+                // Calculate other features using these assignments
+                calculate_other_features(E1, E2, E3, px_prompt, py_prompt, pz_prompt,
+                                        opening_angle, cos_theta, E_asym, 
+                                        e_min_x_angle, asym_x_angle, E_diff);
+            }
+            else if (diff13 <= diff12 && diff13 <= diff23) {
+                m_gg = m13;
+                // Photons 1 and 3 are the pi0 candidates
+                E_min = std::min(E1, E3);
+                E_max = std::max(E1, E3);
+                float E_prompt = E2;
+                float px_prompt = px2, py_prompt = py2, pz_prompt = pz2;
+                
+                calculate_other_features(E1, E2, E3, px_prompt, py_prompt, pz_prompt,
+                                        opening_angle, cos_theta, E_asym,
+                                        e_min_x_angle, asym_x_angle, E_diff);
+            }
+            else {
+                m_gg = m23;
+                // Photons 2 and 3 are the pi0 candidates
+                E_min = std::min(E2, E3);
+                E_max = std::max(E2, E3);
+                float E_prompt = E1;
+                float px_prompt = px1, py_prompt = py1, pz_prompt = pz1;
+                
+                calculate_other_features(E1, E2, E3, px_prompt, py_prompt, pz_prompt,
+                                        opening_angle, cos_theta, E_asym,
+                                        e_min_x_angle, asym_x_angle, E_diff);
+            }
+            
+            // Prepare features vector for BDT
+            std::vector<float> features = {
+                m_gg, opening_angle, cos_theta, E_asym, e_min_x_angle,
+                E_min, E_max, E_mid, asym_x_angle, E_diff
+            };
+            
+            // Compute BDT response
+            TMVA::Experimental::RTensor<float> input_tensor(features.data(), {1, features.size()});
+            auto result = bdt.Compute(input_tensor);
+            bdt_response = result(0, 0);
+            
+            sum_response += bdt_response;
+            outtree->Fill();
+        }
+        
+        double mean_response = sum_response / nentries;
+        std::cout << "Mean BDT response: " << mean_response << std::endl;
+        
+        outfile->Write();
+        outfile->Close();
+        file->Close();
+        
+        std::cout << "✓ Results saved to output_with_bdt.root" << std::endl;
+    }
+    
+    std::cout << "\n✓ Test complete!" << std::endl;
+}
+
+// Helper function to calculate invariant mass of two photons
+float calculate_invariant_mass(float px1, float py1, float pz1, float E1,
+                                float px2, float py2, float pz2, float E2) {
+    float px = px1 + px2;
+    float py = py1 + py2;
+    float pz = pz1 + pz2;
+    float E = E1 + E2;
+    float m2 = E*E - (px*px + py*py + pz*pz);
+    return (m2 > 0) ? sqrt(m2) : 0;
+}
+
+// Helper function to calculate other features
+void calculate_other_features(float E1, float E2, float E3,
+                             float px_prompt, float py_prompt, float pz_prompt,
+                             float& opening_angle, float& cos_theta,
+                             float& E_asym, float& e_min_x_angle,
+                             float& asym_x_angle, float& E_diff) {
+    
+    // Sort photon energies
+    std::vector<float> energies = {E1, E2, E3};
+    std::sort(energies.begin(), energies.end());
+    float E_min = energies[0];
+    float E_mid = energies[1];
+    float E_max = energies[2];
+    
+    // Energy asymmetry
+    E_asym = (E_max - E_min) / (E_max + E_min);
+    
+    // Energy difference
+    E_diff = E_max - E_min;
+    
+    // Opening angle between pi0 photons (need to know which are pi0)
+    // This depends on your pi0 assignment
+    // ...
+    
+    // cos_theta of prompt photon
+    // ...
+    
+    // e_min_x_angle - angle between min energy photon and something
+    // ...
+    
+    // asym_x_angle - asymmetry in angle
+    // ...
+}
+
+
+==========================================================================
+#include <TMVA/RBDT.hxx>
+#include <TMVA/RTensor.hxx>
+#include <TFile.h>
+#include <TTree.h>
+#include <TSystem.h>
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <algorithm>
+#include <map>
+
+using namespace TMVA::Experimental;
+
+// [Include your helper functions here: inv_mass_4vector, is_missing, etc.]
+
+void find_pi0_with_bdt(const char* model_filename = "../training/models/bdt_pi0_TCOMB.root",
+                        const char* data_filename = "../data/kloe_small_sample.root"){
+
+    gSystem->Load("libTMVA");
+    gSystem->Load("libTMVAUtils");
+    
+    std::cout << "Finding π⁰ candidates using BDT model..." << std::endl;
+
+    // Load BDT model
+    if (gSystem->AccessPathName(model_filename)) {
+        std::cout << model_filename << " does not exist!" << std::endl;
+        return;
+    }
+    
+    std::cout << "Loading model from " << model_filename << std::endl;
+    RBDT bdt("BDT_pi0", model_filename);
+    std::cout << "✓ Model loaded successfully!" << std::endl;
+
+    // Process data file
+    if (!gSystem->AccessPathName(data_filename)) {
+        std::cout << "\nProcessing data file: " << data_filename << std::endl;
+        
+        TFile* file = TFile::Open(data_filename);
+        if (!file || file->IsZombie()) {
+            std::cerr << "Error: Cannot open file " << data_filename << std::endl;
+            return;
+        }
+        
+        TTree* tree = (TTree*)file->Get("tree");
+        if (!tree) {
+            std::cerr << "Error: Cannot find tree 'tree' in file" << std::endl;
+            file->Close();
+            return;
+        }
+        
+        std::cout << "Tree has " << tree->GetEntries() << " events" << std::endl;
+        
+        // Variables for photon 4-momenta
+        double Br_E1, Br_px1, Br_py1, Br_pz1;
+        double Br_E2, Br_px2, Br_py2, Br_pz2;
+        double Br_E3, Br_px3, Br_py3, Br_pz3;
+        int event_id;
+        int is_signal = 0;
+        
+        // Set branch addresses
+        tree->SetBranchAddress("Br_E1", &Br_E1);
+        tree->SetBranchAddress("Br_px1", &Br_px1);
+        tree->SetBranchAddress("Br_py1", &Br_py1);
+        tree->SetBranchAddress("Br_pz1", &Br_pz1);
+        
+        tree->SetBranchAddress("Br_E2", &Br_E2);
+        tree->SetBranchAddress("Br_px2", &Br_px2);
+        tree->SetBranchAddress("Br_py2", &Br_py2);
+        tree->SetBranchAddress("Br_pz2", &Br_pz2);
+        
+        tree->SetBranchAddress("Br_E3", &Br_E3);
+        tree->SetBranchAddress("Br_px3", &Br_px3);
+        tree->SetBranchAddress("Br_py3", &Br_py3);
+        tree->SetBranchAddress("Br_pz3", &Br_pz3);
+        
+        tree->SetBranchAddress("event", &event_id);
+        
+        if (tree->GetBranch("is_signal")) {
+            tree->SetBranchAddress("is_signal", &is_signal);
+        }
+        
+        // Create output file with best π⁰ per event
+        TFile* outfile = TFile::Open("pi0_candidates.root", "RECREATE");
+        TTree* outtree = new TTree("pi0_candidates", "Best π⁰ candidate per event");
+        
+        // Output variables
+        int out_event;
+        int pi0_photon1_idx, pi0_photon2_idx;  // indices of photons forming π⁰ (0,1,2)
+        int prompt_photon_idx;                  // index of prompt photon
+        double pi0_mass;
+        double pi0_energy;
+        double pi0_px, pi0_py, pi0_pz;
+        double prompt_energy;
+        double bdt_score;
+        double bdt_score_other1, bdt_score_other2;  // scores for other two pairs
+        int is_correct;  // if truth info available
+        
+        outtree->Branch("event", &out_event);
+        outtree->Branch("pi0_photon1_idx", &pi0_photon1_idx);
+        outtree->Branch("pi0_photon2_idx", &pi0_photon2_idx);
+        outtree->Branch("prompt_photon_idx", &prompt_photon_idx);
+        outtree->Branch("pi0_mass", &pi0_mass);
+        outtree->Branch("pi0_energy", &pi0_energy);
+        outtree->Branch("pi0_px", &pi0_px);
+        outtree->Branch("pi0_py", &pi0_py);
+        outtree->Branch("pi0_pz", &pi0_pz);
+        outtree->Branch("prompt_energy", &prompt_energy);
+        outtree->Branch("bdt_score", &bdt_score);
+        outtree->Branch("bdt_score_other1", &bdt_score_other1);
+        outtree->Branch("bdt_score_other2", &bdt_score_other2);
+        outtree->Branch("is_correct", &is_correct);
+        
+        // Loop over events
+        Long64_t nentries = tree->GetEntries();
+        std::cout << "Processing " << nentries << " events to find π⁰ candidates..." << std::endl;
+        
+        const double energy_threshold = 5.0;
+        int n_found = 0;
+        
+        for (Long64_t i = 0; i < nentries; i++) {
+            tree->GetEntry(i);
+            
+            // Store photons
+            double photons[3][4] = {
+                {Br_E1, Br_px1, Br_py1, Br_pz1},
+                {Br_E2, Br_px2, Br_py2, Br_pz2},
+                {Br_E3, Br_px3, Br_py3, Br_pz3}
+            };
+            
+            // All 3 possible pairs
+            int pair_indices[3][2] = {{0,1}, {2,0}, {1,2}};
+            
+            // Store scores for each pair
+            double scores[3] = {0, 0, 0};
+            double masses[3] = {0, 0, 0};
+            
+            // Calculate BDT score for each pair
+            for (int p = 0; p < 3; p++) {
+                int i_idx = pair_indices[p][0];
+                int j_idx = pair_indices[p][1];
+                
+                double e1 = photons[i_idx][0];
+                double e2 = photons[j_idx][0];
+                
+                // Find unpaired photon
+                int unpaired_idx = -1;
+                for (int k = 0; k < 3; k++) {
+                    if (k != i_idx && k != j_idx) {
+                        unpaired_idx = k;
+                        break;
+                    }
+                }
+                double e3 = photons[unpaired_idx][0];
+                
+                // Calculate features (same as before)
+                double m_gg = 0, opening_angle = 0, cos_theta = 0;
+                double E_asym = 0, e_min_x_angle = 0;
+                double asym_x_angle = 0, E_diff = 0;
+                
+                if (!is_missing(e1) && !is_missing(e2) && e1 >= energy_threshold && e2 >= energy_threshold) {
+                    // Invariant mass
+                    m_gg = inv_mass_4vector(
+                        photons[i_idx][0], photons[i_idx][1], photons[i_idx][2], photons[i_idx][3],
+                        photons[j_idx][0], photons[j_idx][1], photons[j_idx][2], photons[j_idx][3]
+                    );
+                    masses[p] = m_gg;
+                    
+                    // Opening angle
+                    double p1_mag = std::sqrt(
+                        photons[i_idx][1]*photons[i_idx][1] + 
+                        photons[i_idx][2]*photons[i_idx][2] + 
+                        photons[i_idx][3]*photons[i_idx][3]
+                    );
+                    double p2_mag = std::sqrt(
+                        photons[j_idx][1]*photons[j_idx][1] + 
+                        photons[j_idx][2]*photons[j_idx][2] + 
+                        photons[j_idx][3]*photons[j_idx][3]
+                    );
+                    
+                    double dot = photons[i_idx][1]*photons[j_idx][1] + 
+                                 photons[i_idx][2]*photons[j_idx][2] + 
+                                 photons[i_idx][3]*photons[j_idx][3];
+                    
+                    cos_theta = dot / (p1_mag * p2_mag + 1e-10);
+                    cos_theta = std::max(-1.0, std::min(1.0, cos_theta));
+                    opening_angle = std::acos(cos_theta);
+                    
+                    // Energy features
+                    E_asym = std::abs(e1 - e2) / (e1 + e2 + 1e-10);
+                    E_asym = std::max(0.0, std::min(1.0, E_asym));
+                    E_diff = std::abs(e1 - e2);
+                    e_min_x_angle = std::min(e1, e2) * opening_angle;
+                    asym_x_angle = E_asym * opening_angle;
+                }
+                
+                // Prepare features for BDT
+                std::vector<float> features = {
+                    (float)m_gg, (float)opening_angle, (float)cos_theta, 
+                    (float)E_asym, (float)e_min_x_angle,
+                    (float)e1, (float)e2, (float)e3, 
+                    (float)asym_x_angle, (float)E_diff
+                };
+                
+                // Get BDT score
+                RTensor<float> input_tensor(features.data(), {1, features.size()});
+                auto result = bdt.Compute(input_tensor);
+                scores[p] = result(0, 0);
+            }
+            
+            // Find the best pair (highest BDT score)
+            int best_pair = 0;
+            if (scores[1] > scores[best_pair]) best_pair = 1;
+            if (scores[2] > scores[best_pair]) best_pair = 2;
+            
+            // Get the indices for the best pair
+            int best_i = pair_indices[best_pair][0];
+            int best_j = pair_indices[best_pair][1];
+            
+            // Find prompt photon (the one not in the best pair)
+            int prompt_idx = -1;
+            for (int k = 0; k < 3; k++) {
+                if (k != best_i && k != best_j) {
+                    prompt_idx = k;
+                    break;
+                }
+            }
+            
+            // Calculate π⁰ 4-vector
+            pi0_photon1_idx = best_i;
+            pi0_photon2_idx = best_j;
+            prompt_photon_idx = prompt_idx;
+            
+            pi0_mass = masses[best_pair];
+            pi0_energy = photons[best_i][0] + photons[best_j][0];
+            pi0_px = photons[best_i][1] + photons[best_j][1];
+            pi0_py = photons[best_i][2] + photons[best_j][2];
+            pi0_pz = photons[best_i][3] + photons[best_j][3];
+            prompt_energy = photons[prompt_idx][0];
+            
+            bdt_score = scores[best_pair];
+            
+            // Get scores for other pairs
+            int other1 = (best_pair + 1) % 3;
+            int other2 = (best_pair + 2) % 3;
+            bdt_score_other1 = scores[other1];
+            bdt_score_other2 = scores[other2];
+            
+            // Check if correct (if truth available)
+            is_correct = 0;
+            if (is_signal == 1) {
+                // You would need truth information about which pair is correct
+                // This depends on your data
+            }
+            
+            out_event = event_id;
+            outtree->Fill();
+            
+            if (scores[best_pair] > 0.5) n_found++;
+            
+            // Optional: Print some events for debugging
+            if (i < 5) {
+                std::cout << "\nEvent " << event_id << ":" << std::endl;
+                std::cout << "  Pair (0,1) score: " << scores[0] << " mass: " << masses[0] << std::endl;
+                std::cout << "  Pair (2,0) score: " << scores[1] << " mass: " << masses[1] << std::endl;
+                std::cout << "  Pair (1,2) score: " << scores[2] << " mass: " << masses[2] << std::endl;
+                std::cout << "  BEST: pair " << best_pair << " with score " << scores[best_pair] << std::endl;
+                std::cout << "  π⁰ mass: " << pi0_mass << " GeV" << std::endl;
+            }
+        }
+        
+        std::cout << "\n=== Results ===" << std::endl;
+        std::cout << "Processed " << nentries << " events" << std::endl;
+        std::cout << "Found " << n_found << " events with BDT score > 0.5" << std::endl;
+        std::cout << "Output saved to pi0_candidates.root" << std::endl;
+        
+        outfile->Write();
+        outfile->Close();
+        file->Close();
+    }
+    
+    std::cout << "\n✓ π⁰ finding complete!" << std::endl;
+}

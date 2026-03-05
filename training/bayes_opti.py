@@ -35,9 +35,9 @@ def baye_opti(X_train, y_train):
             random_state=42
         ),
         search_spaces=search_spaces,
-        n_iter=5, # Number of optimization steps 50
+        n_iter=10, # Number of optimization steps 50
         scoring='roc_auc',
-        cv=3, # 5
+        cv=5, # 5
         random_state=42,
         n_jobs=-1,
         verbose=1

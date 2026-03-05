@@ -48,7 +48,7 @@ if __name__ == '__main__':
     phys_map = joblib.load(os.path.join(input_data_dir, f'phys_map.pkl'))
     print(phys_map)
 
-    br_type = 'TISR3PI_SIG' #'TETAGAM' #TISR3PI_SIG'
+    br_type = 'TCOMB' #'TETAGAM', TISR3PI_SIG'
     info = phys_map[br_type]
     info_title = info['br_title']
     info_category = info['category']
@@ -65,6 +65,9 @@ if __name__ == '__main__':
             ## Bayesian optimization (look for best model parameters)
             X_train, y_train, X_val, y_val = load_dataset()
             print(f"X_train columns: {X_train.columns}")
+            print(f"Number of features in the training: {len(X_train.columns.tolist())}")
+
+
             params = baye_opti(X_train, y_train) # Find best model parameters
             #params = set_model_params(X_train, y_train) # Initial model parameters
             params['early_stopping_rounds'] = 50 # Add early stop parameter (avoid early stop for model version saved in ROOT)
@@ -104,7 +107,7 @@ if __name__ == '__main__':
             ROOT.TMVA.Experimental.SaveXGBoost(
                 model,  # ← This is XGBClassifier, which has .objective attribute
                 "BDT_pi0", 
-                f"bdt_pi0_{br_type}.root", 
+                f"{model_dir}/bdt_pi0_{br_type}.root", 
                 num_inputs=X_train_np.shape[1]
             )
 

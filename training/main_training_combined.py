@@ -36,7 +36,7 @@ if __name__ == '__main__':
     ## Bayesian optimization (look for best model parameters)
     data_type = 'combined'
     X_train, y_train, X_val, y_val = load_dataset()
-
+    
     params = baye_opti(X_train, y_train) # Find best model parameters
     #params = set_model_params(X_train, y_train) # Initial model parameters
     params['early_stopping_rounds'] = 50 # Add early stop parameter
