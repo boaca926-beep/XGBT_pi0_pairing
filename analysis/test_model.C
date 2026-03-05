@@ -8,6 +8,31 @@
 
 using namespace TMVA::Experimental;
 
+double get_cos_theta(int i_idx, int j_idx, double photons[3][4]){
+
+    double p1_mag = TMath::Sqrt(TMath::Max(0.0, 
+        photons[i_idx][1] * photons[i_idx][1] + 
+        photons[i_idx][2] * photons[i_idx][2] +
+        photons[i_idx][3] * photons[i_idx][3]) 
+    );
+
+    double p2_mag = TMath::Sqrt(TMath::Max(0.0,
+        photons[j_idx][1] * photons[j_idx][1] + 
+        photons[j_idx][2] * photons[j_idx][2] +
+        photons[j_idx][3] * photons[j_idx][3])
+    );
+
+    double dot = photons[i_idx][1] * photons[j_idx][1] + 
+    photons[i_idx][2] * photons[j_idx][2] +
+    photons[i_idx][3] * photons[j_idx][3];
+
+    double cos_theta = dot / (p1_mag * p2_mag + 1e-10);
+    cos_theta = TMath::Max(-1.0, TMath::Min(1.0, cos_theta));
+
+    return cos_theta;
+}
+
+//
 double inv_mass_4vector(int i_idx, int j_idx, double photons[3][4]){
     double inv_mass = 0;
 
@@ -124,6 +149,8 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
     TH1D* he3 = new TH1D("he3", "", 200, 0, 500);
 
     TH1D* hm_gg = new TH1D("hm_gg", "", 200, 0, 1000);
+    TH1D* hcos_theta = new TH1D("hcos_theta", "", 200, -1, 1);
+    
 
     // If data file exists, process it with RDataFame
     if(!gSystem -> AccessPathName(data_filename)){
@@ -150,9 +177,12 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
         cout << "Tree has " << nentries << " entries" << endl;
 
         // Set branch addres for input features
+        double lagvalue_min_7C;
         double E1, px1, py1, pz1;
         double E2, px2, py2, pz2;
         double E3, px3, py3, pz3;
+
+        tree -> SetBranchAddress("Br_lagvalue_min_7C", &lagvalue_min_7C);
 
         tree -> SetBranchAddress("Br_E1", &E1);
         tree -> SetBranchAddress("Br_px1", &px1);
@@ -185,6 +215,10 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
         // Loop over entries
         for (int i = 0; i < nentries; i++) {
             tree -> GetEntry(i);
+
+            // Cuts
+            //cout << lagvalue_min_7C << endl;
+            if (lagvalue_min_7C > 43) continue;
 
             // Clean data
             if (TMath::IsNaN(E1) || TMath::IsNaN(E2) || TMath::IsNaN(E3)) continue;
@@ -251,6 +285,10 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
                     m_gg = inv_mass_4vector(i_idx, j_idx, photons);
                     masses[p] = m_gg;
                     hm_gg -> Fill(m_gg);
+
+                    // cos_theta
+                    cos_theta = get_cos_theta(i_idx, j_idx, photons);
+                    hcos_theta -> Fill(cos_theta);
                 }
 
 
@@ -268,6 +306,24 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
         }
 
     }    
+
+    TCanvas *c1 = new TCanvas("c1", "Photon Analysis", 1200, 900);
+    c1 -> Divide(5, 2);  // 2 rows, 5 columns
+
+    c1 -> cd(1);
+    hm_gg -> Draw();
+
+    c1 -> cd(3);
+    hcos_theta -> Draw();
+
+    c1 -> cd(6);
+    he1 -> Draw();
+
+    c1 -> cd(7);
+    he2 -> Draw();
+
+    c1 -> cd(8);
+    he3 -> Draw();
 
     /*
     // Plot e1, e2 and e3
@@ -293,7 +349,11 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
     */
 
     // Plot m_gg
-    TCanvas *c2 = new TCanvas("c1", "Gamma-gamma Invariant Mass", 800, 600);
-    hm_gg -> Draw();
+    //TCanvas *c2 = new TCanvas("c2", "Gamma-gamma Invariant Mass", 800, 600);
+    //hm_gg -> Draw();
+
+    // Plot cos_theta
+    //TCanvas *c3 = new TCanvas("c3", "Cos_theta", 800, 600);
+    //hcos_theta -> Draw();
 
 }
