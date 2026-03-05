@@ -11,6 +11,16 @@ from bayes_opti import baye_opti
 import joblib
 import xgboost as xgb # xgboost must be imported before ROOT to prevent a crash caused by conflicting C++ std::regex symbols
 import ROOT
+import json
+
+# Define the patch function
+def patched_get_basescore(model):
+    config_str = model.get_booster().save_config()
+    config = json.loads(config_str)
+    base_score_str = config["learner"]["learner_model_param"]["base_score"]
+    # Remove brackets if present
+    base_score_str = base_score_str.strip('[]')
+    return float(base_score_str)
 
 def load_dataset():
     """
@@ -38,7 +48,7 @@ if __name__ == '__main__':
     phys_map = joblib.load(os.path.join(input_data_dir, f'phys_map.pkl'))
     print(phys_map)
 
-    br_type = 'TETAGAM' #'TETAGAM' #TISR3PI_SIG'
+    br_type = 'TISR3PI_SIG' #'TETAGAM' #TISR3PI_SIG'
     info = phys_map[br_type]
     info_title = info['br_title']
     info_category = info['category']
@@ -86,6 +96,10 @@ if __name__ == '__main__':
             # Get the booster
             booster = model.get_booster()
 
+            # Import the module and patch it
+            import ROOT._pythonization._tmva._tree_inference as tree_inference
+            tree_inference.get_basescore = patched_get_basescore
+
             # Try saving with booster instead of model
             ROOT.TMVA.Experimental.SaveXGBoost(
                 model,  # ← This is XGBClassifier, which has .objective attribute
@@ -93,4 +107,11 @@ if __name__ == '__main__':
                 f"bdt_pi0_{br_type}.root", 
                 num_inputs=X_train_np.shape[1]
             )
+
+            # Check model root files in terminal:
+            # > ls -la bdt_pi0_*.root
+            # import ROOT
+            # f = ROOT.TFile.Open(f"bdt_pi0_{br_type}.root")
+            # f.ls()
+
             print(f"✓ Model saved to bdt_pi0_{br_type}.root")

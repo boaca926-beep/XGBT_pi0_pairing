@@ -678,3 +678,97 @@ pi0_photon_paring/
 ├── plots/                   # Generated plots
 └── utils/
     └── helpers.py          # Shared utilities
+    
+=====================================================================
+= C++ Script to Apply the Model
+===================================================================== 
+#include <TMVA/RBDT.hxx>
+#include <TMVA/RTensor.hxx>
+#include <ROOT/RDataFrame.hxx>
+#include <TFile.h>
+#include <TTree.h>
+#include <TSystem.h>
+#include <iostream>
+
+using namespace TMVA::Experimental;
+
+void apply_xgboost_model(const char* model_filename = "bdt_pi0_yourtype.root", 
+                         const char* data_filename = "your_data.root") {
+    
+    // Check if model file exists
+    if (gSystem->AccessPathName(model_filename)) {
+        std::cerr << "Error: Model file " << model_filename << " does not exist!" << std::endl;
+        return;
+    }
+    
+    // 1. Load the BDT model
+    //    "BDT_pi0" should match the name you used when saving (second argument to SaveXGBoost)
+    std::cout << "Loading model from " << model_filename << std::endl;
+    RBDT<> bdt("BDT_pi0", model_filename);
+    
+    // ========================================================
+    // OPTION A: Apply on a single event (event-by-event)
+    // ========================================================
+    std::cout << "\n--- Option A: Single event inference ---" << std::endl;
+    
+    // Example input values (must match your training features)
+    // Replace with your actual features (m_gg, opening_angle, cos_theta, etc.)
+    std::vector<float> single_input = {0.5, 1.2, 0.8, 0.3, 2.1, 10.5, 15.2, 8.7, 0.4, 5.6};
+    
+    // Compute BDT response
+    auto response = bdt.Compute(single_input);
+    std::cout << "BDT response for single event: " << response[0] << std::endl;
+    
+    // ========================================================
+    // OPTION B: Apply on a batch of inputs using RTensor
+    // ========================================================
+    std::cout << "\n--- Option B: Batch inference ---" << std::endl;
+    
+    // Example batch: 3 events, each with 10 features (adjust dimensions!)
+    float batch_data[30] = {
+        0.5, 1.2, 0.8, 0.3, 2.1, 10.5, 15.2, 8.7, 0.4, 5.6,   // event 1
+        0.6, 1.3, 0.7, 0.4, 2.2, 11.0, 14.8, 9.0, 0.5, 5.8,   // event 2
+        0.4, 1.1, 0.9, 0.2, 2.0, 10.0, 15.5, 8.5, 0.3, 5.4    // event 3
+    };
+    
+    // Create tensor with shape {3, 10} (3 events, 10 features)
+    RTensor<float> batch_input(batch_data, {3, 10});
+    
+    // Compute BDT responses for all 3 events at once
+    auto batch_responses = bdt.Compute(batch_input);
+    std::cout << "Batch responses: " << batch_responses << std::endl;
+    
+    // ========================================================
+    // OPTION C: Apply as part of an RDataFrame workflow (RECOMMENDED for data analysis)
+    // ========================================================
+    std::cout << "\n--- Option C: RDataFrame workflow ---" << std::endl;
+    
+    // Open your data file
+    TFile* file = TFile::Open(data_filename);
+    if (!file || file->IsZombie()) {
+        std::cerr << "Error: Cannot open data file " << data_filename << std::endl;
+        return;
+    }
+    
+    // Create RDataFrame from your tree
+    // Adjust "tree_name" to match your TTree name
+    ROOT::RDataFrame df("tree_name", data_filename);
+    
+    // Apply the BDT model within RDataFrame
+    // You need to define columns for each of your input features
+    // IMPORTANT: These variable names must match your training features!
+    auto df_with_bdt = df.Define("bdt_response",
+        Compute<10, float>(bdt),  // 10 = number of input features
+        {"m_gg", "opening_angle", "cos_theta", "E_asym", "e_min_x_angle",
+         "E1", "E2", "E3", "asym_x_angle", "E_diff"});
+    
+    // Compute mean response (just as an example)
+    auto mean_response = df_with_bdt.Mean("bdt_response");
+    std::cout << "Mean BDT response on data: " << *mean_response << std::endl;
+    
+    // Optionally save results to a new file
+    // df_with_bdt.Snapshot("new_tree", "output_with_bdt.root");
+    
+    file->Close();
+    std::cout << "\n✓ Application complete!" << std::endl;
+}
