@@ -14,7 +14,7 @@ import random
 import awkward as ak
 
 def create_dataset(df): # For photon 4-momentum
-
+    print(f'\n✅ Creating dataset ...')
     # Define photon 4-momentum
     br_nm = ['Br_E1', 'Br_px1', 'Br_py1', 'Br_pz1', 
              'Br_E2', 'Br_px2', 'Br_py2', 'Br_pz2', 
@@ -157,6 +157,11 @@ if __name__ == '__main__':
 
     # Check first few braches and create a phys_map dynamically
     phys_map = {}
+    #All keys: ['TISR3PI_SIG;1' (done), 'TOMEGAPI;1' (done), 
+    #           'TKPM;1', 'TKSL;1' (done), 
+    #           'T3PIGAM;1' (done), 'TRHOPI;1', 
+    #           'TETAGAM;1', 'TBKGREST;1', 
+    #           'TDATA;1', 'TEEG;1']
 
     for i, br_nm in enumerate(branches):
         # Remove ROOT cycle number (;1, ;2, etc.) for comparison
@@ -170,7 +175,10 @@ if __name__ == '__main__':
             category = "signal"
         elif base_br_nm == "TKSL":
             br_title = rf"$e^{{+}}e^{{-}}\to\phi\to K_{{S}}K_{{L}}$"
-            category = "signal"
+            category = "background"
+        elif base_br_nm == "TOMEGAPI":
+            br_title = rf"$\omega\pi^{0}$"
+            category = "background"
         else:
             #br_title = "br_title"
             #category = "rest"
@@ -185,6 +193,7 @@ if __name__ == '__main__':
             'category': category
         }
 
+
     # Add a single new entry
     #phys_map['NEW_BRANCH_NAME'] = {
     #'br_nm': 'NEW_BRANCH_NAME',
@@ -193,9 +202,6 @@ if __name__ == '__main__':
     #}
 
     #print(phys_map)
-
-    # Save phys_map
-    joblib.dump(phys_map, f'{data_dir}/phys_map.pkl')
     
     # Check phys_map
     for data_type, info in phys_map.items():
@@ -205,7 +211,7 @@ if __name__ == '__main__':
         print(data_type, info_title, info_category)
 
         if info_category == 'signal':
-            print(f"Processing: {data_type}")
+            print(f"Creating phys_ch: {data_type}")
             tree = root_file[data_type]
             print(f"Tree entries: {tree.num_entries}")
 
@@ -218,14 +224,14 @@ if __name__ == '__main__':
             if "Br_mpi0" not in ak_array.fields:
                 print("Br_mpi0 is missing !!! Need to add this branch into the root file !!!")
             
-            print(f"\nAwkward array fields: {ak_array.fields}")
-            print(f"Number of fields: {len(ak_array.fields)}")
+            #print(f"\nAwkward array fields: {ak_array.fields}")
+            #print(f"Number of fields: {len(ak_array.fields)}")
             exclude_fields = ['Br_pull_E1', 'Br_pull_x1', 'Br_pull_y1', 'Br_pull_z1', 'Br_pull_t1']
             fields_to_use = []
             for field in ak_array.fields:
                 # Skip fields that match exclude_fields
                 if any(pattern in field for pattern in exclude_fields):
-                    print(f"Excluding array field: {field}")
+                    #print(f"Excluding array field: {field}")
                     continue
 
                 # Only include 1D fields
@@ -234,7 +240,7 @@ if __name__ == '__main__':
                 else:
                     print(f"Excluding multi-dim field: {field} (ndim={ak_array[field].ndim})")
 
-        print(len(fields_to_use))
+        #print(len(fields_to_use))
         #df = tree.arrays(library="pd") 
         #print(df.describe())
 
@@ -242,70 +248,117 @@ if __name__ == '__main__':
     #============================================================
     # CREATE DATASET
     #============================================================
-    all_df_list = [] # List for storing all dataset for combining
+    df_list = [] # List for storing all dataset for combining
 
+    ch_indx = 0
     for data_type, info in phys_map.items():
-        #info_br = info['br_nm']
-        br_title = info['br_title']
-        
+
         ##
         data_nm = data_type.split(';')[0]
         #if (data_nm == "TETAGAM"):
-        if (data_type == "TISR3PI_SIG"):
+        #if (data_type == "TISR3PI_SIG"):
+        #if (data_type == "TKSL"):
+        #if (data_type == "TOMEGAPI"):
 
-            print("="*50)
-            # Create data frame
-            tree = root_file[data_type] 
-            df = tree.arrays(fields_to_use, library="pd") 
-            #print(df.describe())
+        ch_indx += 1
+        print("="*25 + f"Channel {ch_indx}: {data_type}" + "="*25)
+        # Create data frame
+        tree = root_file[data_type] 
+        df = tree.arrays(fields_to_use, library="pd") 
+        #print(df.describe())
 
-            # Check for any missing values
-            print(f"\nMissing values per column:")
-            #print(df.isnull().sum())
+        # Check for any missing values
+        #print(f"Missing values per column:")
+        #print(df.isnull().sum())
 
-            # Create pho4mom_all_df for signal and bkg separately
-            all_df, pi0_all_df = create_dataset(df)
+        # Create pho4mom_all_df for signal and bkg separately
+        all_df, pi0_all_df = create_dataset(df)
             
-            # Check for anomalies
-            print(all_df.columns)
-            betapi0_values = all_df['Br_betapi0']
-            print(betapi0_values.describe())
+        # Check for anomalies
+        #print(all_df.columns)
+        betapi0_values = all_df['Br_betapi0']
+        #print(betapi0_values.describe())
 
-            # Data splitting
-            all_df_train, all_df_val, all_df_test, X_train, y_train, X_val, y_val, X_test, y_test = data_splitting(all_df)
+        # Data splitting
+        all_df_train, all_df_val, all_df_test, X_train, y_train, X_val, y_val, X_test, y_test = data_splitting(all_df)
 
-            joblib.dump(all_df, f'{data_dir}/all_df_{data_nm}.pkl')
-            joblib.dump(pi0_all_df, f'{data_dir}/pi0_all_df_{data_nm}.pkl')
+        joblib.dump(all_df, f'{data_dir}/all_df_{data_nm}.pkl')
+        joblib.dump(pi0_all_df, f'{data_dir}/pi0_all_df_{data_nm}.pkl')
 
-            joblib.dump(all_df_train, f'{data_dir}/all_df_train_{data_nm}.pkl')
-            joblib.dump(all_df_val, f'{data_dir}/all_df_val_{data_nm}.pkl')
-            joblib.dump(all_df_test, f'{data_dir}/all_df_test_{data_nm}.pkl')
+        joblib.dump(all_df_train, f'{data_dir}/all_df_train_{data_nm}.pkl')
+        joblib.dump(all_df_val, f'{data_dir}/all_df_val_{data_nm}.pkl')
+        joblib.dump(all_df_test, f'{data_dir}/all_df_test_{data_nm}.pkl')
 
-            joblib.dump(X_train, f'{data_dir}/X_train_{data_nm}.pkl')
-            joblib.dump(X_val, f'{data_dir}/X_val_{data_nm}.pkl')
-            joblib.dump(X_test, f'{data_dir}/X_test_{data_nm}.pkl')
+        joblib.dump(X_train, f'{data_dir}/X_train_{data_nm}.pkl')
+        joblib.dump(X_val, f'{data_dir}/X_val_{data_nm}.pkl')
+        joblib.dump(X_test, f'{data_dir}/X_test_{data_nm}.pkl')
 
-            joblib.dump(y_train, f'{data_dir}/y_train_{data_nm}.pkl')
-            joblib.dump(y_val, f'{data_dir}/y_val_{data_nm}.pkl')
-            joblib.dump(y_test, f'{data_dir}/y_test_{data_nm}.pkl')
+        joblib.dump(y_train, f'{data_dir}/y_train_{data_nm}.pkl')
+        joblib.dump(y_val, f'{data_dir}/y_val_{data_nm}.pkl')
+        joblib.dump(y_test, f'{data_dir}/y_test_{data_nm}.pkl')
 
-            # Combine dataset
-            all_df_list.append(all_df)
-        else:
-            continue
+        # Combining dataset
+        df_list.append(all_df) # Add each channel's dataframe
+        #else:
+        #    continue
 
-        ##
-        #if all_df_list: # combining dataset
-        #    all_df_comb = pd.concat(all_df_list, ignore_index=True)
-        #    shuffled_idx = np.random.permutation(len(all_df_comb))
-        #    all_df_comb = all_df_comb.iloc[shuffled_idx].reset_index(drop=True)
-            
-        #    joblib.dump(all_df_comb, f'{data_dir}/all_df_comb.pkl')
+        
 
+    ## Combining dataset
+    if df_list: # combining dataset
+        print(f"Combining {len(df_list)} channels ...")
 
-    # shuffle comb. dataset, using small sample,
-    # split comb. dataset
-    # save the comb. data set
+        df_comb = pd.concat(df_list, ignore_index=True)
+        print(f"Raw combined shape: {df_comb.shape}")
+
+        # Shuffle
+        df_comb = df_comb.sample(frac=1, random_state=42).reset_index(drop=True)
+        print(f"Shuffled combined shape: {df_comb.shape}")
+
+        # Creat datasets
+        all_df_comb, pi0_all_df_comb = create_dataset(df_comb)
+
+        # Split
+        all_df_train_comb, all_df_val_comb, all_df_test_comb, X_train_comb, y_train_comb, X_val_comb, y_val_comb, X_test_comb, y_test_comb = data_splitting(all_df_comb)
+
+        # Save with clear names
+        save_dict = {
+            'all_df_comb': all_df_comb,
+            'pi0_all_df_comb': pi0_all_df_comb,
+            'train': (all_df_train_comb, X_train_comb, y_train_comb),
+            'val': (all_df_val_comb, X_val_comb, y_val_comb),
+            'test': (all_df_test_comb, X_test_comb, y_test_comb)
+        }
+
+        # Save individual files
+        joblib.dump(all_df_comb, f'{data_dir}/all_df_TCOMB.pkl')
+        joblib.dump(pi0_all_df_comb, f'{data_dir}/pi0_all_df_TCOMB.pkl')
+
+        joblib.dump(all_df_train_comb, f'{data_dir}/all_df_train_TCOMB.pkl')
+        joblib.dump(all_df_val_comb, f'{data_dir}/all_df_val_TCOMB.pkl')
+        joblib.dump(all_df_test_comb, f'{data_dir}/all_df_test_TCOMB.pkl')
+
+        joblib.dump(X_train_comb, f'{data_dir}/X_train_TCOMB.pkl')
+        joblib.dump(X_val_comb, f'{data_dir}/X_val_TCOMB.pkl')
+        joblib.dump(X_test_comb, f'{data_dir}/X_test_TCOMB.pkl')
+
+        joblib.dump(y_train_comb, f'{data_dir}/y_train_TCOMB.pkl')
+        joblib.dump(y_val_comb, f'{data_dir}/y_val_TCOMB.pkl')
+        joblib.dump(y_test_comb, f'{data_dir}/y_test_TCOMB.pkl')    
+
+        print(f"Combined phys. channels: {phys_map.keys()}")
+    else:
+        print(f"df_list is empty, no channels can be combined!")
+        raise ValueError("No data to combine!")
+
+    phys_map['TCOMB'] = {
+        'br_title': "MC combined",
+        'category': "combined"
+    }
+    print(phys_map.keys())
+
+    # Save phys_map
+    joblib.dump(phys_map, f'{data_dir}/phys_map.pkl')
 
     r'''
     # Combining dataset 
