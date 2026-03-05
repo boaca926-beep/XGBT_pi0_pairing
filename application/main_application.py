@@ -36,10 +36,10 @@ if __name__ == '__main__':
     input_data_dir = os.path.join(project_root, f'analysis/dataset')
     input_model_dir = os.path.join(project_root, f'training/models')
 
-    #category_type = ['indiv', 'signal']
-    category_type = ['combined', 'combined']
+    category_type = 'TISR3PI_SIG'
+    #category_type = ['combined', 'combined']
 
-    phys_map = joblib.load(os.path.join(input_data_dir, f'phys_map_{category_type[0]}.pkl'))
+    phys_map = joblib.load(os.path.join(input_data_dir, f'phys_map.pkl'))
     print(phys_map)
     
 
@@ -48,13 +48,12 @@ if __name__ == '__main__':
     os.makedirs(plot_dir , exist_ok=True)
     
     for data_type, info in phys_map.items():
-        br_nm = info['br_nm']
         br_title = info['br_title']
         category = info['category']
         #print(f"Inspecting dataset {data_type}; {br_nm}; {br_title}; {category}")  
         print(info)
 
-        if (category == category_type[1]):
+        if (data_type == category_type):
 
             # Load test dataset and all_df
             all_df, model, X_test, y_test = load_data_model()

@@ -34,12 +34,11 @@ if __name__ == '__main__':
     model_dir = "./models" 
     os.makedirs(model_dir, exist_ok=True)
 
-
     input_data_dir = os.path.join(project_root, f'analysis/dataset')
     phys_map = joblib.load(os.path.join(input_data_dir, f'phys_map.pkl'))
     print(phys_map)
 
-    br_type = 'TISR3PI_SIG'
+    br_type = 'TETAGAM' #'TETAGAM' #TISR3PI_SIG'
     info = phys_map[br_type]
     info_title = info['br_title']
     info_category = info['category']
@@ -75,14 +74,23 @@ if __name__ == '__main__':
             model = xgb.XGBClassifier(**params) 
 
             # Fit with the model
-            model.fit(X_train, y_train,
+            model.fit(X_train_np, y_train_np,
                     eval_set = [(X_train_np, y_train_np), (X_val_np, y_val_np)],
-                    verbose=False,
-                    feature_names=None
+                    verbose=False     
             )
 
             # Save the model
             joblib.dump(model, f'{model_dir}/pi0_classifier_model_{br_type}.pkl')
             #print(f"Model is saved!")
-            ROOT.TMVA.Experimental.SaveXGBoost(model, "BDT_pi0", rf"bdt_pi0_{br_type}.root", num_inputs=X_train.shape[1])
-            print(f"Model saved successfully to bdt_pi0_{br_type}.root")
+
+            # Get the booster
+            booster = model.get_booster()
+
+            # Try saving with booster instead of model
+            ROOT.TMVA.Experimental.SaveXGBoost(
+                model,  # ← This is XGBClassifier, which has .objective attribute
+                "BDT_pi0", 
+                f"bdt_pi0_{br_type}.root", 
+                num_inputs=X_train_np.shape[1]
+            )
+            print(f"✓ Model saved to bdt_pi0_{br_type}.root")

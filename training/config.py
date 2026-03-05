@@ -33,7 +33,8 @@ def prepare_3photon_paris(df_events):
         ]
 
         # All 3 possible pairs.
-        pair_indices = [(0,1), (0,2), (1,2)]
+        #pair_indices = [(0,1), (0,2), (1,2)]
+        pair_indices = [(0,1), (2,0), (1,2)]
 
         #print(f"{pair_indices},{type(pair_indices)}, {type(df_events)}")
         #print(photon)

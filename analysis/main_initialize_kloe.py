@@ -161,12 +161,12 @@ if __name__ == '__main__':
         if base_br_nm == "TISR3PI_SIG":
             br_title = rf"$e^{{+}}e^{{-}}\to\pi^{{+}}\pi^{{-}}\pi^{{0}}\gamma$"
             category = "signal"
-        #elif base_br_nm == "TETAGAM":
-        #    br_title = rf"$e^{{+}}e^{{-}}\to\phi\to\eta\gamma$"
-        #    category = "signal"
-        #elif base_br_nm == "TKSL":
-        #    br_title = rf"$e^{{+}}e^{{-}}\to\phi\to K_{{S}}K_{{L}}$"
-        #    category = "signal"
+        elif base_br_nm == "TETAGAM":
+            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to\eta\gamma$"
+            category = "signal"
+        elif base_br_nm == "TKSL":
+            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to K_{{S}}K_{{L}}$"
+            category = "signal"
         else:
             #br_title = "br_title"
             #category = "rest"
@@ -246,8 +246,8 @@ if __name__ == '__main__':
         
         ##
         data_nm = data_type.split(';')[0]
-        if (data_nm == "TISR3PI_SIG"):
-        #if (data_type == "TISR3PI_SIG"):
+        #if (data_nm == "TETAGAM"):
+        if (data_type == "TISR3PI_SIG"):
 
             print("="*50)
             # Create data frame
@@ -297,7 +297,7 @@ if __name__ == '__main__':
     # shuffle comb. dataset, using small sample,
     # split comb. dataset
     # save the comb. data set
-    
+
     r'''
     # Combining dataset 
     # (later, after signal and background are separated)

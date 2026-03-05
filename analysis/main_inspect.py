@@ -19,6 +19,7 @@ if __name__ == '__main__':
     print(phys_map)
 
     phys_ch = ['TISR3PI_SIG', 'signal']
+    #phys_ch = ['TETAGAM', 'signal']
 
     # Create output folder
     plot_dir = rf'./plots'
