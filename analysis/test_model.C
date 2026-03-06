@@ -8,6 +8,36 @@
 
 using namespace TMVA::Experimental;
 
+double pi = TMath::Pi();
+
+void legtextsize(TLegend* l, Double_t size) {
+  for(int i = 0 ; i < l -> GetListOfPrimitives() -> GetSize() ; i++) {
+    TLegendEntry *header = (TLegendEntry*)l->GetListOfPrimitives()->At(i);
+    header->SetTextSize(size);
+  }
+}
+
+//
+void PteAttr(TPaveText *pt) {
+
+  pt -> SetTextSize(0.04);
+  pt -> SetFillColor(0);
+  pt -> SetTextAlign(12);
+  pt -> SetBorderSize(0);
+}
+
+void format_h(TH1D* h, Int_t linecolor, Int_t width) {
+  h->SetLineColor(linecolor);
+  //cout << "histo format" << endl;
+  h->SetLineWidth(width);
+}
+
+void formatfill_h(TH1D* h, Int_t fillcolor, Int_t fillstyle) {
+  h -> SetFillStyle(fillstyle);
+  h -> SetFillColor(fillcolor);
+  h -> SetLineColor(0);
+}
+
 double get_cos_theta(int i_idx, int j_idx, double photons[3][4]){
 
     double p1_mag = TMath::Sqrt(TMath::Max(0.0, 
@@ -53,9 +83,37 @@ double inv_mass_4vector(int i_idx, int j_idx, double photons[3][4]){
 
 }
 
+//
+double inv_3pimass_4vector(int i_idx, int j_idx, double photons[3][4], double trk[2][4]){
+    double inv_mass = 0;
+
+    // Calculate total energy and momentum
+    double e = photons[i_idx][0] + photons[j_idx][0] + trk[0][0] + trk[1][0];
+    
+    double px = photons[i_idx][1] + photons[j_idx][1] + trk[0][1] + trk[1][1];
+    double py = photons[i_idx][2] + photons[j_idx][2] + trk[0][2] + trk[1][2];
+    double pz = photons[i_idx][3] + photons[j_idx][3] + trk[0][3] + trk[1][3];
+
+    double mass_square = e*e - (px*px + py*py + pz*pz);
+    
+    if (mass_square < 0 && mass_square > -1e-8) {
+        return 0;
+    }
+    
+    return (mass_square > 0) ? TMath::Sqrt(mass_square) : 0;
+
+}
+
 void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.root",
                 const char* data_filename = "../data/kloe_small_sample.root"){
 
+    gErrorIgnoreLevel = kError;
+    TGaxis::SetMaxDigits(4);
+    gStyle->SetOptStat(0);
+    gStyle->SetOptTitle(0);
+    gStyle->SetFitFormat("6.4g");
+  
+    
     // Manually load libraries
     gSystem->Load("libTMVA");
     gSystem->Load("libTMVAUtils");
@@ -73,6 +131,7 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
     TMVA::Experimental::RBDT bdt("BDT_pi0", model_filename);  // ← Declaration is HERE
 
     std::cout << "✓ Model loaded successfully!" << std::endl;  // Added this line
+
     //std::cout << "Number of input features: " << bdt.GetNInputDim() << std::endl;
 
     /*
@@ -150,7 +209,45 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
 
     TH1D* hm_gg = new TH1D("hm_gg", "", 200, 0, 1000);
     TH1D* hcos_theta = new TH1D("hcos_theta", "", 200, -1, 1);
+    TH1D* hopen_angle = new TH1D("hopen_angle", "", 200, 0, pi);
+    TH1D* hE_asym = new TH1D("hE_asym", "", 200, 0, 1);
+    TH1D* he_min_x_angle = new TH1D("he_min_x_angle", "", 200, 0, 1000);
+    TH1D* hE_diff = new TH1D("hE_diff", "", 200, 0, 500);
+    TH1D* hasym_x_angle = new TH1D("hasym_x_angle", "", 200, 0, pi);
+
+    TH1D* hM3pi_BDT = new TH1D("hM3pi_BDT", "", 200, 400, 1000); // BDT selection
+    TH1D* hM3pi_BDT_good = new TH1D("hM3pi_BDT_good", "", 200, 400, 1000);
+    TH1D* hM3pi_BDT_bad = new TH1D("hM3pi_BDT_bad", "", 200, 400, 1000);
     
+    TH1D* hM_gg_BDT = new TH1D("hM_gg_BDT", "", 200, 50, 200); 
+    TH1D* hM_gg_BDT_good = new TH1D("hM_gg_BDT_good", "", 200, 50, 200);
+    TH1D* hM_gg_BDT_bad = new TH1D("hM_gg_BDT_bad", "", 200, 50, 200);
+    
+    TH1D* hE1_BDT_good = new TH1D("hE1_BDT_good", "", 200, 0, 500); 
+    TH1D* hE1_BDT_bad = new TH1D("hE1_BDT_bad", "", 200, 0, 500); 
+
+    TH1D* hE2_BDT_good = new TH1D("hE2_BDT_good", "", 200, 0, 500); 
+    TH1D* hE2_BDT_bad = new TH1D("hE2_BDT_bad", "", 200, 0, 500); 
+
+    TH1D* hE1 = new TH1D("hE1", "", 200, 0, 500); // KLOE selection
+    TH1D* hE1_good = new TH1D("hE1_good", "", 200, 0, 500); 
+    TH1D* hE1_bad = new TH1D("hE1_bad", "", 200, 0, 500); 
+
+    TH1D* hE2 = new TH1D("hE2", "", 200, 0, 500); 
+    TH1D* hE2_good = new TH1D("hE2_good", "", 200, 0, 500); 
+    TH1D* hE2_bad = new TH1D("hE2_bad", "", 200, 0, 500); 
+
+    TH1D* hM_gg = new TH1D("hM_gg", "", 200, 50, 200); 
+    TH1D* hM_gg_good = new TH1D("hM_gg_good", "", 200, 50, 200);
+    TH1D* hM_gg_bad = new TH1D("hM_gg_bad", "", 200, 50, 200);
+
+    TH1D* hM3pi = new TH1D("hM3pi", "", 200, 400, 1000);
+    TH1D* hM3pi_good = new TH1D("hM3pi_good", "", 200, 400, 1000);
+    TH1D* hM3pi_bad = new TH1D("hM3pi_bad", "", 200, 400, 1000);
+    
+    int evnt_KLOE = 0;
+    int evnt_good = 0;
+    int evnt_bad = 0;
 
     // If data file exists, process it with RDataFame
     if(!gSystem -> AccessPathName(data_filename)){
@@ -181,8 +278,24 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
         double E1, px1, py1, pz1;
         double E2, px2, py2, pz2;
         double E3, px3, py3, pz3;
+	double ppl_E, ppl_px, ppl_py, ppl_pz;
+        double pmi_E, pmi_px, pmi_py, pmi_pz;
+        
+        int bkg_indx, recon_indx;
 
         tree -> SetBranchAddress("Br_lagvalue_min_7C", &lagvalue_min_7C);
+        tree -> SetBranchAddress("Br_bkg_indx", &bkg_indx);
+        tree -> SetBranchAddress("Br_recon_indx", &recon_indx);
+
+	tree -> SetBranchAddress("Br_ppl_E", &ppl_E);
+        tree -> SetBranchAddress("Br_ppl_px", &ppl_px);
+        tree -> SetBranchAddress("Br_ppl_py", &ppl_py);
+        tree -> SetBranchAddress("Br_ppl_pz", &ppl_pz);
+
+	tree -> SetBranchAddress("Br_pmi_E", &pmi_E);
+        tree -> SetBranchAddress("Br_pmi_px", &pmi_px);
+        tree -> SetBranchAddress("Br_pmi_py", &pmi_py);
+        tree -> SetBranchAddress("Br_pmi_pz", &pmi_pz);
 
         tree -> SetBranchAddress("Br_E1", &E1);
         tree -> SetBranchAddress("Br_px1", &px1);
@@ -203,16 +316,28 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
         TFile* outfile = TFile::Open("output_with_bdt.root", "RECREATE");
         TTree* outtree = new TTree("new_tree", "Tree with BDT response");
 
-        double bdt_response;
-        outtree -> Branch("bdt_response", &bdt_response);
+        // Output variables
+        int out_event;
+        int pi0_pho1_idx, pi0_pho2_idx; // indices of bdt pi0 photons
+        int prompt_pho_idx; // prompt photon index
+	double bdt_score;
+        
+        outtree -> Branch("event", &out_event);
 
         // Copy original branches if needed
         //outtree -> Branch("E1", &E1);
 
         const double energy_threshold = 5.0;
-        int n_found = 0;
 
-        // Loop over entries
+	int n_found = 0;
+	
+        double m_gg_bdt = 0, m_gg = 0;
+	double m3pi = 0;
+        double e1_bdt = 0;
+        double e2_bdt = 0;
+        double e3_bdt = 0;
+
+	// Loop over entries
         for (int i = 0; i < nentries; i++) {
             tree -> GetEntry(i);
 
@@ -224,6 +349,16 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
             if (TMath::IsNaN(E1) || TMath::IsNaN(E2) || TMath::IsNaN(E3)) continue;
             //if (!TMath::IsNaN(px1)) continue;
 
+	    // Store tracks
+	    double trk[2][4] = {
+	      {ppl_E, ppl_px, ppl_py, ppl_pz},
+	      {pmi_E, pmi_px, pmi_py, pmi_pz}
+	    };
+
+	    //cout << "(ppl_E, ppl_px, ppl_py, ppl_z) = (" << ppl_E << ", " << ppl_px << ", " << ppl_py << ", " << ppl_pz <<  ")" << endl;
+              
+	  
+        
             // Store photons
             double photons[3][4] = {
                 {E1, px1, py1, pz1},
@@ -279,81 +414,348 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
                 double m_gg = 0, opening_angle = 0,  cos_theta = 0;
                 double E_asym = 0, e_min_x_angle = 0;
                 double asym_x_angle = 0, E_diff = 0;
-
+		
                 if (e1 >= energy_threshold && e2 >= energy_threshold) {
                     // Invariant mass
-                    m_gg = inv_mass_4vector(i_idx, j_idx, photons);
+		    m_gg = inv_mass_4vector(i_idx, j_idx, photons);
+                    
                     masses[p] = m_gg;
-                    hm_gg -> Fill(m_gg);
 
+		    //cout << m3pi << endl;
+		    
+                    //hm_gg -> Fill(m_gg);
+		    
                     // cos_theta
                     cos_theta = get_cos_theta(i_idx, j_idx, photons);
                     hcos_theta -> Fill(cos_theta);
+
+                    // opening angle
+                    opening_angle = TMath::ACos(cos_theta);
+                    hopen_angle -> Fill(opening_angle);
+
+                    //cout << opening_angle << endl;
+
+                    // energy features
+                    E_asym = TMath::Abs(e1 - e2) / (e1 + e2 + 1e-10);
+                    E_asym = TMath::Max(0.0, TMath::Min(1.0, E_asym));
+                    E_diff = TMath::Abs(e1 - e2);
+                    e_min_x_angle = TMath::Min(e1, e2) * opening_angle;
+                    asym_x_angle = E_asym * opening_angle;
+
+                    //cout << E_asym << endl;
+                    //cout << e_min_x_angle << endl;
+                    hE_asym -> Fill(E_asym);
+                    he_min_x_angle -> Fill(e_min_x_angle);
+                    hE_diff -> Fill(E_diff);
+                    hasym_x_angle -> Fill(asym_x_angle);
+
                 }
 
+                // Prepare features for BDT
+                std::vector<float> features = {
+                    (float)m_gg, (float)opening_angle, (float)cos_theta, 
+                    (float)E_asym, (float)e_min_x_angle, 
+                    (float)e1, (float)e2, (float)e3, 
+                    (float)asym_x_angle, (float)E_diff
+                };
+
+                // Get BDT score
+                // Convert vector to tensor (1 event, n_features)
+                //TMVA::Experimental::RTensor<float> input(dummy.data(), {1, (size_t)n_features});
+
+                TMVA::Experimental::RTensor<float> input_tensor(features.data(), {1, features.size()});
+                auto result = bdt.Compute(input_tensor);
+                scores[p] = result(0, 0);
+                //cout << "p: " << p << ", score: " << scores[p] << endl;
 
             }
 
-            // Prepare features
-            vector<double> features = {
-                E1
-            };
+            // Find the best pair (highest BDT score)
+            int best_pair = 0;
+            if(scores[1] > scores[best_pair]) best_pair = 1;
+            if(scores[2] > scores[best_pair]) best_pair = 2;
 
+            // Get the indices for the best pair
+            int best_i = pair_indicies[best_pair][0];
+            int best_j = pair_indicies[best_pair][1];
+
+            // Find prompt photon (the one not in the best pair)
+            int prompt_idx = -1;
+            for (size_t k = 0; k < 3; k++)
+            {
+                if (k != best_i && k != best_j)
+                {
+                    prompt_idx = k;
+                    break;
+                }
+                
+            }
+            
+            //cout << "best pair indices: (" << best_i << ", " << best_j << "), prompt index: " << prompt_idx << endl;
+
+            // Calculate pi0 4-vector
+            pi0_pho1_idx = best_i;
+            pi0_pho2_idx = best_j;
+            prompt_pho_idx = prompt_idx;
+
+            e1_bdt = photons[pi0_pho1_idx][0];
+            m_gg_bdt = inv_mass_4vector(pi0_pho1_idx, pi0_pho2_idx, photons);
+	    m_gg = inv_mass_4vector(0, 1, photons);
+            m3pi = inv_3pimass_4vector(0, 1, photons, trk);
+            	 
+            //m_gg_bdt = inv_mass_4vector(0, 1, photons);
+            hM_gg -> Fill(m_gg);
+	    hM3pi -> Fill(m3pi);
+            hE1 -> Fill(photons[0][0]);
+            hE2 -> Fill(photons[1][0]);
+            
+	    bdt_score = scores[best_pair];
+            
+            //cout << "m_gg_bdt = " << m_gg_bdt << endl;
+
+	    /*
+	    // Get scores for other pairs
+            int other1 = (best_pair + 1) % 3;
+            int other2 = (best_pair + 2) % 3;
+            bdt_score_other1 = scores[other1];
+            bdt_score_other2 = scores[other2];
+            
+            // Check if correct (if truth available)
+            is_correct = 0;
+            if (is_signal == 1) {
+                // You would need truth information about which pair is correct
+                // This depends on your data
+            }
+	    out_event = event_id;
+            outtree->Fill();
+            
+            */
+
+	    // BDT selection
+	    if (scores[best_pair] > 0.5) {
+	      n_found ++;
+	      hE1_BDT_good -> Fill(photons[pi0_pho1_idx][0]);
+	      hE2_BDT_good -> Fill(photons[pi0_pho2_idx][0]);
+	      hM_gg_BDT_good -> Fill(m_gg_bdt);
+	      //hM3pi_BDT_good -> Fill(m_gg_bdt);
+            }
+	    else {
+	      hE1_BDT_bad -> Fill(photons[pi0_pho1_idx][0]);
+	      hE2_BDT_bad -> Fill(photons[pi0_pho2_idx][0]);
+	      hM_gg_BDT_bad -> Fill(m_gg_bdt);
+	      //hM3pi_BDT_bad -> Fill(m_gg_bdt);
+	    }
+            
+            // Summary and comprison
+            if (recon_indx == 2 && bkg_indx == 1)
+            {// KLOE selection true pi0 gg
+	        hE1_good -> Fill(photons[0][0]);
+		hE2_good -> Fill(photons[1][0]);
+		hM_gg_good -> Fill(m_gg);
+		hM3pi_good -> Fill(m3pi);
+            
+		evnt_good += 1;
+            }
+            else{// KLOE selection false pi0 gg
+                hE1_bad -> Fill(photons[0][0]);
+		hE2_bad -> Fill(photons[1][0]);
+		hM_gg_bad -> Fill(m_gg);
+		hM3pi_bad -> Fill(m3pi);
+            
+		evnt_bad += 1;
+            } 
+
+	    evnt_KLOE += 1;
+    
             //if (i > 10) break; // Fisrt 10 events
 
 
 
         }
 
+	
     }    
 
+    TCanvas *cv0 = new TCanvas("c1", "Photon E1 Analysis", 1200, 900);
+    cv0 -> SetLeftMargin(0.1);
+    cv0 -> SetBottomMargin(0.1);//0.007
+
+    cv0 -> Divide(2, 2);  // [0] columns, [1] rows
+    cv0 -> cd(1);
+
+    Double_t ymax = hE1 -> GetBinContent(hE1 -> GetMaximumBin());
+    cout << ymax << endl;
+    
+    TPaveText *pt1 = new TPaveText(0.12, 0.87, 0.80, 0.89, "NDC");
+    
+    PteAttr(pt1); pt1 -> SetTextSize(0.04); pt1 -> SetTextColor(kBlack);
+    
+    pt1 -> AddText(Form("EVENTS=%d, good=%d, bad=%d", evnt_KLOE, evnt_good, evnt_bad));
+    
+    
+    format_h(hE1, 1, 2);
+    format_h(hE1_good, 4, 1);
+    format_h(hE1_bad, 2, 1);
+
+    format_h(hE1_BDT_good, 3, 2);
+    formatfill_h(hE1_BDT_bad, 2, 3001);
+
+    hE1 -> GetYaxis() -> SetNdivisions(505);
+    hE1 -> GetYaxis() -> SetRangeUser(0.01, ymax * 1.2); 
+    hE1 -> GetXaxis() -> SetTitle("E_{1} [MeV]");
+    hE1 -> GetXaxis() -> CenterTitle();
+    hE1 -> GetXaxis() -> SetTitleSize(0.04);
+    //hE1 -> GetXaxis() -> SetTitleOffset(1.0);
+    //hE1 -> GetXaxis() -> SetLabelOffset(0.01);
+    //hE1 -> GetXaxis() -> SetLabelSize(0.05);//0.03
+  
+    
+    hE1 -> Draw();
+    hE1_good -> Draw("Same");
+    hE1_bad -> Draw("Same");
+    hE1_BDT_good -> Draw("Same");
+    hE1_BDT_bad -> Draw("Same");
+    
+    pt1 -> Draw("Same");
+
+    TLegend *legd_cv = new TLegend(0.65, 0.35, 0.9, 0.8);
+  
+    legd_cv -> SetTextFont(132);
+    legd_cv -> SetFillStyle(0);
+    legd_cv -> SetBorderSize(0);
+    legd_cv -> SetNColumns(1);
+    
+    legd_cv -> AddEntry(hE1, "#chi^{2}-selection", "l");
+    legd_cv -> AddEntry(hE1_good, "good", "l");
+    legd_cv -> AddEntry(hE1_bad, "bad", "l");
+    legd_cv -> AddEntry(hE1_BDT_good, "BDT good", "l");
+    legd_cv -> AddEntry(hE1_BDT_bad, "BDT bad", "f");
+    
+    legd_cv -> Draw("Same");
+  
+    legtextsize(legd_cv, 0.04);
+
+    //
+    cv0 -> cd(2);
+
+    format_h(hE2, 1, 2);
+    format_h(hE2_good, 4, 1);
+    format_h(hE2_bad, 2, 1);
+
+    format_h(hE2_BDT_good, 3, 2);
+    formatfill_h(hE2_BDT_bad, 2, 3001);
+
+    hE2 -> GetYaxis() -> SetNdivisions(505);
+    hE2 -> GetYaxis() -> SetRangeUser(0.01, ymax * 1.2); 
+    hE2 -> GetXaxis() -> SetTitle("E_{2} [MeV]");
+    hE2 -> GetXaxis() -> CenterTitle();
+    hE2 -> GetXaxis() -> SetTitleSize(0.04);
+    
+    
+    hE2 -> Draw();
+    hE2_good -> Draw("Same");
+    hE2_bad -> Draw("Same");
+    hE2_BDT_good -> Draw("Same");
+    hE2_BDT_bad -> Draw("Same");
+
+    //
+    cv0 -> cd(3);
+
+    ymax = hM_gg -> GetBinContent(hM_gg -> GetMaximumBin());
+    
+    format_h(hM_gg, 1, 2);
+    format_h(hM_gg_good, 4, 1);
+    format_h(hM_gg_bad, 2, 1);
+
+    format_h(hM_gg_BDT_good, 3, 2);
+    formatfill_h(hM_gg_BDT_bad, 2, 3001);
+
+    hM_gg -> GetYaxis() -> SetNdivisions(505);
+    hM_gg -> GetYaxis() -> SetRangeUser(0.01, ymax * 1.2); 
+    hM_gg -> GetXaxis() -> SetTitle("E_{2} [MeV]");
+    hM_gg -> GetXaxis() -> CenterTitle();
+    hM_gg -> GetXaxis() -> SetTitleSize(0.04);
+
+    hM_gg -> GetXaxis() -> SetTitle("M(#gamma_{1}#gamma_{2}) [MeV/c^{2}]");
+    hM_gg -> GetXaxis() -> CenterTitle();
+    hM_gg -> GetXaxis() -> SetTitleSize(0.04);
+    
+    hM_gg -> Draw();
+    hM_gg_good -> Draw("Same");
+    hM_gg_bad -> Draw("Same");
+    hM_gg_BDT_good -> Draw("Same");
+    hM_gg_BDT_bad -> Draw("Same");
+
+    //
+    cv0 -> cd(4);
+
+    ymax = hM3pi -> GetBinContent(hM3pi -> GetMaximumBin());
+    
+    format_h(hM3pi, 1, 2);
+    format_h(hM3pi_good, 4, 1);
+    format_h(hM3pi_bad, 2, 1);
+
+    format_h(hM3pi_BDT_good, 3, 2);
+    formatfill_h(hM3pi_BDT_bad, 2, 3001);
+
+    hM3pi -> Draw();
+    hM3pi_good -> Draw("Same");
+    hM3pi_bad -> Draw("Same");
+     
+    
+    /*
     TCanvas *c1 = new TCanvas("c1", "Photon Analysis", 1200, 900);
     c1 -> Divide(5, 2);  // 2 rows, 5 columns
 
     c1 -> cd(1);
+    hm_gg -> SetLineColor(kBlue);
+    hm_gg -> SetLineWidth(2);
     hm_gg -> Draw();
 
+    c1 -> cd(2);
+    hopen_angle -> SetLineColor(kBlue);
+    hopen_angle -> SetLineWidth(2);
+    hopen_angle -> Draw();
+
     c1 -> cd(3);
+    hcos_theta -> SetLineColor(kBlue);
+    hcos_theta -> SetLineWidth(2);
     hcos_theta -> Draw();
 
+    c1 -> cd(4);
+    hE_asym -> SetLineColor(kBlue);
+    hE_asym -> SetLineWidth(2);
+    hE_asym -> Draw();
+
+    c1 -> cd(5);
+    he_min_x_angle-> SetLineColor(kBlue);
+    he_min_x_angle -> SetLineWidth(2);
+    he_min_x_angle -> Draw();
+
     c1 -> cd(6);
+    he1 -> SetLineColor(kBlue);
+    he1 -> SetLineWidth(2);
     he1 -> Draw();
 
     c1 -> cd(7);
+    he2 -> SetLineColor(kBlue);
+    he2 -> SetLineWidth(2);
     he2 -> Draw();
 
     c1 -> cd(8);
+    he3 -> SetLineColor(kBlue);
+    he3 -> SetLineWidth(2);
     he3 -> Draw();
 
-    /*
-    // Plot e1, e2 and e3
-    TCanvas *c1 = new TCanvas("c1", "Photon Energies Comparison", 800, 600);
+    c1 -> cd(9);
+    hasym_x_angle -> SetLineColor(kBlue);
+    hasym_x_angle -> SetLineWidth(2);
+    hasym_x_angle -> Draw();
 
-    he1->SetLineColor(kRed);
-    he1->SetLineWidth(2);
-    he1->Draw();
-
-    he2->SetLineColor(kBlue);
-    he2->SetLineWidth(2);
-    he2->Draw("SAME");
-
-    he3->SetLineColor(kGreen+2);
-    he3->SetLineWidth(2);
-    he3->Draw("SAME");
-
-    TLegend *leg = new TLegend(0.7, 0.7, 0.9, 0.9);
-    leg->AddEntry(he1, "Photon 1", "l");
-    leg->AddEntry(he2, "Photon 2", "l");
-    leg->AddEntry(he3, "Photon 3", "l");
-    leg->Draw();
+    c1 -> cd(10);
+    hE_diff -> SetLineColor(kBlue);
+    hE_diff -> SetLineWidth(2);
+    hE_diff -> Draw();
     */
-
-    // Plot m_gg
-    //TCanvas *c2 = new TCanvas("c2", "Gamma-gamma Invariant Mass", 800, 600);
-    //hm_gg -> Draw();
-
-    // Plot cos_theta
-    //TCanvas *c3 = new TCanvas("c3", "Cos_theta", 800, 600);
-    //hcos_theta -> Draw();
 
 }

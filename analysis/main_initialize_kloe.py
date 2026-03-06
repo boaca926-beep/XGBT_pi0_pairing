@@ -36,8 +36,8 @@ def create_dataset(df): # For photon 4-momentum
         if info['category'] == 'signal':
             print(f"Creating all_df for {info['category']} {df.columns}...")
 
-            pos_df = df[(df['Br_recon_indx'] == 2) & (df['Br_bkg_indx'])][br_nm]
-            neg_df = df[~((df['Br_recon_indx'] == 2) & (df['Br_bkg_indx']))][br_nm]
+            pos_df = df[(df['Br_recon_indx'] == 2) & (df['Br_bkg_indx'] == 1)][br_nm]
+            neg_df = df[~((df['Br_recon_indx'] == 2) & (df['Br_bkg_indx'] == 1))][br_nm]
 
             # True positive
             nb_pos = [i for i in range(len(pos_df))]  
@@ -175,10 +175,10 @@ if __name__ == '__main__':
             category = "signal"
         elif base_br_nm == "TKSL":
             br_title = rf"$e^{{+}}e^{{-}}\to\phi\to K_{{S}}K_{{L}}$"
-            category = "background"
+            category = "signal"
         elif base_br_nm == "TOMEGAPI":
             br_title = rf"$\omega\pi^{0}$"
-            category = "background"
+            category = "signal"
         else:
             #br_title = "br_title"
             #category = "rest"
