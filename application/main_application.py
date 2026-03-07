@@ -36,8 +36,7 @@ if __name__ == '__main__':
     input_data_dir = os.path.join(project_root, f'analysis/dataset')
     input_model_dir = os.path.join(project_root, f'training/models')
 
-    category_type = 'TISR3PI_SIG' #'TETAGAM', 'TISR3PI_SIG'
-    #category_type = ['combined', 'combined']
+    category_type = 'TCOMB' #'TETAGAM', 'TISR3PI_SIG', 'TKSL'
 
     phys_map = joblib.load(os.path.join(input_data_dir, f'phys_map.pkl'))
     print(phys_map)

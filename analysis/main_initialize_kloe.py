@@ -175,10 +175,10 @@ if __name__ == '__main__':
             category = "signal"
         elif base_br_nm == "TKSL":
             br_title = rf"$e^{{+}}e^{{-}}\to\phi\to K_{{S}}K_{{L}}$"
-            category = "signal"
+            category = "background"
         elif base_br_nm == "TOMEGAPI":
             br_title = rf"$\omega\pi^{0}$"
-            category = "signal"
+            category = "background"
         else:
             #br_title = "br_title"
             #category = "rest"

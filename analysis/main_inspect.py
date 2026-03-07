@@ -13,7 +13,7 @@ if __name__ == '__main__':
 
     input_data_dir = os.path.join(project_root, f'analysis/dataset')
     phys_map = joblib.load(os.path.join(input_data_dir, f'phys_map.pkl'))
-    #print(phys_map)
+    print(phys_map)
 
     ## Check if true pi0 events add up for all channels in phys_map
     nb_evnt_sum = 0
@@ -42,9 +42,9 @@ if __name__ == '__main__':
     
     #phys_ch = ['TISR3PI_SIG', 'signal']
     #phys_ch = ['TETAGAM', 'signal']
-    phys_ch = ['TKSL', 'background']
+    #phys_ch = ['TKSL', 'background']
     #phys_ch = ['TOMEGAPI', 'background']
-    #phys_ch = ['TCOMB', 'combined']
+    phys_ch = ['TCOMB', 'combined']
 
     # Create output folder
     plot_dir = rf'./plots'
@@ -124,7 +124,8 @@ if __name__ == '__main__':
             #print(kine_all_df.head(5)) 
 
             
-            if category == 'signal' or 'combined': # Only plots for signal channels
+            if category == 'signal' or category == 'combined': # Only plots for signal channels
+                print(f"!!!!!!!!!!!!!!!!!!!!!!!!!! {br_nm}, {category}")
                 ## * Plot true pi0 mass
                 fig_var = plot_var(pi0_mass, 'm_gg', br_title)
                 fig_var.savefig(f'./{plot_dir}/pos_pi0_mass_{br_nm}.png', dpi=300, bbox_inches='tight')
