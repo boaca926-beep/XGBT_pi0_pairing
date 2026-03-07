@@ -249,6 +249,9 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
     int evnt_good = 0;
     int evnt_bad = 0;
 
+    int bdt_indx = -999;
+    int kloe_indx = -999;
+
     // If data file exists, process it with RDataFame
     if(!gSystem -> AccessPathName(data_filename)){
     
@@ -312,6 +315,9 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
         tree -> SetBranchAddress("Br_py3", &py3);
         tree -> SetBranchAddress("Br_pz3", &pz3);
 
+	//tree -> SetBranchAddress("Br_event_id", &event_id);
+
+	
         // Create output file and tree
         TFile* outfile = TFile::Open("output_with_bdt.root", "RECREATE");
         TTree* outtree = new TTree("new_tree", "Tree with BDT response");
@@ -332,10 +338,13 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
 	int n_found = 0;
 	
         double m_gg_bdt = 0, m_gg = 0;
-	double m3pi = 0;
-        double e1_bdt = 0;
-        double e2_bdt = 0;
-        double e3_bdt = 0;
+	double m3pi = 0, m3pi_bdt = 0;
+
+	double e1_bdt = 0, e2_bdt = 0, e3_bdt = 0;
+	double opening_angle = 0, cos_theta = 0;
+        double E_asym = 0, e_min_x_angle = 0;
+        double asym_x_angle = 0, E_diff = 0;
+		
 
 	// Loop over entries
         for (int i = 0; i < nentries; i++) {
@@ -411,9 +420,10 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
                 //cout << "i_idx = " << i_idx << ", j_idx = " << j_idx << ", unpaired_idx = " << unpaired_idx << endl;
 
                 // Calculate features
-                double m_gg = 0, opening_angle = 0,  cos_theta = 0;
-                double E_asym = 0, e_min_x_angle = 0;
-                double asym_x_angle = 0, E_diff = 0;
+                //double opening_angle = 0,  cos_theta = 0;
+                //double E_asym = 0, e_min_x_angle = 0;
+                //double asym_x_angle = 0, E_diff = 0;
+		//cout << opening_angle << endl;
 		
                 if (e1 >= energy_threshold && e2 >= energy_threshold) {
                     // Invariant mass
@@ -499,9 +509,14 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
             prompt_pho_idx = prompt_idx;
 
             e1_bdt = photons[pi0_pho1_idx][0];
+	    e2_bdt = photons[pi0_pho2_idx][0];
+	    
             m_gg_bdt = inv_mass_4vector(pi0_pho1_idx, pi0_pho2_idx, photons);
-	    m_gg = inv_mass_4vector(0, 1, photons);
-            m3pi = inv_3pimass_4vector(0, 1, photons, trk);
+	    //m_gg = inv_mass_4vector(0, 1, photons);
+	    m_gg = masses[0];
+	    //cout << m_gg << ", " << masses[0] << endl;
+	    m3pi = inv_3pimass_4vector(0, 1, photons, trk);
+            m3pi_bdt = inv_3pimass_4vector(pi0_pho1_idx, pi0_pho2_idx, photons, trk);
             	 
             //m_gg_bdt = inv_mass_4vector(0, 1, photons);
             hM_gg -> Fill(m_gg);
@@ -526,43 +541,50 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
                 // You would need truth information about which pair is correct
                 // This depends on your data
             }
-	    out_event = event_id;
-            outtree->Fill();
-            
+	    
             */
 
+	    //out_event = event_id;
+	    //cout << out_event << endl;
+            outtree -> Fill();
+            
 	    // BDT selection
 	    if (scores[best_pair] > 0.5) {
 	      n_found ++;
-	      hE1_BDT_good -> Fill(photons[pi0_pho1_idx][0]);
-	      hE2_BDT_good -> Fill(photons[pi0_pho2_idx][0]);
+	      hE1_BDT_good -> Fill(e1_bdt);
+	      hE2_BDT_good -> Fill(e2_bdt);
 	      hM_gg_BDT_good -> Fill(m_gg_bdt);
-	      //hM3pi_BDT_good -> Fill(m_gg_bdt);
+	      hM3pi_BDT_good -> Fill(m3pi_bdt);
+
+	      bdt_indx = 1;
             }
 	    else {
-	      hE1_BDT_bad -> Fill(photons[pi0_pho1_idx][0]);
-	      hE2_BDT_bad -> Fill(photons[pi0_pho2_idx][0]);
+	      hE1_BDT_bad -> Fill(e1_bdt);
+	      hE2_BDT_bad -> Fill(e2_bdt);
 	      hM_gg_BDT_bad -> Fill(m_gg_bdt);
-	      //hM3pi_BDT_bad -> Fill(m_gg_bdt);
+	      hM3pi_BDT_bad -> Fill(m3pi_bdt);
+
+	      bdt_indx = 0;
 	    }
             
-            // Summary and comprison
-            if (recon_indx == 2 && bkg_indx == 1)
-            {// KLOE selection true pi0 gg
+            // KLOE selection
+            if (recon_indx == 2 && bkg_indx == 1){//  true pi0 gg
 	        hE1_good -> Fill(photons[0][0]);
 		hE2_good -> Fill(photons[1][0]);
 		hM_gg_good -> Fill(m_gg);
 		hM3pi_good -> Fill(m3pi);
             
 		evnt_good += 1;
+		kloe_indx = 1;
             }
-            else{// KLOE selection false pi0 gg
+            else{// false pi0 gg
                 hE1_bad -> Fill(photons[0][0]);
 		hE2_bad -> Fill(photons[1][0]);
 		hM_gg_bad -> Fill(m_gg);
 		hM3pi_bad -> Fill(m3pi);
             
 		evnt_bad += 1;
+		kloe_indx = 0;
             } 
 
 	    evnt_KLOE += 1;
@@ -573,20 +595,25 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
 
         }
 
-	
+
+	outfile -> Write();
+	outfile -> Close();
+	file -> Close();
+
+	cout << "\n pi0 finding complete!" << endl;
     }    
 
-    TCanvas *cv0 = new TCanvas("c1", "Photon E1 Analysis", 1200, 900);
+    TCanvas *cv0 = new TCanvas("c1", "BDT pi0 Photon Pair Selection", 1200, 600);
     cv0 -> SetLeftMargin(0.1);
     cv0 -> SetBottomMargin(0.1);//0.007
 
-    cv0 -> Divide(2, 2);  // [0] columns, [1] rows
+    cv0 -> Divide(2, 1);  // [0] columns, [1] rows
     cv0 -> cd(1);
 
     Double_t ymax = hE1 -> GetBinContent(hE1 -> GetMaximumBin());
     cout << ymax << endl;
     
-    TPaveText *pt1 = new TPaveText(0.12, 0.87, 0.80, 0.89, "NDC");
+    TPaveText *pt1 = new TPaveText(0.11, 0.87, 0.80, 0.89, "NDC");
     
     PteAttr(pt1); pt1 -> SetTextSize(0.04); pt1 -> SetTextColor(kBlack);
     
@@ -618,18 +645,18 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
     
     pt1 -> Draw("Same");
 
-    TLegend *legd_cv = new TLegend(0.65, 0.35, 0.9, 0.8);
+    TLegend *legd_cv = new TLegend(0.5, 0.45, 0.9, 0.8);
   
     legd_cv -> SetTextFont(132);
     legd_cv -> SetFillStyle(0);
     legd_cv -> SetBorderSize(0);
     legd_cv -> SetNColumns(1);
     
-    legd_cv -> AddEntry(hE1, "#chi^{2}-selection", "l");
-    legd_cv -> AddEntry(hE1_good, "good", "l");
-    legd_cv -> AddEntry(hE1_bad, "bad", "l");
-    legd_cv -> AddEntry(hE1_BDT_good, "BDT good", "l");
-    legd_cv -> AddEntry(hE1_BDT_bad, "BDT bad", "f");
+    //legd_cv -> AddEntry(hE1, "#chi^{2}-selection", "l");
+    legd_cv -> AddEntry(hE1_good, "KLOE Selected", "l");
+    legd_cv -> AddEntry(hE1_bad, "KLOE Comb. BKG", "l");
+    legd_cv -> AddEntry(hE1_BDT_good, "BDT Selected", "l");
+    legd_cv -> AddEntry(hE1_BDT_bad, "BDT Comb. BKG", "f");
     
     legd_cv -> Draw("Same");
   
@@ -658,8 +685,12 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
     hE2_BDT_good -> Draw("Same");
     hE2_BDT_bad -> Draw("Same");
 
-    //
-    cv0 -> cd(3);
+    TCanvas *cv01 = new TCanvas("cv01", "BDT pi0 Photon Pair Selection", 1200, 600);
+    cv01 -> SetLeftMargin(0.1);
+    cv01 -> SetBottomMargin(0.1);//0.007
+    
+    cv01 -> Divide(2, 1);  // [0] columns, [1] rows
+    cv01 -> cd(1);
 
     ymax = hM_gg -> GetBinContent(hM_gg -> GetMaximumBin());
     
@@ -687,7 +718,7 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
     hM_gg_BDT_bad -> Draw("Same");
 
     //
-    cv0 -> cd(4);
+    cv01 -> cd(2);
 
     ymax = hM3pi -> GetBinContent(hM3pi -> GetMaximumBin());
     
@@ -698,10 +729,21 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
     format_h(hM3pi_BDT_good, 3, 2);
     formatfill_h(hM3pi_BDT_bad, 2, 3001);
 
+    hM3pi -> GetYaxis() -> SetNdivisions(505);
+    hM3pi -> GetYaxis() -> SetRangeUser(0.01, ymax * 1.5); 
+    hM3pi -> GetXaxis() -> SetTitle("M_{3#pi} [MeV/c^{2}]");
+    hM3pi -> GetXaxis() -> CenterTitle();
+    hM3pi -> GetXaxis() -> SetTitleSize(0.04);
+    
     hM3pi -> Draw();
     hM3pi_good -> Draw("Same");
     hM3pi_bad -> Draw("Same");
-     
+    hM3pi_BDT_good -> Draw("Same");
+    hM3pi_BDT_bad -> Draw("Same");
+    gPad->SetLogy(1); 
+
+    cv0 -> SaveAs("./bdt_gamma_sel_cv0.pdf");
+    cv01 -> SaveAs("./bdt_gamma_sel_cv01.pdf");
     
     /*
     TCanvas *c1 = new TCanvas("c1", "Photon Analysis", 1200, 900);
@@ -758,4 +800,5 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
     hE_diff -> Draw();
     */
 
+    
 }
