@@ -5,6 +5,10 @@
 #include <TTree.h>
 #include <TSystem.h>
 #include <iostream>
+#include <TCanvas.h>
+#include <TLegend.h>
+#include <TPaveText.h>
+#include <TMath.h>
 
 using namespace TMVA::Experimental;
 
@@ -603,202 +607,204 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
 	cout << "\n pi0 finding complete!" << endl;
     }    
 
-    TCanvas *cv0 = new TCanvas("c1", "BDT pi0 Photon Pair Selection", 1200, 600);
-    cv0 -> SetLeftMargin(0.1);
-    cv0 -> SetBottomMargin(0.1);//0.007
+    if (evnt_KLOE > 0) {
+      TCanvas *cv0 = new TCanvas("c1", "BDT pi0 Photon Pair Selection", 1200, 600);
+      cv0 -> SetLeftMargin(0.1);
+      cv0 -> SetBottomMargin(0.1);//0.007
 
-    cv0 -> Divide(2, 1);  // [0] columns, [1] rows
-    cv0 -> cd(1);
+      cv0 -> Divide(2, 1);  // [0] columns, [1] rows
+      cv0 -> cd(1);
 
-    Double_t ymax = hE1 -> GetBinContent(hE1 -> GetMaximumBin());
-    cout << ymax << endl;
+      Double_t ymax_e1 = hE1 -> GetBinContent(hE1 -> GetMaximumBin());
+      cout << ymax_e1 << endl;
     
-    TPaveText *pt1 = new TPaveText(0.11, 0.87, 0.80, 0.89, "NDC");
+      TPaveText *pt1 = new TPaveText(0.11, 0.87, 0.80, 0.89, "NDC");
     
-    PteAttr(pt1); pt1 -> SetTextSize(0.04); pt1 -> SetTextColor(kBlack);
+      PteAttr(pt1); pt1 -> SetTextSize(0.04); pt1 -> SetTextColor(kBlack);
     
-    pt1 -> AddText(Form("EVENTS=%d, good=%d, bad=%d", evnt_KLOE, evnt_good, evnt_bad));
-    
-    
-    format_h(hE1, 1, 2);
-    format_h(hE1_good, 4, 1);
-    format_h(hE1_bad, 2, 1);
-
-    format_h(hE1_BDT_good, 3, 2);
-    formatfill_h(hE1_BDT_bad, 2, 3001);
-
-    hE1 -> GetYaxis() -> SetNdivisions(505);
-    hE1 -> GetYaxis() -> SetRangeUser(0.01, ymax * 1.2); 
-    hE1 -> GetXaxis() -> SetTitle("E_{1} [MeV]");
-    hE1 -> GetXaxis() -> CenterTitle();
-    hE1 -> GetXaxis() -> SetTitleSize(0.04);
-    //hE1 -> GetXaxis() -> SetTitleOffset(1.0);
-    //hE1 -> GetXaxis() -> SetLabelOffset(0.01);
-    //hE1 -> GetXaxis() -> SetLabelSize(0.05);//0.03
-  
-    
-    hE1 -> Draw();
-    hE1_good -> Draw("Same");
-    hE1_bad -> Draw("Same");
-    hE1_BDT_good -> Draw("Same");
-    hE1_BDT_bad -> Draw("Same");
-    
-    pt1 -> Draw("Same");
-
-    TLegend *legd_cv = new TLegend(0.5, 0.45, 0.9, 0.8);
-  
-    legd_cv -> SetTextFont(132);
-    legd_cv -> SetFillStyle(0);
-    legd_cv -> SetBorderSize(0);
-    legd_cv -> SetNColumns(1);
-    
-    //legd_cv -> AddEntry(hE1, "#chi^{2}-selection", "l");
-    legd_cv -> AddEntry(hE1_good, "KLOE Selected", "l");
-    legd_cv -> AddEntry(hE1_bad, "KLOE Comb. BKG", "l");
-    legd_cv -> AddEntry(hE1_BDT_good, "BDT Selected", "l");
-    legd_cv -> AddEntry(hE1_BDT_bad, "BDT Comb. BKG", "f");
-    
-    legd_cv -> Draw("Same");
-  
-    legtextsize(legd_cv, 0.04);
-
-    //
-    cv0 -> cd(2);
-
-    format_h(hE2, 1, 2);
-    format_h(hE2_good, 4, 1);
-    format_h(hE2_bad, 2, 1);
-
-    format_h(hE2_BDT_good, 3, 2);
-    formatfill_h(hE2_BDT_bad, 2, 3001);
-
-    hE2 -> GetYaxis() -> SetNdivisions(505);
-    hE2 -> GetYaxis() -> SetRangeUser(0.01, ymax * 1.2); 
-    hE2 -> GetXaxis() -> SetTitle("E_{2} [MeV]");
-    hE2 -> GetXaxis() -> CenterTitle();
-    hE2 -> GetXaxis() -> SetTitleSize(0.04);
+      pt1 -> AddText(Form("EVENTS=%d, good=%d, bad=%d", evnt_KLOE, evnt_good, evnt_bad));
     
     
-    hE2 -> Draw();
-    hE2_good -> Draw("Same");
-    hE2_bad -> Draw("Same");
-    hE2_BDT_good -> Draw("Same");
-    hE2_BDT_bad -> Draw("Same");
+      format_h(hE1, 1, 2);
+      format_h(hE1_good, 4, 1);
+      format_h(hE1_bad, 2, 1);
 
-    TCanvas *cv01 = new TCanvas("cv01", "BDT pi0 Photon Pair Selection", 1200, 600);
-    cv01 -> SetLeftMargin(0.1);
-    cv01 -> SetBottomMargin(0.1);//0.007
+      format_h(hE1_BDT_good, 3, 2);
+      formatfill_h(hE1_BDT_bad, 2, 3001);
+
+      hE1 -> GetYaxis() -> SetNdivisions(505);
+      hE1 -> GetYaxis() -> SetRangeUser(0.01, ymax_e1 * 1.2); 
+      hE1 -> GetXaxis() -> SetTitle("E_{1} [MeV]");
+      hE1 -> GetXaxis() -> CenterTitle();
+      hE1 -> GetXaxis() -> SetTitleSize(0.04);
+      //hE1 -> GetXaxis() -> SetTitleOffset(1.0);
+      //hE1 -> GetXaxis() -> SetLabelOffset(0.01);
+      //hE1 -> GetXaxis() -> SetLabelSize(0.05);//0.03
+      
+      
+      hE1 -> Draw();
+      hE1_good -> Draw("Same");
+      hE1_bad -> Draw("Same");
+      hE1_BDT_good -> Draw("Same");
+      hE1_BDT_bad -> Draw("Same");
+      
+      pt1 -> Draw("Same");
+      
+      TLegend *legd_cv = new TLegend(0.5, 0.45, 0.9, 0.8);
+      
+      legd_cv -> SetTextFont(132);
+      legd_cv -> SetFillStyle(0);
+      legd_cv -> SetBorderSize(0);
+      legd_cv -> SetNColumns(1);
+      
+      //legd_cv -> AddEntry(hE1, "#chi^{2}-selection", "l");
+      legd_cv -> AddEntry(hE1_good, "KLOE Selected", "l");
+      legd_cv -> AddEntry(hE1_bad, "KLOE Comb. BKG", "l");
+      legd_cv -> AddEntry(hE1_BDT_good, "BDT Selected", "l");
+      legd_cv -> AddEntry(hE1_BDT_bad, "BDT Comb. BKG", "f");
+      
+      legd_cv -> Draw("Same");
+      
+      legtextsize(legd_cv, 0.04);
+      
+      //
+      cv0 -> cd(2);
+      
+      format_h(hE2, 1, 2);
+      format_h(hE2_good, 4, 1);
+      format_h(hE2_bad, 2, 1);
+      
+      format_h(hE2_BDT_good, 3, 2);
+      formatfill_h(hE2_BDT_bad, 2, 3001);
+      
+      hE2 -> GetYaxis() -> SetNdivisions(505);
+      hE2 -> GetYaxis() -> SetRangeUser(0.01, ymax_e1 * 1.2); 
+      hE2 -> GetXaxis() -> SetTitle("E_{2} [MeV]");
+      hE2 -> GetXaxis() -> CenterTitle();
+      hE2 -> GetXaxis() -> SetTitleSize(0.04);
+      
+      
+      hE2 -> Draw();
+      hE2_good -> Draw("Same");
+      hE2_bad -> Draw("Same");
+      hE2_BDT_good -> Draw("Same");
+      hE2_BDT_bad -> Draw("Same");
+      
+      TCanvas *cv01 = new TCanvas("cv01", "BDT pi0 Photon Pair Selection", 1200, 600);
+      cv01 -> SetLeftMargin(0.1);
+      cv01 -> SetBottomMargin(0.1);//0.007
+      
+      cv01 -> Divide(2, 1);  // [0] columns, [1] rows
+      cv01 -> cd(1);
+      
+      double ymax_m_gg = hM_gg -> GetBinContent(hM_gg -> GetMaximumBin());
+      
+      format_h(hM_gg, 1, 2);
+      format_h(hM_gg_good, 4, 1);
+      format_h(hM_gg_bad, 2, 1);
+      
+      format_h(hM_gg_BDT_good, 3, 2);
+      formatfill_h(hM_gg_BDT_bad, 2, 3001);
+      
+      hM_gg -> GetYaxis() -> SetNdivisions(505);
+      hM_gg -> GetYaxis() -> SetRangeUser(0.01, ymax_m_gg * 1.2); 
+      hM_gg -> GetXaxis() -> CenterTitle();
+      hM_gg -> GetXaxis() -> SetTitleSize(0.04);
+      hM_gg -> GetXaxis() -> SetTitle("M(#gamma_{1}#gamma_{2}) [MeV/c^{2}]");
+      hM_gg -> GetXaxis() -> CenterTitle();
+      hM_gg -> GetXaxis() -> SetTitleSize(0.04);
+      
+      hM_gg -> Draw();
+      hM_gg_good -> Draw("Same");
+      hM_gg_bad -> Draw("Same");
+      hM_gg_BDT_good -> Draw("Same");
+      hM_gg_BDT_bad -> Draw("Same");
+      
+      //
+      cv01 -> cd(2);
+      
+      double ymax_m3pi = hM3pi -> GetBinContent(hM3pi -> GetMaximumBin());
     
-    cv01 -> Divide(2, 1);  // [0] columns, [1] rows
-    cv01 -> cd(1);
+      format_h(hM3pi, 1, 2);
+      format_h(hM3pi_good, 4, 1);
+      format_h(hM3pi_bad, 2, 1);
+      
+      format_h(hM3pi_BDT_good, 3, 2);
+      formatfill_h(hM3pi_BDT_bad, 2, 3001);
+      
+      hM3pi -> GetYaxis() -> SetNdivisions(505);
+      hM3pi -> GetYaxis() -> SetRangeUser(0.01, ymax_m3pi * 1.5); 
+      hM3pi -> GetXaxis() -> SetTitle("M_{3#pi} [MeV/c^{2}]");
+      hM3pi -> GetXaxis() -> CenterTitle();
+      hM3pi -> GetXaxis() -> SetTitleSize(0.04);
+      
+      hM3pi -> Draw();
+      hM3pi_good -> Draw("Same");
+      hM3pi_bad -> Draw("Same");
+      hM3pi_BDT_good -> Draw("Same");
+      hM3pi_BDT_bad -> Draw("Same");
+      gPad->SetLogy(1); 
+      
+      cv0 -> SaveAs("./bdt_gamma_sel_cv0.pdf");
+      cv01 -> SaveAs("./bdt_gamma_sel_cv01.pdf");
 
-    ymax = hM_gg -> GetBinContent(hM_gg -> GetMaximumBin());
-    
-    format_h(hM_gg, 1, 2);
-    format_h(hM_gg_good, 4, 1);
-    format_h(hM_gg_bad, 2, 1);
+      delete cv0;
+      delete cv01;
+      
+      /*
+	TCanvas *c1 = new TCanvas("c1", "Photon Analysis", 1200, 900);
+	c1 -> Divide(5, 2);  // 2 rows, 5 columns
+	
+	c1 -> cd(1);
+	hm_gg -> SetLineColor(kBlue);
+	hm_gg -> SetLineWidth(2);
+	hm_gg -> Draw();
+	
+	c1 -> cd(2);
+	hopen_angle -> SetLineColor(kBlue);
+	hopen_angle -> SetLineWidth(2);
+	hopen_angle -> Draw();
+	
+	c1 -> cd(3);
+	hcos_theta -> SetLineColor(kBlue);
+	hcos_theta -> SetLineWidth(2);
+	hcos_theta -> Draw();
+	
+	c1 -> cd(4);
+	hE_asym -> SetLineColor(kBlue);
+	hE_asym -> SetLineWidth(2);
+	hE_asym -> Draw();
+	
+	c1 -> cd(5);
+	he_min_x_angle-> SetLineColor(kBlue);
+	he_min_x_angle -> SetLineWidth(2);
+	he_min_x_angle -> Draw();
+	
+	c1 -> cd(6);
+	he1 -> SetLineColor(kBlue);
+	he1 -> SetLineWidth(2);
+	he1 -> Draw();
+	
+	c1 -> cd(7);
+	he2 -> SetLineColor(kBlue);
+	he2 -> SetLineWidth(2);
+	he2 -> Draw();
+	
+	c1 -> cd(8);
+	he3 -> SetLineColor(kBlue);
+	he3 -> SetLineWidth(2);
+	he3 -> Draw();
 
-    format_h(hM_gg_BDT_good, 3, 2);
-    formatfill_h(hM_gg_BDT_bad, 2, 3001);
-
-    hM_gg -> GetYaxis() -> SetNdivisions(505);
-    hM_gg -> GetYaxis() -> SetRangeUser(0.01, ymax * 1.2); 
-    hM_gg -> GetXaxis() -> SetTitle("E_{2} [MeV]");
-    hM_gg -> GetXaxis() -> CenterTitle();
-    hM_gg -> GetXaxis() -> SetTitleSize(0.04);
-
-    hM_gg -> GetXaxis() -> SetTitle("M(#gamma_{1}#gamma_{2}) [MeV/c^{2}]");
-    hM_gg -> GetXaxis() -> CenterTitle();
-    hM_gg -> GetXaxis() -> SetTitleSize(0.04);
-    
-    hM_gg -> Draw();
-    hM_gg_good -> Draw("Same");
-    hM_gg_bad -> Draw("Same");
-    hM_gg_BDT_good -> Draw("Same");
-    hM_gg_BDT_bad -> Draw("Same");
-
-    //
-    cv01 -> cd(2);
-
-    ymax = hM3pi -> GetBinContent(hM3pi -> GetMaximumBin());
-    
-    format_h(hM3pi, 1, 2);
-    format_h(hM3pi_good, 4, 1);
-    format_h(hM3pi_bad, 2, 1);
-
-    format_h(hM3pi_BDT_good, 3, 2);
-    formatfill_h(hM3pi_BDT_bad, 2, 3001);
-
-    hM3pi -> GetYaxis() -> SetNdivisions(505);
-    hM3pi -> GetYaxis() -> SetRangeUser(0.01, ymax * 1.5); 
-    hM3pi -> GetXaxis() -> SetTitle("M_{3#pi} [MeV/c^{2}]");
-    hM3pi -> GetXaxis() -> CenterTitle();
-    hM3pi -> GetXaxis() -> SetTitleSize(0.04);
-    
-    hM3pi -> Draw();
-    hM3pi_good -> Draw("Same");
-    hM3pi_bad -> Draw("Same");
-    hM3pi_BDT_good -> Draw("Same");
-    hM3pi_BDT_bad -> Draw("Same");
-    gPad->SetLogy(1); 
-
-    cv0 -> SaveAs("./bdt_gamma_sel_cv0.pdf");
-    cv01 -> SaveAs("./bdt_gamma_sel_cv01.pdf");
-    
-    /*
-    TCanvas *c1 = new TCanvas("c1", "Photon Analysis", 1200, 900);
-    c1 -> Divide(5, 2);  // 2 rows, 5 columns
-
-    c1 -> cd(1);
-    hm_gg -> SetLineColor(kBlue);
-    hm_gg -> SetLineWidth(2);
-    hm_gg -> Draw();
-
-    c1 -> cd(2);
-    hopen_angle -> SetLineColor(kBlue);
-    hopen_angle -> SetLineWidth(2);
-    hopen_angle -> Draw();
-
-    c1 -> cd(3);
-    hcos_theta -> SetLineColor(kBlue);
-    hcos_theta -> SetLineWidth(2);
-    hcos_theta -> Draw();
-
-    c1 -> cd(4);
-    hE_asym -> SetLineColor(kBlue);
-    hE_asym -> SetLineWidth(2);
-    hE_asym -> Draw();
-
-    c1 -> cd(5);
-    he_min_x_angle-> SetLineColor(kBlue);
-    he_min_x_angle -> SetLineWidth(2);
-    he_min_x_angle -> Draw();
-
-    c1 -> cd(6);
-    he1 -> SetLineColor(kBlue);
-    he1 -> SetLineWidth(2);
-    he1 -> Draw();
-
-    c1 -> cd(7);
-    he2 -> SetLineColor(kBlue);
-    he2 -> SetLineWidth(2);
-    he2 -> Draw();
-
-    c1 -> cd(8);
-    he3 -> SetLineColor(kBlue);
-    he3 -> SetLineWidth(2);
-    he3 -> Draw();
-
-    c1 -> cd(9);
-    hasym_x_angle -> SetLineColor(kBlue);
-    hasym_x_angle -> SetLineWidth(2);
-    hasym_x_angle -> Draw();
-
-    c1 -> cd(10);
-    hE_diff -> SetLineColor(kBlue);
-    hE_diff -> SetLineWidth(2);
-    hE_diff -> Draw();
-    */
-
-    
+	c1 -> cd(9);
+	hasym_x_angle -> SetLineColor(kBlue);
+	hasym_x_angle -> SetLineWidth(2);
+	hasym_x_angle -> Draw();
+	
+	c1 -> cd(10);
+	hE_diff -> SetLineColor(kBlue);
+	hE_diff -> SetLineWidth(2);
+	hE_diff -> Draw();
+      */
+      
+    }
 }
