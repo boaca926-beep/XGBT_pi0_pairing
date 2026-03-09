@@ -35,8 +35,9 @@ void plot_bdt(const char* input_filename = "./output_with_bdt.root") {
         int nentries = tree -> GetEntries();
         cout << "Tree has " << nentries << " entries" << endl;
 
-	 // Set branch addres for input features
-       
+	// Set branch addres for input features
+	double 
+	
     }// end check file existence
   
     

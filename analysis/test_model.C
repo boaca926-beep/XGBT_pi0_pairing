@@ -195,6 +195,7 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
     }
     */
 
+    /*
     // Test with dummy data (using 10 features from your training)
     const int n_features = 10; // Should known from the training
     std::vector<float> dummy(n_features, 0.5); // Fill vector with 0.5 to each entry
@@ -205,7 +206,8 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
     // Compute BDT response
     auto output = bdt.Compute(input);
     cout << "Test response: " << output(0, 0) << std::endl;
-
+    */
+    
     // Define histos
     TH1D* he1 = new TH1D("he1", "", 200, 0, 500);
     TH1D* he2 = new TH1D("he2", "", 200, 0, 500);
@@ -616,7 +618,7 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
       cv0 -> cd(1);
 
       Double_t ymax_e1 = hE1 -> GetBinContent(hE1 -> GetMaximumBin());
-      cout << ymax_e1 << endl;
+      //cout << ymax_e1 << endl;
     
       TPaveText *pt1 = new TPaveText(0.11, 0.87, 0.80, 0.89, "NDC");
     
