@@ -137,7 +137,9 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
   
   // 3. Create output file
   TFile* outfile = TFile::Open("output_with_bdt.root", "RECREATE");
-        
+
+  
+  
   // 4.If data file exists, process it with RDataFame
   if(!gSystem -> AccessPathName(data_filename)){ // check input root file
     
@@ -167,6 +169,34 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       key -> GetSeekKey();
       
       cout << "classnm = " << classnm_tree << ", objnm = " << objnm_tree << endl;
+
+      outfile -> cd(); // Make sure we're in the output file
+      TTree* outtree = new TTree(Form("%s", objnm_tree.Data()),  "Tree with BDT response");
+
+      // Declare output variables
+      int out_event;
+      int pi0_pho1_idx, pi0_pho2_idx; // indices of bdt pi0 photons
+      int prompt_pho_idx; // prompt photon index
+      double bdt_score;
+      
+      int evnt_KLOE = 0;
+      int evnt_good = 0;
+      int evnt_bad = 0;
+      
+      int bdt_indx = -999;
+      int kloe_indx = -999;
+      
+      const double energy_threshold = 5.0;
+      
+      int n_found = 0;
+      
+      double m_gg_bdt = 0, m_gg = 0;
+      double m3pi = 0, m3pi_bdt = 0;
+      
+      double e1_bdt = 0, e2_bdt = 0, e3_bdt = 0;
+      double opening_angle = 0, cos_theta = 0;
+      double E_asym = 0, e_min_x_angle = 0;
+      double asym_x_angle = 0, E_diff = 0;
       
       // Get the tree
       TTree* tree = (TTree*)file -> Get(objnm_tree);
@@ -264,34 +294,18 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       TH1D* hM3pi_good = new TH1D(Form("hM3pi_good_%s", objnm_tree.Data()), "", 200, 400, 1000);
       TH1D* hM3pi_bad = new TH1D(Form("hM3pi_bad_%s", objnm_tree.Data()), "", 200, 400, 1000);
       
-      // Output variables
-      int out_event;
-      int pi0_pho1_idx, pi0_pho2_idx; // indices of bdt pi0 photons
-      int prompt_pho_idx; // prompt photon index
-      double bdt_score;
-      
-      int evnt_KLOE = 0;
-      int evnt_good = 0;
-      int evnt_bad = 0;
-      
-      int bdt_indx = -999;
-      int kloe_indx = -999;
-
-      const double energy_threshold = 5.0;
-
-      int n_found = 0;
-      
-      double m_gg_bdt = 0, m_gg = 0;
-      double m3pi = 0, m3pi_bdt = 0;
-      
-      double e1_bdt = 0, e2_bdt = 0, e3_bdt = 0;
-      double opening_angle = 0, cos_theta = 0;
-      double E_asym = 0, e_min_x_angle = 0;
-      double asym_x_angle = 0, E_diff = 0;
-      	
-      TTree* outtree = new TTree("new_tree", "Tree with BDT response");
-
+      // Add branches
       outtree -> Branch("event", &out_event);
+      outtree->Branch("pi0_pho1_idx", &pi0_pho1_idx);
+      outtree->Branch("pi0_pho2_idx", &pi0_pho2_idx);
+      outtree->Branch("prompt_pho_idx", &prompt_pho_idx);
+      outtree->Branch("bdt_score", &bdt_score);
+      outtree->Branch("bdt_indx", &bdt_indx);
+      outtree->Branch("kloe_indx", &kloe_indx);
+      outtree->Branch("m_gg_bdt", &m_gg_bdt);
+      outtree->Branch("m3pi_bdt", &m3pi_bdt);
+      outtree->Branch("e1_bdt", &e1_bdt);
+      outtree->Branch("e2_bdt", &e2_bdt);
 
       // Copy original branches if needed
       //outtree -> Branch("E1", &E1);
@@ -363,9 +377,9 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	  double e3 = photons[unpaired_idx][0];
 
 	  // Fill histos
-	  //he1 -> Fill(e1);
-	  //he2 -> Fill(e2);
-	  //he3 -> Fill(e3);
+	  he1 -> Fill(e1);
+	  he2 -> Fill(e2);
+	  he3 -> Fill(e3);
 	  //cout << "i_idx = " << i_idx << ", j_idx = " << j_idx << ", unpaired_idx = " << unpaired_idx << endl;
 	  
 	  // Calculate features
@@ -382,15 +396,15 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	    
 	    //cout << m3pi << endl;
 	    
-	    //hm_gg -> Fill(m_gg);
+	    hm_gg -> Fill(m_gg);
 	    
 	    // cos_theta
 	    cos_theta = get_cos_theta(i_idx, j_idx, photons);
-	    //hcos_theta -> Fill(cos_theta);
+	    hcos_theta -> Fill(cos_theta);
 	    
 	    // opening angle
 	    opening_angle = TMath::ACos(cos_theta);
-	    //hopen_angle -> Fill(opening_angle);
+	    hopen_angle -> Fill(opening_angle);
 	    
 	    //cout << opening_angle << endl;
 	    
@@ -403,10 +417,10 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	    
 	    //cout << E_asym << endl;
 	    //cout << e_min_x_angle << endl;
-	    //hE_asym -> Fill(E_asym);
-	    //he_min_x_angle -> Fill(e_min_x_angle);
-	    //hE_diff -> Fill(E_diff);
-	    //hasym_x_angle -> Fill(asym_x_angle);
+	    hE_asym -> Fill(E_asym);
+	    he_min_x_angle -> Fill(e_min_x_angle);
+	    hE_diff -> Fill(E_diff);
+	    hasym_x_angle -> Fill(asym_x_angle);
 	    
 	  }// end e1 & e2 check
 
@@ -449,14 +463,142 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	
 	//cout << "best pair indices: (" << best_i << ", " << best_j << "), prompt index: " << prompt_idx << endl;
 
-            
-            
+	// Calculate pi0 4-vector
+	pi0_pho1_idx = best_i;
+	pi0_pho2_idx = best_j;
+	prompt_pho_idx = prompt_idx;
+	
+	e1_bdt = photons[pi0_pho1_idx][0];
+	e2_bdt = photons[pi0_pho2_idx][0];
+	
+	m_gg_bdt = inv_mass_4vector(pi0_pho1_idx, pi0_pho2_idx, photons);
+	//m_gg = inv_mass_4vector(0, 1, photons);
+	m_gg = masses[0];
+	//cout << m_gg << ", " << masses[0] << endl;
+	m3pi = inv_3pimass_4vector(0, 1, photons, trk);
+	m3pi_bdt = inv_3pimass_4vector(pi0_pho1_idx, pi0_pho2_idx, photons, trk);
+        
+	//m_gg_bdt = inv_mass_4vector(0, 1, photons);
+	hM_gg -> Fill(m_gg);
+	hM3pi -> Fill(m3pi);
+	hE1 -> Fill(photons[0][0]);
+	hE2 -> Fill(photons[1][0]);
+        
+	bdt_score = scores[best_pair];
+        
+	//cout << "m_gg_bdt = " << m_gg_bdt << endl;
+	
+	/*
+	// Get scores for other pairs
+	int other1 = (best_pair + 1) % 3;
+	int other2 = (best_pair + 2) % 3;
+	bdt_score_other1 = scores[other1];
+	bdt_score_other2 = scores[other2];
+        
+	// Check if correct (if truth available)
+	is_correct = 0;
+	if (is_signal == 1) {
+	    // You would need truth information about which pair is correct
+	    // This depends on your data
+	}
+	*/
+
+	//out_event = event_id;
+	//cout << out_event << endl;
+	outtree -> Fill();
+        
+	// BDT selection
+	hM_gg_BDT -> Fill(m_gg_bdt);
+	if (scores[best_pair] > 0.5) {
+	  n_found ++;
+	  hE1_BDT_good -> Fill(e1_bdt);
+	  hE2_BDT_good -> Fill(e2_bdt);
+	  hM_gg_BDT_good -> Fill(m_gg_bdt);
+	  hM3pi_BDT_good -> Fill(m3pi_bdt);
+
+	  //cout << m_gg_bdt << endl;
+	  
+	  bdt_indx = 1;
+	}
+	else {
+	  hE1_BDT_bad -> Fill(e1_bdt);
+	  hE2_BDT_bad -> Fill(e2_bdt);
+	  hM_gg_BDT_bad -> Fill(m_gg_bdt);
+	  hM3pi_BDT_bad -> Fill(m3pi_bdt);
+
+	  bdt_indx = 0;
+	}
+
+	// KLOE selection
+	if (recon_indx == 2 && bkg_indx == 1){//  true pi0 gg
+	  hE1_good -> Fill(photons[0][0]);
+	  hE2_good -> Fill(photons[1][0]);
+	  hM_gg_good -> Fill(m_gg);
+	  hM3pi_good -> Fill(m3pi);
+          
+	  evnt_good += 1;
+	  kloe_indx = 1;
+	}
+	else{// false pi0 gg
+	  hE1_bad -> Fill(photons[0][0]);
+	  hE2_bad -> Fill(photons[1][0]);
+	  hM_gg_bad -> Fill(m_gg);
+	  hM3pi_bad -> Fill(m3pi);
+          
+	  evnt_bad += 1;
+	  kloe_indx = 0;
+	} 
+	
+	evnt_KLOE += 1;
+
       } // end loop entries
       
       cout << "===============End Pi0 Selection=============" << endl;
 
       // Write histograms for this tree
+      he1 -> Write(); // permutations
+      he2 -> Write();
+      he3 -> Write();
+      hm_gg -> Write();
+      
+      hcos_theta -> Write();
+      hopen_angle -> Write();
+      hE_asym -> Write();
+      he_min_x_angle -> Write();
+      hE_diff -> Write();
+      hasym_x_angle -> Write();
+      
+      hM3pi_BDT -> Write(); // BDT selection
+      hM3pi_BDT_good -> Write();
+      hM3pi_BDT_bad -> Write();
+      
+      hM_gg_BDT -> Write(); 
+      hM_gg_BDT_good -> Write();
+      hM_gg_BDT_bad -> Write();
+      
+      hE1_BDT_good -> Write(); 
+      hE1_BDT_bad -> Write(); 
+      
+      hE2_BDT_good -> Write(); 
+      hE2_BDT_bad-> Write(); 
 
+      hE1 -> Write(); // KLOE selection
+      hE1_good -> Write(); 
+      hE1_bad -> Write(); 
+      
+      hE2 -> Write(); 
+      hE2_good -> Write(); 
+      hE2_bad -> Write(); 
+      
+      hM_gg -> Write(); 
+      hM_gg_good -> Write();
+      hM_gg_bad -> Write();
+      
+      hM3pi -> Write();
+      hM3pi_good -> Write();
+      hM3pi_bad -> Write();
+      
+      
       // Delete hist, canvases to avoid memory leak
       delete he1;
       delete he2;
@@ -503,7 +645,7 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       ch_nb ++;
       //cout << ch_nb << endl;
       
-      if (ch_nb > 0) {
+      if (ch_nb > 1) {
 	cout << ch_nb << ": " << objnm_tree << endl;
 	break;
       }
@@ -512,6 +654,7 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 
     outfile -> Write();
     outfile -> Close();
+    delete outfile;
     file -> Close();
     
   } // check input root file end
