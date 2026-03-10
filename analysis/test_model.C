@@ -9,104 +9,9 @@
 #include <TLegend.h>
 #include <TPaveText.h>
 #include <TMath.h>
+#include "helper.h"
 
 using namespace TMVA::Experimental;
-
-double pi = TMath::Pi();
-
-void legtextsize(TLegend* l, Double_t size) {
-  for(int i = 0 ; i < l -> GetListOfPrimitives() -> GetSize() ; i++) {
-    TLegendEntry *header = (TLegendEntry*)l->GetListOfPrimitives()->At(i);
-    header->SetTextSize(size);
-  }
-}
-
-//
-void PteAttr(TPaveText *pt) {
-
-  pt -> SetTextSize(0.04);
-  pt -> SetFillColor(0);
-  pt -> SetTextAlign(12);
-  pt -> SetBorderSize(0);
-}
-
-void format_h(TH1D* h, Int_t linecolor, Int_t width) {
-  h->SetLineColor(linecolor);
-  //cout << "histo format" << endl;
-  h->SetLineWidth(width);
-}
-
-void formatfill_h(TH1D* h, Int_t fillcolor, Int_t fillstyle) {
-  h -> SetFillStyle(fillstyle);
-  h -> SetFillColor(fillcolor);
-  h -> SetLineColor(0);
-}
-
-double get_cos_theta(int i_idx, int j_idx, double photons[3][4]){
-
-    double p1_mag = TMath::Sqrt(TMath::Max(0.0, 
-        photons[i_idx][1] * photons[i_idx][1] + 
-        photons[i_idx][2] * photons[i_idx][2] +
-        photons[i_idx][3] * photons[i_idx][3]) 
-    );
-
-    double p2_mag = TMath::Sqrt(TMath::Max(0.0,
-        photons[j_idx][1] * photons[j_idx][1] + 
-        photons[j_idx][2] * photons[j_idx][2] +
-        photons[j_idx][3] * photons[j_idx][3])
-    );
-
-    double dot = photons[i_idx][1] * photons[j_idx][1] + 
-    photons[i_idx][2] * photons[j_idx][2] +
-    photons[i_idx][3] * photons[j_idx][3];
-
-    double cos_theta = dot / (p1_mag * p2_mag + 1e-10);
-    cos_theta = TMath::Max(-1.0, TMath::Min(1.0, cos_theta));
-
-    return cos_theta;
-}
-
-//
-double inv_mass_4vector(int i_idx, int j_idx, double photons[3][4]){
-    double inv_mass = 0;
-
-    // Calculate total energy and momentum
-    double e = photons[i_idx][0] + photons[j_idx][0];
-    
-    double px = photons[i_idx][1] + photons[j_idx][1];
-    double py = photons[i_idx][2] + photons[j_idx][2];
-    double pz = photons[i_idx][3] + photons[j_idx][3];
-
-    double mass_square = e*e - (px*px + py*py + pz*pz);
-    
-    if (mass_square < 0 && mass_square > -1e-10) {
-        return 0;
-    }
-    
-    return (mass_square > 0) ? TMath::Sqrt(mass_square) : 0;
-
-}
-
-//
-double inv_3pimass_4vector(int i_idx, int j_idx, double photons[3][4], double trk[2][4]){
-    double inv_mass = 0;
-
-    // Calculate total energy and momentum
-    double e = photons[i_idx][0] + photons[j_idx][0] + trk[0][0] + trk[1][0];
-    
-    double px = photons[i_idx][1] + photons[j_idx][1] + trk[0][1] + trk[1][1];
-    double py = photons[i_idx][2] + photons[j_idx][2] + trk[0][2] + trk[1][2];
-    double pz = photons[i_idx][3] + photons[j_idx][3] + trk[0][3] + trk[1][3];
-
-    double mass_square = e*e - (px*px + py*py + pz*pz);
-    
-    if (mass_square < 0 && mass_square > -1e-8) {
-        return 0;
-    }
-    
-    return (mass_square > 0) ? TMath::Sqrt(mass_square) : 0;
-
-}
 
 void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.root",
                 const char* data_filename = "../data/kloe_small_sample.root"){
@@ -283,15 +188,19 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
         cout << "Tree has " << nentries << " entries" << endl;
 
         // Set branch addres for input features
-        double lagvalue_min_7C;
-        double E1, px1, py1, pz1;
-        double E2, px2, py2, pz2;
-        double E3, px3, py3, pz3;
-	double ppl_E, ppl_px, ppl_py, ppl_pz;
-        double pmi_E, pmi_px, pmi_py, pmi_pz;
+        double lagvalue_min_7C = 0., deltaE = 0., betapi0 = 0.,  angle_pi0gam12 = 0.;
+        double E1 = 0., px1 = 0., py1 = 0., pz1 = 0.;
+        double E2 = 0., px2 = 0., py2 = 0., pz2 = 0.;
+        double E3 = 0., px3 = 0., py3 = 0., pz3 = 0.;
+	double ppl_E = 0., ppl_px = 0., ppl_py = 0., ppl_pz = 0.;
+        double pmi_E = 0., pmi_px = 0., pmi_py = 0., pmi_pz = 0.;
         
         int bkg_indx, recon_indx;
 
+	tree -> SetBranchAddress("Br_deltaE", &deltaE);
+	tree -> SetBranchAddress("Br_angle_pi0gam12", &angle_pi0gam12);
+	tree -> SetBranchAddress("Br_betapi0", &betapi0);
+    
         tree -> SetBranchAddress("Br_lagvalue_min_7C", &lagvalue_min_7C);
         tree -> SetBranchAddress("Br_bkg_indx", &bkg_indx);
         tree -> SetBranchAddress("Br_recon_indx", &recon_indx);
@@ -359,11 +268,23 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
             // Cuts
             //cout << lagvalue_min_7C << endl;
             if (lagvalue_min_7C > 43) continue;
+	    //else if (deltaE > deltaE_cut) continue;
+	    //else if (angle_pi0gam12 > angle_cut) continue;
+	    //else if (betapi0 > GetFBeta(beta_cut, c0, c1, ppIM)) continue;
 
+	    //cout << angle_pi0gam12 << endl;
+	    //cout << betapi0 << endl;
+	    //cout << deltaE << endl;
+	    
+	    
             // Clean data
             if (TMath::IsNaN(E1) || TMath::IsNaN(E2) || TMath::IsNaN(E3)) continue;
             //if (!TMath::IsNaN(px1)) continue;
 
+	    //if (TMath::IsNaN(angle_pi0gam12)) {
+	    //  cout << angle_pi0gam12 << endl;
+	    //}
+	    
 	    // Store tracks
 	    double trk[2][4] = {
 	      {ppl_E, ppl_px, ppl_py, ppl_pz},
@@ -602,6 +523,12 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
         }
 
 
+	hM3pi -> Write();
+	hM3pi_good -> Write();
+	hM3pi_bad -> Write();
+	hM3pi_BDT_good -> Write();
+	hM3pi_BDT_bad -> Write();
+	
 	outfile -> Write();
 	outfile -> Close();
 	file -> Close();
@@ -741,17 +668,17 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
       hM3pi -> GetXaxis() -> SetTitleSize(0.04);
       
       hM3pi -> Draw();
-      hM3pi_good -> Draw("Same");
-      hM3pi_bad -> Draw("Same");
+      //hM3pi_good -> Draw("Same");
+      //hM3pi_bad -> Draw("Same");
       hM3pi_BDT_good -> Draw("Same");
       hM3pi_BDT_bad -> Draw("Same");
-      gPad->SetLogy(1); 
+      //gPad->SetLogy(1); 
       
       cv0 -> SaveAs("./bdt_gamma_sel_cv0.pdf");
       cv01 -> SaveAs("./bdt_gamma_sel_cv01.pdf");
 
-      delete cv0;
-      delete cv01;
+      //delete cv0;
+      //delete cv01;
       
       /*
 	TCanvas *c1 = new TCanvas("c1", "Photon Analysis", 1200, 900);
