@@ -134,7 +134,7 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       
       // Set branch addres for input features
       double lagvalue_min_7C = 0., deltaE = 0., betapi0 = 0.,  angle_pi0gam12 = 0.;
-      double ppIM = 0.;
+      double ppIM = 0., Eisr = 0.;
       double E1, px1, py1, pz1;
       double E2, px2, py2, pz2;
       double E3, px3, py3, pz3;
@@ -146,9 +146,10 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       tree -> SetBranchAddress("Br_deltaE", &deltaE);
       tree -> SetBranchAddress("Br_angle_pi0gam12", &angle_pi0gam12);
       tree -> SetBranchAddress("Br_betapi0", &betapi0);
-    
       tree -> SetBranchAddress("Br_lagvalue_min_7C", &lagvalue_min_7C);
+
       tree -> SetBranchAddress("Br_ppIM", &ppIM);
+      tree -> SetBranchAddress("Br_Eisr", &Eisr);
 	
       tree -> SetBranchAddress("Br_bkg_indx", &bkg_indx);
       tree -> SetBranchAddress("Br_recon_indx", &recon_indx);
@@ -180,6 +181,21 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       
       
       // Define histos
+      //ppIM:
+      const double ppIM_min = 200;
+      const double ppIM_max = 700;
+      const double ppIM_sigma = 2.30;
+      const double sfw2d_sigma_nb = 1;
+      const int ppIM_bin = TMath::Nint((ppIM_max - ppIM_min) / sfw2d_sigma_nb / ppIM_sigma);
+
+      //Eisr:
+      const double Eisr_min = 50;
+      const double Eisr_max = 500;
+      const double Eisr_sigma = 2.48;
+      const int Eisr_bin = TMath::Nint((Eisr_max - Eisr_min) / sfw2d_sigma_nb / Eisr_sigma);
+
+
+      // Permuations
       TH1D* he1 = new TH1D(Form("he1_%s", objnm_tree.Data()), "", 200, 0, 500);
       TH1D* he2 = new TH1D(Form("he2_%s", objnm_tree.Data()), "", 200, 0, 500);
       TH1D* he3 = new TH1D(Form("he3_%s", objnm_tree.Data()), "", 200, 0, 500);
@@ -192,37 +208,45 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       TH1D* hE_diff = new TH1D(Form("hE_diff_%s", objnm_tree.Data()), "", 200, 0, 500);
       TH1D* hasym_x_angle = new TH1D(Form("hasym_x_angle_%s", objnm_tree.Data()), "", 200, 0, pi);
       
-      TH1D* hM3pi_BDT = new TH1D(Form("hM3pi_BDT_%s", objnm_tree.Data()), "", 200, 400, 1000);
-      TH1D* hM3pi_BDT_good = new TH1D(Form("hM3pi_BDT_good_%s", objnm_tree.Data()), "", 200, 400, 1000);
-      TH1D* hM3pi_BDT_bad = new TH1D(Form("hM3pi_BDT_bad_%s", objnm_tree.Data()), "", 200, 400, 1000);
-
-      
-      TH1D* hM_gg_BDT = new TH1D(Form("hM_gg_BDT_%s", objnm_tree.Data()), "", 200, 50, 200); 
-      TH1D* hM_gg_BDT_good = new TH1D(Form("hM_gg_BDT_good_%s", objnm_tree.Data()), "", 200, 50, 200);
-      TH1D* hM_gg_BDT_bad = new TH1D(Form("hM_gg_BDT_bad_%s", objnm_tree.Data()), "", 200, 50, 200);
-      
+      // E1
       TH1D* hE1_BDT_good = new TH1D(Form("hE1_BDT_good_%s", objnm_tree.Data()), "", 200, 0, 500); 
       TH1D* hE1_BDT_bad = new TH1D(Form("hE1_BDT_bad_%s", objnm_tree.Data()), "", 200, 0, 500); 
-      
-      TH1D* hE2_BDT_good = new TH1D(Form("hE2_BDT_good_%s", objnm_tree.Data()), "", 200, 0, 500);
-      TH1D* hE2_BDT_bad = new TH1D(Form("hE2_BDT_bad_%s", objnm_tree.Data()), "", 200, 0, 500); 
-      
       TH1D* hE1 = new TH1D(Form("hE1_%s", objnm_tree.Data()), "", 200, 0, 500); // KLOE selection
       TH1D* hE1_good = new TH1D(Form("hE1_good_%s", objnm_tree.Data()), "", 200, 0, 500); 
       TH1D* hE1_bad = new TH1D(Form("hE1_bad_%s", objnm_tree.Data()), "", 200, 0, 500); 
-      
+
+      // E2
+      TH1D* hE2_BDT_good = new TH1D(Form("hE2_BDT_good_%s", objnm_tree.Data()), "", 200, 0, 500);
+      TH1D* hE2_BDT_bad = new TH1D(Form("hE2_BDT_bad_%s", objnm_tree.Data()), "", 200, 0, 500);
+
       TH1D* hE2 = new TH1D(Form("hE2_%s", objnm_tree.Data()), "", 200, 0, 500); 
       TH1D* hE2_good = new TH1D(Form("hE2_good_%s", objnm_tree.Data()), "", 200, 0, 500); 
       TH1D* hE2_bad = new TH1D(Form("hE2_bad_%s", objnm_tree.Data()), "", 200, 0, 500);
 
+      // M_gg
+      TH1D* hM_gg_BDT = new TH1D(Form("hM_gg_BDT_%s", objnm_tree.Data()), "", 200, 50, 200); 
+      TH1D* hM_gg_BDT_good = new TH1D(Form("hM_gg_BDT_good_%s", objnm_tree.Data()), "", 200, 50, 200);
+      TH1D* hM_gg_BDT_bad = new TH1D(Form("hM_gg_BDT_bad_%s", objnm_tree.Data()), "", 200, 50, 200);
       
       TH1D* hM_gg = new TH1D(Form("hM_gg_%s", objnm_tree.Data()), "", 200, 50, 200); 
       TH1D* hM_gg_good = new TH1D(Form("hM_gg_good_%s", objnm_tree.Data()), "", 200, 50, 200);
       TH1D* hM_gg_bad = new TH1D(Form("hM_gg_bad_%s", objnm_tree.Data()), "", 200, 50, 200);
 
+      // m3pi
       TH1D* hM3pi = new TH1D(Form("hM3pi_%s", objnm_tree.Data()), "", 200, 400, 1000);
       TH1D* hM3pi_good = new TH1D(Form("hM3pi_good_%s", objnm_tree.Data()), "", 200, 400, 1000);
       TH1D* hM3pi_bad = new TH1D(Form("hM3pi_bad_%s", objnm_tree.Data()), "", 200, 400, 1000);
+
+      TH1D* hM3pi_BDT = new TH1D(Form("hM3pi_BDT_%s", objnm_tree.Data()), "", 200, 400, 1000);
+      TH1D* hM3pi_BDT_good = new TH1D(Form("hM3pi_BDT_good_%s", objnm_tree.Data()), "", 200, 400, 1000);
+      TH1D* hM3pi_BDT_bad = new TH1D(Form("hM3pi_BDT_bad_%s", objnm_tree.Data()), "", 200, 400, 1000);
+
+      // sfw2d
+      TH2D* h2d_sfw_BDT_good = new TH2D(Form("h2d_sfw_BDT_good_%s", objnm_tree.Data()), "", ppIM_bin, ppIM_min, ppIM_max, Eisr_bin, Eisr_min, Eisr_max);
+      TH2D* h2d_sfw_BDT_bad = new TH2D(Form("h2d_sfw_BDT_bad_%s", objnm_tree.Data()), "", ppIM_bin, ppIM_min, ppIM_max, Eisr_bin, Eisr_min, Eisr_max);
+      
+      //hsfw2d_tmp -> Sumw2();
+
       
       // Add branches
       outtree -> Branch("event", &out_event);
@@ -246,7 +270,7 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	tree -> GetEntry(i);
 
 	// Cuts
-	//cout << lagvalue_min_7C << endl;
+	
 	if (lagvalue_min_7C > chi2_cut) continue;
 	else if (deltaE > deltaE_cut) continue;
 	else if (angle_pi0gam12 > angle_cut) continue;
@@ -255,6 +279,10 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	// Clean data
 	if (TMath::IsNaN(E1) || TMath::IsNaN(E2) || TMath::IsNaN(E3)) continue;
 	//if (!TMath::IsNaN(px1)) continue;
+
+	//cout << lagvalue_min_7C << endl;
+	//cout << ppIM << endl;
+	//cout << Eisr << endl;
 	
 	// Store tracks
 	double trk[2][4] = {
@@ -448,8 +476,9 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	  hE2_BDT_good -> Fill(e2_bdt);
 	  hM_gg_BDT_good -> Fill(m_gg_bdt);
 	  hM3pi_BDT_good -> Fill(m3pi_bdt);
-
+	  h2d_sfw_BDT_good -> Fill(ppIM, Eisr);
 	  //cout << m_gg_bdt << endl;
+	  //cout << ppIM << ", " << Eisr << endl;
 	  
 	  bdt_indx = 1;
 	}
@@ -458,7 +487,8 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	  hE2_BDT_bad -> Fill(e2_bdt);
 	  hM_gg_BDT_bad -> Fill(m_gg_bdt);
 	  hM3pi_BDT_bad -> Fill(m3pi_bdt);
-
+	  h2d_sfw_BDT_bad -> Fill(ppIM, Eisr);
+	  
 	  bdt_indx = 0;
 	}
 
@@ -532,7 +562,9 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       hM3pi -> Write();
       hM3pi_good -> Write();
       hM3pi_bad -> Write();
-      
+
+      h2d_sfw_BDT_good -> Write();
+      h2d_sfw_BDT_bad -> Write();
 
       // Delete hist, canvases to avoid memory leak
       delete he1;
@@ -576,6 +608,9 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       delete hM3pi;
       delete hM3pi_good;
       delete hM3pi_bad;
+
+      delete h2d_sfw_BDT_good;
+      delete h2d_sfw_BDT_bad;
       
       ch_nb ++;
       //cout << ch_nb << endl;

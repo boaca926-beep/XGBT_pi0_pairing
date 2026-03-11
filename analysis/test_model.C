@@ -195,7 +195,9 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
         }
 
         // Get the tree
-        TTree* tree = (TTree*)file -> Get("TISR3PI_SIG");
+        //TTree* tree = (TTree*)file -> Get("TISR3PI_SIG");
+	TTree* tree = (TTree*)file -> Get("TETAGAM");
+        
         if (!tree) {
             cout << "Error: Cannot find 'tree' in file" << endl;
             file -> Close();
