@@ -10,6 +10,26 @@
 #include <TPaveText.h>
 #include <TMath.h>
 #include "helper.h"
+using namespace TMVA::Experimental;
+
+const double chi2_cut = 43;
+const double angle_cut = 138;
+const double deltaE_cut = -150;
+const double beta_cut = 1.98;
+const double c0 = 0.11;
+const double c1 = 0.8;
+
+//
+double GetFBeta(double a1_temp, double b1_temp, double c1_temp, double m2pi_temp) {
+  m2pi_temp = m2pi_temp / 1000.;
+  double fbeta = a1_temp + 1. / (exp((m2pi_temp - c1_temp) / b1_temp) - 1.);
+  /*cout << "a1 = " << a1 << ", a2 = " << a2 << "\n"
+    << "b1 = " << b1 << ", b2 = " << b2 << "\n"
+    << "c1 = " << c1 << ", c2 = " << c2 << "\n\n";*/
+  //cout << "fbeta = " << fbeta << endl;
+  return fbeta;
+}
+
 
 void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOMB.root",
 		   const char* data_filename = "../data/kloe_small_sample.root"){
@@ -113,7 +133,8 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       cout << "Tree has " << nentries << " entries" << endl;
       
       // Set branch addres for input features
-      double lagvalue_min_7C;
+      double lagvalue_min_7C = 0., deltaE = 0., betapi0 = 0.,  angle_pi0gam12 = 0.;
+      double ppIM = 0.;
       double E1, px1, py1, pz1;
       double E2, px2, py2, pz2;
       double E3, px3, py3, pz3;
@@ -121,8 +142,14 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       double pmi_E, pmi_px, pmi_py, pmi_pz;
       
       int bkg_indx, recon_indx;
-      
+
+      tree -> SetBranchAddress("Br_deltaE", &deltaE);
+      tree -> SetBranchAddress("Br_angle_pi0gam12", &angle_pi0gam12);
+      tree -> SetBranchAddress("Br_betapi0", &betapi0);
+    
       tree -> SetBranchAddress("Br_lagvalue_min_7C", &lagvalue_min_7C);
+      tree -> SetBranchAddress("Br_ppIM", &ppIM);
+	
       tree -> SetBranchAddress("Br_bkg_indx", &bkg_indx);
       tree -> SetBranchAddress("Br_recon_indx", &recon_indx);
       
@@ -220,7 +247,10 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 
 	// Cuts
 	//cout << lagvalue_min_7C << endl;
-	if (lagvalue_min_7C > 43) continue;
+	if (lagvalue_min_7C > chi2_cut) continue;
+	else if (deltaE > deltaE_cut) continue;
+	else if (angle_pi0gam12 > angle_cut) continue;
+	else if (betapi0 > GetFBeta(beta_cut, c0, c1, ppIM)) continue;
 	
 	// Clean data
 	if (TMath::IsNaN(E1) || TMath::IsNaN(E2) || TMath::IsNaN(E3)) continue;

@@ -21,9 +21,9 @@ TCanvas *cv_plot(TH1D* h_all, TH1D* h_bdt, TH1D* h_good_bdt, TH1D* h_bad_bdt, TS
     h_all -> GetXaxis() -> SetRangeUser(xmin, xmax); 
    
     h_all -> Draw("E");
-    h_good_bdt -> Draw("Same");
-    h_bad_bdt -> Draw("Same");
-    h_bdt -> Draw("Same");
+    h_good_bdt -> Draw("ESame");
+    h_bad_bdt -> Draw("ESame");
+    h_bdt -> Draw("ESame");
     //gPad->SetLogy(1); 
       
     TLegend *legd_cv = new TLegend(0.5, 0.55, 0.9, 0.9);
@@ -33,9 +33,10 @@ TCanvas *cv_plot(TH1D* h_all, TH1D* h_bdt, TH1D* h_good_bdt, TH1D* h_bad_bdt, TS
     legd_cv -> SetBorderSize(0);
     legd_cv -> SetNColumns(1);
     
-    legd_cv -> AddEntry(h_all, "KLOE Selected", "l");
-    legd_cv -> AddEntry(h_good_bdt, "BDT Selected", "l");
-    legd_cv -> AddEntry(h_bad_bdt, "BDT Comb. BKG", "f");
+    legd_cv -> AddEntry(h_all, "KLOE", "lep");
+    legd_cv -> AddEntry(h_bdt, "BDT", "lep");
+    legd_cv -> AddEntry(h_good_bdt, "BDT Good", "lep");
+    legd_cv -> AddEntry(h_bad_bdt, "BDT Comb. BKG", "lep");
     
     legd_cv -> Draw("Same");
     
@@ -44,7 +45,7 @@ TCanvas *cv_plot(TH1D* h_all, TH1D* h_bdt, TH1D* h_good_bdt, TH1D* h_bad_bdt, TS
     return cv0;
 }
 
-void plot_bdt(const char* input_filename = "./output_main_bdt.root") {
+void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 
   gErrorIgnoreLevel = kError;
   TGaxis::SetMaxDigits(4);
@@ -110,10 +111,13 @@ void plot_bdt(const char* input_filename = "./output_main_bdt.root") {
 
     format_h(hM3pi_TDATA, 1, 2);
     format_h(hM3pi_BDT_TDATA, 2, 2);
-    format_h(hM3pi_BDT_good_TDATA, 3, 2);
-    formatfill_h(hM3pi_BDT_bad_TDATA, 2, 3001);
+    format_h(hM3pi_BDT_good_TDATA, 4, 2);
+    format_h(hM3pi_BDT_bad_TDATA, 2, 2);
 
     // Plot
+    // Create a list of histos
+    
+    // Plot KLOE results, hM3pi MC and data
     TCanvas *cv_3pi = cv_plot(hM3pi_TDATA, hM3pi_BDT_TDATA, hM3pi_BDT_good_TDATA, hM3pi_BDT_bad_TDATA, "Events", "M_{3#pi} [MeV/c^{2}]");
     
     //int nentries = outtree -> GetEntries();
