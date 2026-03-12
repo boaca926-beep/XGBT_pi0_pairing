@@ -134,7 +134,7 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       
       // Set branch addres for input features
       double lagvalue_min_7C = 0., deltaE = 0., betapi0 = 0.,  angle_pi0gam12 = 0.;
-      double ppIM = 0., Eisr = 0.;
+      double IM3pi = 0., ppIM = 0., Eisr = 0.;
       double E1, px1, py1, pz1;
       double E2, px2, py2, pz2;
       double E3, px3, py3, pz3;
@@ -148,6 +148,7 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       tree -> SetBranchAddress("Br_betapi0", &betapi0);
       tree -> SetBranchAddress("Br_lagvalue_min_7C", &lagvalue_min_7C);
 
+      tree -> SetBranchAddress("Br_IM3pi_7C", &IM3pi);
       tree -> SetBranchAddress("Br_ppIM", &ppIM);
       tree -> SetBranchAddress("Br_Eisr", &Eisr);
 	
@@ -182,15 +183,15 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       
       // Define histos
       //ppIM:
-      const double ppIM_min = 200;
-      const double ppIM_max = 700;
+      const double ppIM_min = 250.; //200;
+      const double ppIM_max = 650.; //700;
       const double ppIM_sigma = 2.30;
       const double sfw2d_sigma_nb = 1;
       const int ppIM_bin = TMath::Nint((ppIM_max - ppIM_min) / sfw2d_sigma_nb / ppIM_sigma);
 
       //Eisr:
-      const double Eisr_min = 50;
-      const double Eisr_max = 500;
+      const double Eisr_min = 140.; //50;
+      const double Eisr_max = 250.; //500;
       const double Eisr_sigma = 2.48;
       const int Eisr_bin = TMath::Nint((Eisr_max - Eisr_min) / sfw2d_sigma_nb / Eisr_sigma);
 
@@ -275,6 +276,7 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	else if (deltaE > deltaE_cut) continue;
 	else if (angle_pi0gam12 > angle_cut) continue;
 	else if (betapi0 > GetFBeta(beta_cut, c0, c1, ppIM)) continue;
+	else if (IM3pi > 850. || IM3pi < 750.) continue;
 	
 	// Clean data
 	if (TMath::IsNaN(E1) || TMath::IsNaN(E2) || TMath::IsNaN(E3)) continue;
@@ -283,6 +285,7 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	//cout << lagvalue_min_7C << endl;
 	//cout << ppIM << endl;
 	//cout << Eisr << endl;
+	//cout << IM3pi << endl;
 	
 	// Store tracks
 	double trk[2][4] = {

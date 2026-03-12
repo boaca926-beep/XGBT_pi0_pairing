@@ -1,4 +1,5 @@
 #include "helper.h"
+#include "sfw2d.h"
 
 const double pt1_x0 = 0.4;
 const double pt1_x1 = 0.7;
@@ -211,16 +212,16 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     file -> cd(); // Make sure we're in the output file
 
     // TH2D
-    TH2D *h2d_sfw_BDT_good_TEEG = (TH2D *) file -> Get("h2d_sfw_BDT_good_TEEG");
     TH2D *h2d_sfw_BDT_good_TDATA = (TH2D *) file -> Get("h2d_sfw_BDT_good_TDATA");
-    TH2D *h2d_sfw_BDT_good_TISR3PI_SIG = (TH2D *) file -> Get("h2d_sfw_BDT_good_TISR3PI_SIG");
-    TH2D *h2d_sfw_BDT_good_TOMEGAPI = (TH2D *) file -> Get("h2d_sfw_BDT_good_TOMEGAPI");
-    TH2D *h2d_sfw_BDT_good_TKPM = (TH2D *) file -> Get("h2d_sfw_BDT_good_TKPM");
-    TH2D *h2d_sfw_BDT_good_TKSL = (TH2D *) file -> Get("h2d_sfw_BDT_good_TKSL");
+    TH2D *h2d_sfw_BDT_good_TISR3PI_SIG = (TH2D *) file -> Get("h2d_sfw_BDT_good_TISR3PI_SIG"); // sig mc 1
+    TH2D *h2d_sfw_BDT_good_TEEG = (TH2D *) file -> Get("h2d_sfw_BDT_good_TEEG"); // bkg 1, mc 2
+    TH2D *h2d_sfw_BDT_good_TOMEGAPI = (TH2D *) file -> Get("h2d_sfw_BDT_good_TOMEGAPI"); // bkg 2, mc 3
+    TH2D *h2d_sfw_BDT_good_TKPM = (TH2D *) file -> Get("h2d_sfw_BDT_good_TKPM"); // bkg 3, mc 4
+    TH2D *h2d_sfw_BDT_good_TKSL = (TH2D *) file -> Get("h2d_sfw_BDT_good_TKSL"); // bkg 4, mc 5
     //TH2D *h2d_sfw_BDT_good_T3PIGAM = (TH2D *) file -> Get("h2d_sfw_BDT_good_T3PIGAM");
-    TH2D *h2d_sfw_BDT_good_TRHOPI = (TH2D *) file -> Get("h2d_sfw_BDT_good_TRHOPI");
-    TH2D *h2d_sfw_BDT_good_TETAGAM = (TH2D *) file -> Get("h2d_sfw_BDT_good_TETAGAM");
-    TH2D *h2d_sfw_BDT_good_TBKGREST = (TH2D *) file -> Get("h2d_sfw_BDT_good_TBKGREST");
+    TH2D *h2d_sfw_BDT_good_TRHOPI = (TH2D *) file -> Get("h2d_sfw_BDT_good_TRHOPI"); // bkg 5, mc 6
+    TH2D *h2d_sfw_BDT_good_TETAGAM = (TH2D *) file -> Get("h2d_sfw_BDT_good_TETAGAM"); // bkg 6, mc 7
+    TH2D *h2d_sfw_BDT_good_TBKGREST = (TH2D *) file -> Get("h2d_sfw_BDT_good_TBKGREST"); // bkg 7, mc 8
 
     TH2D * h2d_sfw_BDT_good_MCREST;
     TH2D * h2d_sfw_BDT_good_MCSUM;
@@ -283,8 +284,148 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     format_h(hM3pi_BDT_TDATA, 2, 2);
     format_h(hM3pi_BDT_good_TDATA, 4, 2);
     format_h(hM3pi_BDT_bad_TDATA, 2, 2);
-    
 
+    // Preparing MC normalization
+    // define and initialize variable variables
+    double nb_data = 0.;
+    double nb_isr3pi = 0.;
+    double nb_eeg = 0.;
+    double nb_omegapi = 0.;
+    double nb_kpm = 0.;
+    double nb_ksl = 0.;
+    double nb_rhopi = 0.;
+    double nb_etagam = 0.;
+    double nb_mcrest = 0.;
+    double nb_mc = 0.;
+
+    // fractions
+    double fisr3pi = 0.,   fisr3pi_err = 0.;
+    double feeg = 0.,      feeg_err = 0.;
+    double fomegapi = 0.,  fomegapi_err = 0.;
+    double fkpm = 0.,      fkpm_err = 0.;
+    double fksl = 0.,      fksl_err = 0.;
+    double frhopi = 0.,    frhopi_err = 0.;
+    double fetagam = 0.,   fetagam_err = 0.;
+    double fmcrest = 0.,   fmcrest_err = 0.;
+
+    // scaling factors
+    double isr3pi_sfw = 0,  isr3pi_sfw_err = 0; 
+    double eeg_sfw = 0,     eeg_sfw_err = 0; 
+    double omegapi_sfw = 0, omegapi_sfw_err = 0; 
+    double kpm_sfw = 0,     kpm_sfw_err = 0; 
+    double ksl_sfw = 0,     ksl_sfw_err = 0; 
+    double rhopi_sfw = 0,   rhopi_sfw_err = 0; 
+    double etagam_sfw = 0,  etagam_sfw_err = 0; 
+    double mcrest_sfw  = 0, mcrest_sfw_err = 0; 
+
+    // define tree
+    TTree* TSFW2D = new TTree("TSFW2D", "recreate");
+    TSFW2D -> SetAutoSave(0);
+    
+    TSFW2D -> Branch("Br_nb_data", &nb_data, "Br_nb_data/D");
+    TSFW2D -> Branch("Br_nb_eeg", &nb_eeg, "Br_nb_eeg/D");
+    TSFW2D -> Branch("Br_nb_ksl", &nb_ksl, "Br_nb_ksl/D");
+    TSFW2D -> Branch("Br_nb_omegapi", &nb_omegapi, "Br_nb_omegapi/D");
+    TSFW2D -> Branch("Br_nb_etagam", &nb_etagam, "Br_nb_etagam/D");
+    TSFW2D -> Branch("Br_nb_isr3pi", &nb_isr3pi, "Br_nb_isr3pi/D");
+    TSFW2D -> Branch("Br_nb_mcrest", &nb_mcrest, "Br_nb_mcrest/D");
+
+    /*
+      TH2D *h2d_sfw_BDT_good_TDATA       // data, mc 0
+      TH2D *h2d_sfw_BDT_good_TISR3PI_SIG // sig, mc 1
+      TH2D *h2d_sfw_BDT_good_TEEG        // bkg1, mc 2
+      TH2D *h2d_sfw_BDT_good_TOMEGAPI    // bkg2, mc 3
+      TH2D *h2d_sfw_BDT_good_TKPM        // bkg3, mc 4
+      TH2D *h2d_sfw_BDT_good_TKSL        // bkg4, mc 5
+      TH2D *h2d_sfw_BDT_good_TRHOPI      // bkg5, mc 6
+      TH2D *h2d_sfw_BDT_good_TETAGAM     // bkg6, mc 7
+      TH2D *h2d_sfw_BDT_good_TBKGREST    // bkg7, mc 8
+      h2d_sfw_BDT_good_MCSUM
+    */
+
+    //h2d_sfw_BDT_good_TDATA -> Draw();
+    //h2d_sfw_BDT_good_TISR3PI_SIG -> Draw();
+    //h2d_sfw_BDT_good_TEEG -> Draw();
+    //h2d_sfw_BDT_good_TOMEGAPI -> Draw();
+    //h2d_sfw_BDT_good_TKPM -> Draw();
+    //h2d_sfw_BDT_good_TKSL -> Draw();
+    //h2d_sfw_BDT_good_TRHOPI -> Draw();
+    //h2d_sfw_BDT_good_TETAGAM -> Draw();
+    //h2d_sfw_BDT_good_TBKGREST -> Draw();
+    h2d_sfw_BDT_good_MCSUM -> Draw();
+    
+    // loop over histos
+    int evnt_indx = 0;
+    
+    for (int i = 1; i <= h2d_sfw_BDT_good_TDATA -> ProjectionX() -> GetNbinsX(); i ++ ) {
+
+      for (int j = 1; j <= h2d_sfw_BDT_good_TDATA -> ProjectionY() -> GetNbinsX(); j ++ ) {
+
+	evnt_indx += 1;
+	
+	// data
+	nb_data = h2d_sfw_BDT_good_TDATA -> GetBinContent(i, j);
+	nb_data_sum += nb_data;
+
+	//cout << i << ", " << j << ", " << nb_data << endl;
+
+	// isr3pi
+	nb_isr3pi = h2d_sfw_BDT_good_TISR3PI_SIG -> GetBinContent(i, j);
+	nb_isr3pi_sum += nb_isr3pi;
+
+	// eeg
+	nb_eeg = h2d_sfw_BDT_good_TEEG -> GetBinContent(i, j);
+	nb_eeg_sum += nb_eeg;
+
+	// omegapi
+	nb_omegapi = h2d_sfw_BDT_good_TOMEGAPI -> GetBinContent(i, j);
+	nb_omegapi_sum += nb_omegapi;
+
+	// kpm
+	nb_kpm = h2d_sfw_BDT_good_TKPM -> GetBinContent(i, j);
+	nb_kpm_sum += nb_kpm;
+
+	// ksl
+	nb_ksl = h2d_sfw_BDT_good_TKSL -> GetBinContent(i, j);
+	nb_ksl_sum += nb_ksl;
+	  
+	// rhopi
+	nb_rhopi = h2d_sfw_BDT_good_TRHOPI -> GetBinContent(i, j);
+	nb_rhopi_sum += nb_rhopi;
+
+	// etagam
+	nb_etagam = h2d_sfw_BDT_good_TETAGAM -> GetBinContent(i, j);
+	nb_etagam_sum += nb_etagam;
+
+	// mcrest
+	nb_mcrest = h2d_sfw_BDT_good_MCREST -> GetBinContent(i, j);
+	nb_mcrest_sum += nb_mcrest;
+
+	// mcsum
+	nb_mc = h2d_sfw_BDT_good_MCSUM -> GetBinContent(i, j);
+	nb_mcsum += nb_mc;
+
+	//
+	//if (evnt_indx > 1e3) break;
+	
+      }
+      
+    }
+
+    cout << "nb_data_sum = " << nb_data_sum << "\n"
+	 << "nb_isr3pi_sum = " << nb_isr3pi_sum << "\n"
+    	 << "nb_eeg_sum = " << nb_eeg_sum << "\n"
+	 << "nb_omegapi_sum = " << nb_omegapi_sum << "\n"
+	 << "nb_kpm_sum = " << nb_kpm_sum << "\n"
+	 << "nb_ksl_sum = " << nb_ksl_sum << "\n"
+	 << "nb_rhopi_sum = " << nb_rhopi_sum << "\n"
+	 << "nb_etagam_sum = " << nb_etagam_sum << "\n"
+	 << "nb_mcrest_sum = " << nb_mcrest_sum << "\n"
+	 << "nb_mcsum = " << nb_mcsum << ", checked = " << nb_isr3pi_sum + nb_eeg_sum + nb_omegapi_sum + nb_kpm_sum + nb_ksl_sum + nb_rhopi_sum + nb_etagam_sum  + nb_mcrest_sum << "\n";
+
+      //<< "nb_mcsum = " << nb_mcsum << ", checked = " << nb_isr3pi_sum + nb_eeg_sum + nb_omegapi_sum + nb_kpm_sum + nb_ksl_sum + nb_rhopi_sum + nb_etagam_sum + nb_mcrest_sum << "\n";
+	 
+    /*
     // Plot KLOE results, hM3pi MC and data
     hM3pi_TDATA -> Draw("E");
     hM3pi_bad_TDATA -> Draw("Same");
@@ -301,7 +442,8 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     TCanvas *cv_etagam = plot_sfw("TETAGAM", "etagam", h2d_sfw_BDT_good_TETAGAM, "#eta#gamma");
     TCanvas *cv_data = plot_sfw("TDATA", "data", h2d_sfw_BDT_good_TDATA, "Data");
     TCanvas *cv_mcsum_noeta = plot_sfw("MCSUM_NOETA", "MC sum (no etagam)", h2d_sfw_BDT_good_MCSUM_NOETA, "Others");
-
+    */
+    
     /*
     cv_m3pi_data -> SaveAs("./plots/cv_m3pi_data.pdf");
     cv_m3pi_isr3pi -> SaveAs("./plots/cv_m3pi_isr3pi.pdf");
@@ -312,6 +454,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     cv_data -> SaveAs("./plots/cv_sfw2d_TDATA.pdf");
     */
 
+    /*
     cv_m3pi_data -> SaveAs("cv_m3pi_data.pdf");
     cv_m3pi_isr3pi -> SaveAs("cv_m3pi_isr3pi.pdf");
       
@@ -319,6 +462,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     cv_etagam -> SaveAs("cv_sfw2d_TETAGAM.pdf");
     cv_mcsum_noeta -> SaveAs("cv_sfw2d_TMCSUM_NOETA.pdf");
     cv_data -> SaveAs("cv_sfw2d_TDATA.pdf");
+    */
     
   }// end check input file existence.
 
