@@ -503,6 +503,8 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
           
 	  evnt_good += 1;
 	  kloe_indx = 1;
+
+	  
 	}
 	else{// false pi0 gg
 	  hE1_bad -> Fill(photons[0][0]);

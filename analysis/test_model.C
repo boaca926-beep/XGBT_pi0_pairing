@@ -196,7 +196,7 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
 
         // Get the tree
         //TTree* tree = (TTree*)file -> Get("TISR3PI_SIG");
-	TTree* tree = (TTree*)file -> Get("TETAGAM");
+	TTree* tree = (TTree*)file -> Get("TDATA");
         
         if (!tree) {
             cout << "Error: Cannot find 'tree' in file" << endl;
@@ -533,6 +533,8 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
             
 		evnt_good += 1;
 		kloe_indx = 1;
+
+		cout << recon_indx << endl;
             }
             else{// false pi0 gg
                 hE1_bad -> Fill(photons[0][0]);
@@ -542,6 +544,8 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
             
 		evnt_bad += 1;
 		kloe_indx = 0;
+
+		cout << recon_indx << endl;
             } 
 
 	    evnt_KLOE += 1;

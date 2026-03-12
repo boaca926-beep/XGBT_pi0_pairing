@@ -17,7 +17,7 @@ double getbinwidth(TH1D* h) {
   return width;
 }
 
-TCanvas *plot_cv(const TString hist_type, const TString cv_nm, TH2D *h2d, const TString pt_str)
+TCanvas *plot_sfw(const TString hist_type, const TString cv_nm, TH2D *h2d, const TString pt_str)
 {
 
   TH1D *h2d_projx = h2d -> ProjectionX();
@@ -79,66 +79,79 @@ TCanvas *plot_cv(const TString hist_type, const TString cv_nm, TH2D *h2d, const 
   
 }
 
-TCanvas *cv_plot(TH1D* h_kloe, TH1D* h_bdt, TH1D* h_good_bdt, TH1D* h_bad_bdt, TString y_title, TString x_title, const TString sample_type, const TString cv_title) {
+TCanvas *cv_plot(const TString hist_type, TH1D* h_kloe, TH1D* h_good_kloe, TH1D* h_bad_kloe, TH1D* h_bdt, TH1D* h_good_bdt, TH1D* h_bad_bdt, TString y_title, TString x_title, const TString sample_type, const TString cv_title) {
 
-  TCanvas *cv = new TCanvas("c1", cv_title, 700, 600);
-    cv -> SetLeftMargin(0.1);
-    cv -> SetBottomMargin(0.1);//0.007
+  TCanvas *cv = new TCanvas("cv_" + hist_type, cv_title, 1400, 800);
+  cv -> SetLeftMargin(0.1);
+  cv -> SetBottomMargin(0.1);//0.007
+  
+  double ymax = h_kloe -> GetBinContent(h_kloe -> GetMaximumBin());
+  const double xmin = 0., xmax = 1000.;
+  
+  //const double ymax = 300.;
+  //const double xmin = 650., xmax = 1000.;
+  
+  h_kloe -> GetYaxis() -> SetTitle(y_title);
+  h_kloe -> GetYaxis() -> CenterTitle();
+  h_kloe -> GetYaxis() -> SetTitleSize(0.04);
+  h_kloe -> GetYaxis() -> SetNdivisions(505);
+  h_kloe -> GetYaxis() -> SetRangeUser(0.1, ymax * 1.5); 
+  h_kloe -> GetXaxis() -> SetTitle(x_title);
+  h_kloe -> GetXaxis() -> CenterTitle();
+  h_kloe -> GetXaxis() -> SetTitleSize(0.04);
+  h_kloe -> GetXaxis() -> SetRangeUser(xmin, xmax); 
+  
+  gPad->SetLogy(1); 
+  
+  TLegend *legd_cv = new TLegend(0.15, 0.5, 0.6, 0.9);
+  
+  legd_cv -> SetTextFont(132);
+  legd_cv -> SetFillStyle(0);
+  legd_cv -> SetBorderSize(0);
+  legd_cv -> SetNColumns(1);
 
-    double ymax = h_kloe -> GetBinContent(h_kloe -> GetMaximumBin());
-    const double xmin = 0., xmax = 1000.;
+  legd_cv -> AddEntry(h_kloe, "#chi^{2}_{m_{#gamma#gamma}} Selection", "lep");
+  
+  
+  if (sample_type == "Data") {
+    h_kloe -> Draw("E");
+    //h_good_kloe -> Draw("Same");
+    //h_bad_kloe -> Draw("Same");
     
-    //const double ymax = 300.;
-    //const double xmin = 650., xmax = 1000.;
-    
-    h_kloe -> GetYaxis() -> SetTitle(y_title);
-    h_kloe -> GetYaxis() -> CenterTitle();
-    h_kloe -> GetYaxis() -> SetTitleSize(0.04);
-    h_kloe -> GetYaxis() -> SetNdivisions(505);
-    h_kloe -> GetYaxis() -> SetRangeUser(0.1, ymax * 1.5); 
-    h_kloe -> GetXaxis() -> SetTitle(x_title);
-    h_kloe -> GetXaxis() -> CenterTitle();
-    h_kloe -> GetXaxis() -> SetTitleSize(0.04);
-    h_kloe -> GetXaxis() -> SetRangeUser(xmin, xmax); 
+    h_bdt -> Draw("ESame");
+    h_good_bdt -> Draw("ESame");
+    h_bad_bdt -> Draw("ESame");
 
-    gPad->SetLogy(1); 
-    
-    TLegend *legd_cv = new TLegend(0.5, 0.65, 0.9, 0.9);
-    
-    legd_cv -> SetTextFont(132);
-    legd_cv -> SetFillStyle(0);
-    legd_cv -> SetBorderSize(0);
-    legd_cv -> SetNColumns(1);
-    
-    legd_cv -> AddEntry(h_kloe, "KLOE", "lep");
-    legd_cv -> AddEntry(h_bdt, "BDT Cut", "lep");
+    legd_cv -> AddEntry(h_bdt, "BDT Selection", "lep");
     legd_cv -> AddEntry(h_good_bdt, "BDT Good", "lep");
+    legd_cv -> AddEntry(h_bad_bdt, "BDT Comb. BKG", "lep");
     
-    if (sample_type == "Data") {
-      h_kloe -> Draw("E");
-      h_bdt -> Draw("ESame");
-      h_good_bdt -> Draw("ESame");
-      h_bad_bdt -> Draw("ESame");
+  }
+  else if (sample_type == "MC") {
+    h_kloe -> Draw();
+    h_good_kloe -> Draw("Same");
+    h_bad_kloe -> Draw("Same");
+    
+    h_bdt -> Draw("Same");
+    h_good_bdt -> Draw("Same");
+    h_bad_bdt -> Draw("Same");
 
-      legd_cv -> AddEntry(h_bad_bdt, "BDT Comb. BKG", "lep");
-    
-    }
-    else if (sample_type == "MC") {
-      h_kloe -> Draw();
-      h_bdt -> Draw("Same");
-      h_good_bdt -> Draw("ESame");
-      h_bad_bdt -> Draw("ESame");
+    legd_cv -> AddEntry(h_good_kloe, "#chi^{2}_{m_{#gamma#gamma}} Good", "lep");
+    legd_cv -> AddEntry(h_bad_kloe, "#chi^{2}_{m_{#gamma#gamma}} Bad", "f");
 
-      legd_cv -> AddEntry(h_bad_bdt, "BDT Comb. BKG", "f");
+    legd_cv -> AddEntry(h_bdt, "BDT Selection", "lep");
+    legd_cv -> AddEntry(h_good_bdt, "BDT Good", "lep");
+    legd_cv -> AddEntry(h_bad_bdt, "BDT Comb. BKG", "f");
     
-    }
+  }
+  
+  
+  legd_cv -> Draw("Same");
+  
+  legtextsize(legd_cv, 0.04);
+  
+  return cv;
 
-    
-    legd_cv -> Draw("Same");
-    
-    legtextsize(legd_cv, 0.04);
-    
-    return cv;
 }
 
 void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
@@ -187,7 +200,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 
       //if (classnm_tree == "TH2D") { // list all TH2D
       if (classnm_tree == "TH1D") { // list all TH1D
-	cout << "classnm = " << classnm_tree << ", objnm = " << objnm_tree << endl;
+	//cout << "classnm = " << classnm_tree << ", objnm = " << objnm_tree << endl;
       }
       
       TTree *tree_tmp = (TTree*)file -> Get(objnm_tree);
@@ -238,46 +251,65 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     // TH1D
     // TISR3PI_SIG
     TH1D* hM3pi_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_TISR3PI_SIG");
+    TH1D* hM3pi_good_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_good_TISR3PI_SIG");
+    TH1D* hM3pi_bad_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_bad_TISR3PI_SIG");
+
     TH1D* hM3pi_BDT_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_BDT_TISR3PI_SIG");
     TH1D* hM3pi_BDT_good_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_BDT_good_TISR3PI_SIG");
     TH1D* hM3pi_BDT_bad_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_BDT_bad_TISR3PI_SIG");
 
-    format_h(hM3pi_TISR3PI_SIG, 4, 2);
+    format_h(hM3pi_TISR3PI_SIG, 1, 2);
+    format_h(hM3pi_good_TISR3PI_SIG, 4, 2);
+    formatfill_h(hM3pi_bad_TISR3PI_SIG, 4, 3001);
+
     format_h(hM3pi_BDT_TISR3PI_SIG, 2, 2);
     format_h(hM3pi_BDT_good_TISR3PI_SIG, 3, 2);
     formatfill_h(hM3pi_BDT_bad_TISR3PI_SIG, 2, 3001);
 
     //
     TH1D* hM3pi_TDATA = (TH1D*)file -> Get("hM3pi_TDATA");
+    TH1D* hM3pi_good_TDATA = (TH1D*)file -> Get("hM3pi_good_TDATA");
+    TH1D* hM3pi_bad_TDATA = (TH1D*)file -> Get("hM3pi_bad_TDATA");
+    
     TH1D* hM3pi_BDT_TDATA = (TH1D*)file -> Get("hM3pi_BDT_TDATA");
     TH1D* hM3pi_BDT_good_TDATA = (TH1D*)file -> Get("hM3pi_BDT_good_TDATA");
     TH1D* hM3pi_BDT_bad_TDATA = (TH1D*)file -> Get("hM3pi_BDT_bad_TDATA");
 
     format_h(hM3pi_TDATA, 1, 2);
+    format_h(hM3pi_good_TDATA, 4, 2);
+    formatfill_h(hM3pi_bad_TDATA, 4, 3001);
+    
+    
     format_h(hM3pi_BDT_TDATA, 2, 2);
     format_h(hM3pi_BDT_good_TDATA, 4, 2);
     format_h(hM3pi_BDT_bad_TDATA, 8, 2);
     
 
     // Plot KLOE results, hM3pi MC and data
-    TCanvas *cv_3pi_data = cv_plot(hM3pi_TDATA, hM3pi_BDT_TDATA, hM3pi_BDT_good_TDATA, hM3pi_BDT_bad_TDATA, "Events", "M_{3#pi} [MeV/c^{2}]", "Data", "Invariant mass of 3pi (Data)");
-    TCanvas *cv_3pi_isr3pi = cv_plot(hM3pi_TISR3PI_SIG, hM3pi_BDT_TISR3PI_SIG, hM3pi_BDT_good_TISR3PI_SIG, hM3pi_BDT_bad_TISR3PI_SIG, "Events", "M_{3#pi} [MeV/c^{2}]", "MC", "Invariant mass of 3pi (Signal)");
+    hM3pi_TDATA -> Draw("E");
+    hM3pi_bad_TDATA -> Draw("Same");
+    
+    TCanvas *cv_m3pi_data = cv_plot("TDATA", hM3pi_TDATA, hM3pi_good_TDATA, hM3pi_bad_TDATA, hM3pi_BDT_TDATA, hM3pi_BDT_good_TDATA, hM3pi_BDT_bad_TDATA, "Events", "M_{3#pi} [MeV/c^{2}]", "Data", "Invariant mass of 3pi (Data)");
+    
+    //TCanvas *cv_m3pi_isr3pi = cv_plot("TISR3PI_SIG", hM3pi_TISR3PI_SIG, hM3pi_good_TISR3PI_SIG, hM3pi_bad_TISR3PI_SIG, hM3pi_BDT_TISR3PI_SIG, hM3pi_BDT_good_TISR3PI_SIG, hM3pi_BDT_bad_TISR3PI_SIG, "Events", "M_{3#pi} [MeV/c^{2}]", "MC", "Invariant mass of 3pi (Signal)");
     
     //int nentries = outtree -> GetEntries();
     //cout << "Tree has " << nentries << " entries" << endl;
 
-    /*
     // Plot
-    TCanvas *cv_signal = plot_cv("TISR3PI_SIG", "Singal", h2d_sfw_BDT_good_TISR3PI_SIG, "Singal");
-    TCanvas *cv_etagam = plot_cv("TETAGAM", "etagam", h2d_sfw_BDT_good_TETAGAM, "#eta#gamma");
-    TCanvas *cv_data = plot_cv("TDATA", "data", h2d_sfw_BDT_good_TDATA, "Data");
-    TCanvas *cv_mcsum_noeta = plot_cv("MCSUM_NOETA", "MC sum (no etagam)", h2d_sfw_BDT_good_MCSUM_NOETA, "Others");
+    TCanvas *cv_signal = plot_sfw("TISR3PI_SIG", "Singal", h2d_sfw_BDT_good_TISR3PI_SIG, "Singal");
+    TCanvas *cv_etagam = plot_sfw("TETAGAM", "etagam", h2d_sfw_BDT_good_TETAGAM, "#eta#gamma");
+    TCanvas *cv_data = plot_sfw("TDATA", "data", h2d_sfw_BDT_good_TDATA, "Data");
+    TCanvas *cv_mcsum_noeta = plot_sfw("MCSUM_NOETA", "MC sum (no etagam)", h2d_sfw_BDT_good_MCSUM_NOETA, "Others");
 
-    
-    cv_signal -> SaveAs("cv_sfw2d_TISR3PI_SIG.pdf");
-    cv_etagam -> SaveAs("cv_sfw2d_TETAGAM.pdf");
-    cv_mcsum_noeta -> SaveAs("cv_sfw2d_TMCSUM_NOETA.pdf");
-    cv_data -> SaveAs("cv_sfw2d_TDATA.pdf");
+    /*
+    cv_m3pi_data -> SaveAs("./plots/cv_m3pi_data.pdf");
+    cv_m3pi_isr3pi -> SaveAs("./plots/cv_m3pi_isr3pi.pdf");
+      
+    cv_signal -> SaveAs("./plots/cv_sfw2d_TISR3PI_SIG.pdf");
+    cv_etagam -> SaveAs("./plots/cv_sfw2d_TETAGAM.pdf");
+    cv_mcsum_noeta -> SaveAs("./plots/cv_sfw2d_TMCSUM_NOETA.pdf");
+    cv_data -> SaveAs("./plots/cv_sfw2d_TDATA.pdf");
     */
     
   }// end check input file existence.
