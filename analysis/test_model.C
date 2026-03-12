@@ -20,7 +20,9 @@ const double beta_cut = 1.98;
 const double c0 = 0.11;
 const double c1 = 0.8;
 
-const TString phys_ch[2] = {"TETAGAM", "#eta#gamma"};
+//const TString phys_ch[2] = {"TETAGAM", "#eta#gamma"};
+const TString phys_ch[2] = {"TISR3PI_SIG", "3#pi#gamma"};
+
 const TString ch_nm = phys_ch[0];
 const TString ch_type = phys_ch[1];
 
@@ -612,7 +614,7 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
       format_h(hE1_BDT_best, 3, 2);
  
       hE1 -> GetYaxis() -> SetNdivisions(505);
-      hE1 -> GetYaxis() -> SetRangeUser(0.01, ymax_e1 * 1.2); 
+      hE1 -> GetYaxis() -> SetRangeUser(0.1, ymax_e1 * 1.2); 
       hE1 -> GetXaxis() -> SetTitle("E_{1} [MeV]");
       hE1 -> GetXaxis() -> CenterTitle();
       hE1 -> GetXaxis() -> SetTitleSize(0.04);
@@ -659,7 +661,7 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
       //format_h(hE2_BDT_best, 3, 2);
       
       hE2 -> GetYaxis() -> SetNdivisions(505);
-      hE2 -> GetYaxis() -> SetRangeUser(0.01, ymax_e1 * 1.2); 
+      hE2 -> GetYaxis() -> SetRangeUser(0.1, ymax_e1 * 1.2); 
       hE2 -> GetXaxis() -> SetTitle("E_{2} [MeV]");
       hE2 -> GetXaxis() -> CenterTitle();
       hE2 -> GetXaxis() -> SetTitleSize(0.04);
@@ -688,7 +690,7 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
       formatfill_h(hM_gg_BDT_bad, 2, 3001);
       
       hM_gg -> GetYaxis() -> SetNdivisions(505);
-      hM_gg -> GetYaxis() -> SetRangeUser(0.01, ymax_m_gg * 1.2); 
+      hM_gg -> GetYaxis() -> SetRangeUser(0.1, ymax_m_gg * 1.2); 
       hM_gg -> GetXaxis() -> CenterTitle();
       hM_gg -> GetXaxis() -> SetTitleSize(0.04);
       hM_gg -> GetXaxis() -> SetTitle("M(#gamma_{1}#gamma_{2}) [MeV/c^{2}]");
@@ -716,7 +718,7 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
       //format_h(hM3pi_BDT_best, 3, 2);
       
       hM3pi -> GetYaxis() -> SetNdivisions(505);
-      hM3pi -> GetYaxis() -> SetRangeUser(0.01, ymax_m3pi * 1.5); 
+      hM3pi -> GetYaxis() -> SetRangeUser(0.1, ymax_m3pi * 1.5); 
       hM3pi -> GetXaxis() -> SetTitle("M_{3#pi} [MeV/c^{2}]");
       hM3pi -> GetXaxis() -> CenterTitle();
       hM3pi -> GetXaxis() -> SetTitleSize(0.04);
