@@ -233,11 +233,11 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     h2d_sfw_BDT_good_MCREST -> SetName("h2d_sfw_BDT_good_MCREST");
     
     // h2d_sfw_BDT_good_MCSUM
-    h2d_sfw_BDT_good_MCSUM = (TH2D*) h2d_sfw_BDT_good_TEEG -> Clone();
+    h2d_sfw_BDT_good_MCSUM = (TH2D*) h2d_sfw_BDT_good_TISR3PI_SIG -> Clone();
+    h2d_sfw_BDT_good_MCSUM -> Add(h2d_sfw_BDT_good_TEEG, 1.);
     h2d_sfw_BDT_good_MCSUM -> Add(h2d_sfw_BDT_good_TOMEGAPI, 1.);
     h2d_sfw_BDT_good_MCSUM -> Add(h2d_sfw_BDT_good_TKSL, 1.);
     h2d_sfw_BDT_good_MCSUM -> Add(h2d_sfw_BDT_good_TETAGAM, 1.);
-    h2d_sfw_BDT_good_MCSUM -> Add(h2d_sfw_BDT_good_TISR3PI_SIG, 1.);
     h2d_sfw_BDT_good_MCSUM -> Add(h2d_sfw_BDT_good_MCREST, 1.);
     h2d_sfw_BDT_good_MCSUM -> SetName("h2d_sfw_BDT_good_MCSUM");
 
@@ -398,7 +398,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 	nb_etagam_sum += nb_etagam;
 
 	// mcrest
-	nb_mcrest = h2d_sfw_BDT_good_MCREST -> GetBinContent(i, j);
+	nb_mcrest = h2d_sfw_BDT_good_TBKGREST-> GetBinContent(i, j);
 	nb_mcrest_sum += nb_mcrest;
 
 	// mcsum
@@ -421,9 +421,41 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 	 << "nb_rhopi_sum = " << nb_rhopi_sum << "\n"
 	 << "nb_etagam_sum = " << nb_etagam_sum << "\n"
 	 << "nb_mcrest_sum = " << nb_mcrest_sum << "\n"
-	 << "nb_mcsum = " << nb_mcsum << ", checked = " << nb_isr3pi_sum + nb_eeg_sum + nb_omegapi_sum + nb_kpm_sum + nb_ksl_sum + nb_rhopi_sum + nb_etagam_sum  + nb_mcrest_sum << "\n";
+	 << "nb_mcsum = " << nb_mcsum << ", checked = " << nb_isr3pi_sum + nb_eeg_sum + nb_omegapi_sum + nb_kpm_sum + nb_ksl_sum + nb_rhopi_sum + nb_etagam_sum  + nb_mcrest_sum << "\n\n";
 
-      //<< "nb_mcsum = " << nb_mcsum << ", checked = " << nb_isr3pi_sum + nb_eeg_sum + nb_omegapi_sum + nb_kpm_sum + nb_ksl_sum + nb_rhopi_sum + nb_etagam_sum + nb_mcrest_sum << "\n";
+    cout << "nb_mcsum = " << h2d_sfw_BDT_good_MCSUM -> GetEntries() << endl;
+    cout << "1. nb_isr3pi_sum = " << h2d_sfw_BDT_good_TISR3PI_SIG -> GetEntries() << endl;
+    cout << "2. nb_eeg_sum = " << h2d_sfw_BDT_good_TEEG -> GetEntries() << endl;
+    cout << "3. nb_omegapi_sum = " << h2d_sfw_BDT_good_TOMEGAPI -> GetEntries() << endl;
+    cout << "4. nb_kpm_sum = " << h2d_sfw_BDT_good_TKPM -> GetEntries() << endl;
+    cout << "5. nb_ksl_sum = " << h2d_sfw_BDT_good_TKSL -> GetEntries() << endl;
+    cout << "6. nb_rhopi_sum = " << h2d_sfw_BDT_good_TRHOPI -> GetEntries() << endl;
+    cout << "7. nb_etagam_sum = " << h2d_sfw_BDT_good_TETAGAM -> GetEntries() << endl;
+    cout << "8. nb_mcrest_sum = " << h2d_sfw_BDT_good_MCREST -> GetEntries() << "\n\n";
+    
+    double fisr3pi_init  = h2d_sfw_BDT_good_TISR3PI_SIG -> GetEntries() / h2d_sfw_BDT_good_MCSUM -> GetEntries();
+    double feeg_init     = h2d_sfw_BDT_good_TEEG -> GetEntries() / h2d_sfw_BDT_good_MCSUM -> GetEntries();
+    double fomegapi_init = h2d_sfw_BDT_good_TOMEGAPI -> GetEntries() / h2d_sfw_BDT_good_MCSUM -> GetEntries();
+    double fkpm_init     = h2d_sfw_BDT_good_TKPM -> GetEntries() / h2d_sfw_BDT_good_MCSUM -> GetEntries();
+    double fksl_init     = h2d_sfw_BDT_good_TKSL -> GetEntries() / h2d_sfw_BDT_good_MCSUM -> GetEntries();
+    double frhopi_init   = h2d_sfw_BDT_good_TRHOPI -> GetEntries() / h2d_sfw_BDT_good_MCSUM -> GetEntries();
+    double fetagam_init  = h2d_sfw_BDT_good_TETAGAM -> GetEntries()  / h2d_sfw_BDT_good_MCSUM -> GetEntries();
+    double fmcrest_init  = h2d_sfw_BDT_good_MCREST -> GetEntries()  / h2d_sfw_BDT_good_MCSUM -> GetEntries();
+    
+    cout << "1. fisr3pi_init = " << fisr3pi_init << "\n"
+	 << "2. feeg_init = " << feeg_init << "\n"
+	 << "3. fomegapi_init = " << fomegapi_init << "\n"
+	 << "4. fkpm_init = " << fkpm_init << "\n"
+	 << "5. fksl_init = " << fksl_init << "\n"
+	 << "6. frhopi_init = " << frhopi_init << "\n"
+	 << "7. fetagam_init = " << fetagam_init << "\n"
+	 << "8. fmcrest_init = " << fmcrest_init << "\n"
+	 << "f_sum = " << fisr3pi_init + feeg_init + fomegapi_init + fkpm_init + fksl_init + frhopi_init + fetagam_init + fmcrest_init << endl;
+
+
+
+    
+    //<< "nb_mcsum = " << nb_mcsum << ", checked = " << nb_isr3pi_sum + nb_eeg_sum + nb_omegapi_sum + nb_kpm_sum + nb_ksl_sum + nb_rhopi_sum + nb_etagam_sum + nb_mcrest_sum << "\n";
 	 
     /*
     // Plot KLOE results, hM3pi MC and data
