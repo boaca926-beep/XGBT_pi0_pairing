@@ -20,6 +20,11 @@ const double beta_cut = 1.98;
 const double c0 = 0.11;
 const double c1 = 0.8;
 
+const TString phys_ch[2] = {"TETAGAM", "#eta#gamma"};
+const TString ch_nm = phys_ch[0];
+const TString ch_type = phys_ch[1];
+
+	
 //
 double GetFBeta(double a1_temp, double b1_temp, double c1_temp, double m2pi_temp) {
   m2pi_temp = m2pi_temp / 1000.;
@@ -147,6 +152,7 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
     TH1D* hM3pi_BDT = new TH1D("hM3pi_BDT", "", 200, 400, 1000); // BDT selection
     TH1D* hM3pi_BDT_good = new TH1D("hM3pi_BDT_good", "", 200, 400, 1000);
     TH1D* hM3pi_BDT_bad = new TH1D("hM3pi_BDT_bad", "", 200, 400, 1000);
+    TH1D* hM3pi_BDT_best = new TH1D("hM3pi_BDT_best", "", 200, 400, 1000);
     
     TH1D* hM_gg_BDT = new TH1D("hM_gg_BDT", "", 200, 50, 200); 
     TH1D* hM_gg_BDT_good = new TH1D("hM_gg_BDT_good", "", 200, 50, 200);
@@ -154,7 +160,8 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
     
     TH1D* hE1_BDT_good = new TH1D("hE1_BDT_good", "", 200, 0, 500); 
     TH1D* hE1_BDT_bad = new TH1D("hE1_BDT_bad", "", 200, 0, 500); 
-
+    TH1D* hE1_BDT_best = new TH1D("hE1_BDT_best", "", 200, 0, 500); 
+    
     TH1D* hE2_BDT_good = new TH1D("hE2_BDT_good", "", 200, 0, 500); 
     TH1D* hE2_BDT_bad = new TH1D("hE2_BDT_bad", "", 200, 0, 500); 
 
@@ -195,8 +202,11 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
         }
 
         // Get the tree
+	cout << ch_nm << endl;
+	
         //TTree* tree = (TTree*)file -> Get("TISR3PI_SIG");
-	TTree* tree = (TTree*)file -> Get("TDATA");
+	TTree* tree = (TTree*)file -> Get(ch_nm);
+	//TTree* tree = (TTree*)file -> Get("TDATA");
         
         if (!tree) {
             cout << "Error: Cannot find 'tree' in file" << endl;
@@ -509,9 +519,13 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
 	    if (scores[best_pair] > 0.5) {
 	      n_found ++;
 	      hE1_BDT_good -> Fill(e1_bdt);
+	      hE1_BDT_best -> Fill(e1_bdt);
+	      
 	      hE2_BDT_good -> Fill(e2_bdt);
+	      
 	      hM_gg_BDT_good -> Fill(m_gg_bdt);
 	      hM3pi_BDT_good -> Fill(m3pi_bdt);
+	      hM3pi_BDT_best -> Fill(m3pi_bdt);
 
 	      bdt_indx = 1;
             }
@@ -534,7 +548,7 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
 		evnt_good += 1;
 		kloe_indx = 1;
 
-		cout << recon_indx << endl;
+		//cout << recon_indx << endl;
             }
             else{// false pi0 gg
                 hE1_bad -> Fill(photons[0][0]);
@@ -545,7 +559,7 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
 		evnt_bad += 1;
 		kloe_indx = 0;
 
-		cout << recon_indx << endl;
+		//cout << recon_indx << endl;
             } 
 
 	    evnt_KLOE += 1;
@@ -562,6 +576,7 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
 	hM3pi_bad -> Write();
 	hM3pi_BDT_good -> Write();
 	hM3pi_BDT_bad -> Write();
+	hM3pi_BDT_best -> Write();
 	
 	outfile -> Write();
 	outfile -> Close();
@@ -571,7 +586,7 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
     }    
 
     if (evnt_KLOE > 0) {
-      TCanvas *cv0 = new TCanvas("c1", "BDT pi0 Photon Pair Selection", 1200, 600);
+      TCanvas *cv0 = new TCanvas("c1", "BDT Selection (" + ch_nm + ")", 1200, 600);
       cv0 -> SetLeftMargin(0.1);
       cv0 -> SetBottomMargin(0.1);//0.007
 
@@ -583,18 +598,19 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
     
       TPaveText *pt1 = new TPaveText(0.11, 0.87, 0.80, 0.89, "NDC");
     
-      PteAttr(pt1); pt1 -> SetTextSize(0.04); pt1 -> SetTextColor(kBlack);
+      PteAttr(pt1); pt1 -> SetTextSize(0.03); pt1 -> SetTextColor(kBlack);
     
-      pt1 -> AddText(Form("EVENTS=%d, good=%d, bad=%d", evnt_KLOE, evnt_good, evnt_bad));
+      pt1 -> AddText(Form("Events=%d, BDT Selected=%d, Discarded=%d", evnt_KLOE, evnt_good, evnt_bad));
     
     
       format_h(hE1, 1, 2);
       format_h(hE1_good, 4, 1);
       format_h(hE1_bad, 2, 1);
 
-      format_h(hE1_BDT_good, 3, 2);
+      formatfill_h(hE1_BDT_good, 3, 3001);
       formatfill_h(hE1_BDT_bad, 2, 3001);
-
+      format_h(hE1_BDT_best, 3, 2);
+ 
       hE1 -> GetYaxis() -> SetNdivisions(505);
       hE1 -> GetYaxis() -> SetRangeUser(0.01, ymax_e1 * 1.2); 
       hE1 -> GetXaxis() -> SetTitle("E_{1} [MeV]");
@@ -610,21 +626,22 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
       hE1_bad -> Draw("Same");
       hE1_BDT_good -> Draw("Same");
       hE1_BDT_bad -> Draw("Same");
+      //hE1_BDT_best -> Draw("Same");
       
       pt1 -> Draw("Same");
       
-      TLegend *legd_cv = new TLegend(0.5, 0.45, 0.9, 0.8);
+      TLegend *legd_cv = new TLegend(0.5, 0.5, 0.9, 0.85);
       
       legd_cv -> SetTextFont(132);
       legd_cv -> SetFillStyle(0);
       legd_cv -> SetBorderSize(0);
       legd_cv -> SetNColumns(1);
       
-      //legd_cv -> AddEntry(hE1, "#chi^{2}-selection", "l");
-      legd_cv -> AddEntry(hE1_good, "KLOE Selected", "l");
-      legd_cv -> AddEntry(hE1_bad, "KLOE Comb. BKG", "l");
-      legd_cv -> AddEntry(hE1_BDT_good, "BDT Selected", "l");
-      legd_cv -> AddEntry(hE1_BDT_bad, "BDT Comb. BKG", "f");
+      legd_cv -> AddEntry(hE1, "#chi^{2}_{m_{#gamma#gamma}} Sum", "l");
+      legd_cv -> AddEntry(hE1_good, "#chi^{2}_{m_{#gamma#gamma}} Selected", "l");
+      legd_cv -> AddEntry(hE1_bad, "#chi^{2}_{m_{#gamma#gamma}} Discarded", "l");
+      legd_cv -> AddEntry(hE1_BDT_good, "BDT Selected", "f");
+      legd_cv -> AddEntry(hE1_BDT_bad, "BDT Discarded", "f");
       
       legd_cv -> Draw("Same");
       
@@ -637,8 +654,9 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
       format_h(hE2_good, 4, 1);
       format_h(hE2_bad, 2, 1);
       
-      format_h(hE2_BDT_good, 3, 2);
+      formatfill_h(hE2_BDT_good, 3, 3001);
       formatfill_h(hE2_BDT_bad, 2, 3001);
+      //format_h(hE2_BDT_best, 3, 2);
       
       hE2 -> GetYaxis() -> SetNdivisions(505);
       hE2 -> GetYaxis() -> SetRangeUser(0.01, ymax_e1 * 1.2); 
@@ -653,7 +671,7 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
       hE2_BDT_good -> Draw("Same");
       hE2_BDT_bad -> Draw("Same");
       
-      TCanvas *cv01 = new TCanvas("cv01", "BDT pi0 Photon Pair Selection", 1200, 600);
+      TCanvas *cv01 = new TCanvas("cv01", "BDT Selection (" + ch_nm + ")", 1200, 600);
       cv01 -> SetLeftMargin(0.1);
       cv01 -> SetBottomMargin(0.1);//0.007
       
@@ -682,7 +700,8 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
       hM_gg_bad -> Draw("Same");
       hM_gg_BDT_good -> Draw("Same");
       hM_gg_BDT_bad -> Draw("Same");
-      
+      gPad->SetLogy(1); 
+
       //
       cv01 -> cd(2);
       
@@ -692,8 +711,9 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
       format_h(hM3pi_good, 4, 1);
       format_h(hM3pi_bad, 2, 1);
       
-      format_h(hM3pi_BDT_good, 3, 2);
+      formatfill_h(hM3pi_BDT_good, 3, 3001);
       formatfill_h(hM3pi_BDT_bad, 2, 3001);
+      //format_h(hM3pi_BDT_best, 3, 2);
       
       hM3pi -> GetYaxis() -> SetNdivisions(505);
       hM3pi -> GetYaxis() -> SetRangeUser(0.01, ymax_m3pi * 1.5); 
@@ -702,11 +722,28 @@ void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.r
       hM3pi -> GetXaxis() -> SetTitleSize(0.04);
       
       hM3pi -> Draw();
-      //hM3pi_good -> Draw("Same");
-      //hM3pi_bad -> Draw("Same");
+      hM3pi_good -> Draw("Same");
+      hM3pi_bad -> Draw("Same");
       hM3pi_BDT_good -> Draw("Same");
       hM3pi_BDT_bad -> Draw("Same");
-      //gPad->SetLogy(1); 
+      gPad->SetLogy(1); 
+
+      TLegend *legd1 = new TLegend(0.5, 0.6, 0.9, 0.9);
+      
+      legd1 -> SetTextFont(132);
+      legd1 -> SetFillStyle(0);
+      legd1 -> SetBorderSize(0);
+      legd1 -> SetNColumns(1);
+      
+      legd1 -> AddEntry(hM3pi, "#chi^{2}_{m_{#gamma#gamma}} Sum", "l");
+      legd1 -> AddEntry(hM3pi_good, "#chi^{2}_{m_{#gamma#gamma}} Selected", "l");
+      legd1 -> AddEntry(hM3pi_bad, "#chi^{2}_{m_{#gamma#gamma}} Discarded", "l");
+      legd1 -> AddEntry(hM3pi_BDT_good, "BDT Selected", "f");
+      legd1 -> AddEntry(hM3pi_BDT_bad, "BDT Discarded", "f");
+      
+      legd1 -> Draw("Same");
+
+      legtextsize(legd1, 0.03);
       
       cv0 -> SaveAs("./bdt_gamma_sel_cv0.pdf");
       cv01 -> SaveAs("./bdt_gamma_sel_cv01.pdf");
