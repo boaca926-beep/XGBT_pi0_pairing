@@ -162,7 +162,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
   gStyle->SetOptStat(0);
   gStyle->SetOptTitle(0);
   gStyle->SetFitFormat("6.4g");
-  
+
   cout << "Plotting BDT results ... " << endl;
 
   // Load input root file: output_with_bdt.root
@@ -181,7 +181,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     // Open the root file
     //TFile* file = TFile::Open(input_filename);
     TFile* file = new TFile(input_filename);
-
+    
     if (!file || file -> IsZombie()){
       cout << "Error: Cannot open file " << input_filename << endl;
       return;
@@ -319,15 +319,19 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     double mcrest_sfw  = 0, mcrest_sfw_err = 0; 
 
     // define tree
-    TTree* TSFW2D = new TTree("TSFW2D", "recreate");
+    TFile *f_output = new TFile("sfw2d.root", "recreate");
+    f_output -> cd();  // Set as current directory
+    
     TSFW2D -> SetAutoSave(0);
     
     TSFW2D -> Branch("Br_nb_data", &nb_data, "Br_nb_data/D");
-    TSFW2D -> Branch("Br_nb_eeg", &nb_eeg, "Br_nb_eeg/D");
-    TSFW2D -> Branch("Br_nb_ksl", &nb_ksl, "Br_nb_ksl/D");
-    TSFW2D -> Branch("Br_nb_omegapi", &nb_omegapi, "Br_nb_omegapi/D");
-    TSFW2D -> Branch("Br_nb_etagam", &nb_etagam, "Br_nb_etagam/D");
     TSFW2D -> Branch("Br_nb_isr3pi", &nb_isr3pi, "Br_nb_isr3pi/D");
+    TSFW2D -> Branch("Br_nb_eeg", &nb_eeg, "Br_nb_eeg/D");
+    TSFW2D -> Branch("Br_nb_omegapi", &nb_omegapi, "Br_nb_omegapi/D");
+    TSFW2D -> Branch("Br_nb_kpm", &nb_kpm, "Br_nb_kpm/D");
+    TSFW2D -> Branch("Br_nb_ksl", &nb_ksl, "Br_nb_ksl/D");
+    TSFW2D -> Branch("Br_nb_rhopi", &nb_rhopi, "Br_nb_rhopi/D");
+    TSFW2D -> Branch("Br_nb_etagam", &nb_etagam, "Br_nb_etagam/D");
     TSFW2D -> Branch("Br_nb_mcrest", &nb_mcrest, "Br_nb_mcrest/D");
 
     /*
@@ -407,7 +411,8 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 
 	//
 	//if (evnt_indx > 1e3) break;
-	
+
+	TSFW2D -> Fill();
       }
       
     }
@@ -423,6 +428,15 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 	 << "nb_mcrest_sum = " << nb_mcrest_sum << "\n"
 	 << "nb_mcsum = " << nb_mcsum << ", checked = " << nb_isr3pi_sum + nb_eeg_sum + nb_omegapi_sum + nb_kpm_sum + nb_ksl_sum + nb_rhopi_sum + nb_etagam_sum  + nb_mcrest_sum << "\n\n";
 
+    nb_isr3pi_sum = h2d_sfw_BDT_good_TISR3PI_SIG -> GetEntries();
+    nb_eeg_sum = h2d_sfw_BDT_good_TEEG -> GetEntries();
+    nb_omegapi_sum = h2d_sfw_BDT_good_TOMEGAPI -> GetEntries();
+    nb_kpm_sum = h2d_sfw_BDT_good_TKPM -> GetEntries();
+    nb_ksl_sum = h2d_sfw_BDT_good_TKSL -> GetEntries();
+    nb_rhopi_sum = h2d_sfw_BDT_good_TRHOPI -> GetEntries() + 1; // avoid zero
+    nb_etagam_sum = h2d_sfw_BDT_good_TETAGAM -> GetEntries();
+    nb_mcrest_sum = h2d_sfw_BDT_good_MCREST -> GetEntries();
+      
     cout << "nb_mcsum = " << h2d_sfw_BDT_good_MCSUM -> GetEntries() << endl;
     cout << "1. nb_isr3pi_sum = " << h2d_sfw_BDT_good_TISR3PI_SIG -> GetEntries() << endl;
     cout << "2. nb_eeg_sum = " << h2d_sfw_BDT_good_TEEG -> GetEntries() << endl;
@@ -451,13 +465,37 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 	 << "7. fetagam_init = " << fetagam_init << "\n"
 	 << "8. fmcrest_init = " << fmcrest_init << "\n"
 	 << "f_sum = " << fisr3pi_init + feeg_init + fomegapi_init + fkpm_init + fksl_init + frhopi_init + fetagam_init + fmcrest_init << endl;
-
-
-
     
     //<< "nb_mcsum = " << nb_mcsum << ", checked = " << nb_isr3pi_sum + nb_eeg_sum + nb_omegapi_sum + nb_kpm_sum + nb_ksl_sum + nb_rhopi_sum + nb_etagam_sum + nb_mcrest_sum << "\n";
-	 
-    /*
+
+    // Fit
+
+    const int para_nb_sfw2d = 7;
+    
+    TMinuit *gMinuit = new TMinuit(para_nb_sfw2d); // maximum number of parameters in ()
+    gMinuit -> SetFCN(fcn_sfw2d);
+
+    Double_t arglist[10];
+    Int_t ierflg = 0;
+
+    // Set print level
+    //gMinuit -> SetPrintLevel(-1);
+
+    gMinuit -> mnparm(0, "fisr3pi_ML",  fisr3pi_init,  0.001, 0., 1., ierflg);
+    gMinuit -> mnparm(1, "feeg_ML",     feeg_init,     0.001, 0., 1., ierflg);
+    gMinuit -> mnparm(2, "fomegapi_ML", fomegapi_init, 0.001, 0., 1., ierflg);
+    gMinuit -> mnparm(3, "fkpm_ML",     fkpm_init,     0.001, 0., 1., ierflg);
+    gMinuit -> mnparm(4, "fksl_ML",     fksl_init,     0.001, 0., 1., ierflg);
+    //gMinuit -> mnparm(5, "frhopi_ML",   frhopi_init,   0.01, 0., 1., ierflg);
+    gMinuit -> mnparm(5, "fetagam_ML",  fetagam_init,  0.001, 0., 1., ierflg);
+    gMinuit -> mnparm(6, "fmcrest_ML",  fmcrest_init,  0.001, 0., 1., ierflg);
+    
+    gMinuit -> SetErrorDef(0.5);
+
+    // ready for minimization step
+    arglist[0] = 500;
+    gMinuit -> mnexcm("MIGRAD", arglist, 1, ierflg); // fit sfw2d
+
     // Plot KLOE results, hM3pi MC and data
     hM3pi_TDATA -> Draw("E");
     hM3pi_bad_TDATA -> Draw("Same");
@@ -474,7 +512,6 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     TCanvas *cv_etagam = plot_sfw("TETAGAM", "etagam", h2d_sfw_BDT_good_TETAGAM, "#eta#gamma");
     TCanvas *cv_data = plot_sfw("TDATA", "data", h2d_sfw_BDT_good_TDATA, "Data");
     TCanvas *cv_mcsum_noeta = plot_sfw("MCSUM_NOETA", "MC sum (no etagam)", h2d_sfw_BDT_good_MCSUM_NOETA, "Others");
-    */
     
     /*
     cv_m3pi_data -> SaveAs("./plots/cv_m3pi_data.pdf");
@@ -495,9 +532,13 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     cv_mcsum_noeta -> SaveAs("cv_sfw2d_TMCSUM_NOETA.pdf");
     cv_data -> SaveAs("cv_sfw2d_TDATA.pdf");
     */
-    
+
+    TSFW2D -> Write();
+    f_output -> Close();
+  
   }// end check input file existence.
 
   
-    
+  //return 0;
+  
 }

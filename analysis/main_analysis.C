@@ -183,15 +183,15 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       
       // Define histos
       //ppIM:
-      const double ppIM_min = 250.; //200;
-      const double ppIM_max = 650.; //700;
+      const double ppIM_min = 250.; //250.; //200;
+      const double ppIM_max = 650.; //650.; //700;
       const double ppIM_sigma = 2.30;
       const double sfw2d_sigma_nb = 1;
       const int ppIM_bin = TMath::Nint((ppIM_max - ppIM_min) / sfw2d_sigma_nb / ppIM_sigma);
 
       //Eisr:
-      const double Eisr_min = 140.; //50;
-      const double Eisr_max = 250.; //500;
+      const double Eisr_min = 140; //140.; //50;
+      const double Eisr_max = 250.; //250.; //500;
       const double Eisr_sigma = 2.48;
       const int Eisr_bin = TMath::Nint((Eisr_max - Eisr_min) / sfw2d_sigma_nb / Eisr_sigma);
 
@@ -276,7 +276,6 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	else if (deltaE > deltaE_cut) continue;
 	else if (angle_pi0gam12 > angle_cut) continue;
 	else if (betapi0 > GetFBeta(beta_cut, c0, c1, ppIM)) continue;
-	else if (IM3pi > 850. || IM3pi < 750.) continue;
 	
 	// Clean data
 	if (TMath::IsNaN(E1) || TMath::IsNaN(E2) || TMath::IsNaN(E3)) continue;
@@ -468,7 +467,9 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	//out_event = event_id;
 	//cout << out_event << endl;
 	outtree -> Fill();
-        
+
+	//if (m3pi_bdt > 900. || m3pi_bdt < 650.) continue;
+	
 	// BDT selection
 	hM_gg_BDT -> Fill(m_gg_bdt);
 	hM3pi_BDT -> Fill(m3pi_bdt);
