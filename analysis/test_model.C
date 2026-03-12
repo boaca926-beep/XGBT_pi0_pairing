@@ -21,7 +21,8 @@ const double c0 = 0.11;
 const double c1 = 0.8;
 
 //const TString phys_ch[2] = {"TETAGAM", "#eta#gamma"};
-const TString phys_ch[2] = {"TISR3PI_SIG", "3#pi#gamma"};
+//const TString phys_ch[2] = {"TISR3PI_SIG", "3#pi#gamma"};
+const TString phys_ch[2] = {"TDATA", "Data"};
 
 const TString ch_nm = phys_ch[0];
 const TString ch_type = phys_ch[1];

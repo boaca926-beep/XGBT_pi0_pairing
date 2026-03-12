@@ -81,7 +81,7 @@ TCanvas *plot_sfw(const TString hist_type, const TString cv_nm, TH2D *h2d, const
 
 TCanvas *cv_plot(const TString hist_type, TH1D* h_kloe, TH1D* h_good_kloe, TH1D* h_bad_kloe, TH1D* h_bdt, TH1D* h_good_bdt, TH1D* h_bad_bdt, TString y_title, TString x_title, const TString sample_type, const TString cv_title) {
 
-  TCanvas *cv = new TCanvas("cv_" + hist_type, cv_title, 1400, 800);
+  TCanvas *cv = new TCanvas("cv_" + hist_type, cv_title, 1000, 800);
   cv -> SetLeftMargin(0.1);
   cv -> SetBottomMargin(0.1);//0.007
   
@@ -103,7 +103,7 @@ TCanvas *cv_plot(const TString hist_type, TH1D* h_kloe, TH1D* h_good_kloe, TH1D*
   
   gPad->SetLogy(1); 
   
-  TLegend *legd_cv = new TLegend(0.15, 0.5, 0.6, 0.9);
+  TLegend *legd_cv = new TLegend(0.6, 0.65, 0.85, 0.9);
   
   legd_cv -> SetTextFont(132);
   legd_cv -> SetFillStyle(0);
@@ -118,13 +118,13 @@ TCanvas *cv_plot(const TString hist_type, TH1D* h_kloe, TH1D* h_good_kloe, TH1D*
     //h_good_kloe -> Draw("Same");
     //h_bad_kloe -> Draw("Same");
     
-    h_bdt -> Draw("ESame");
+    //h_bdt -> Draw("ESame");
     h_good_bdt -> Draw("ESame");
     h_bad_bdt -> Draw("ESame");
 
-    legd_cv -> AddEntry(h_bdt, "BDT Selection", "lep");
-    legd_cv -> AddEntry(h_good_bdt, "BDT Good", "lep");
-    legd_cv -> AddEntry(h_bad_bdt, "BDT Comb. BKG", "lep");
+    //legd_cv -> AddEntry(h_bdt, "BDT Selection", "lep");
+    legd_cv -> AddEntry(h_good_bdt, "BDT Selected", "lep");
+    legd_cv -> AddEntry(h_bad_bdt, "BDT Discarded", "lep");
     
   }
   else if (sample_type == "MC") {
@@ -139,9 +139,9 @@ TCanvas *cv_plot(const TString hist_type, TH1D* h_kloe, TH1D* h_good_kloe, TH1D*
     legd_cv -> AddEntry(h_good_kloe, "#chi^{2}_{m_{#gamma#gamma}} Good", "lep");
     legd_cv -> AddEntry(h_bad_kloe, "#chi^{2}_{m_{#gamma#gamma}} Bad", "f");
 
-    legd_cv -> AddEntry(h_bdt, "BDT Selection", "lep");
-    legd_cv -> AddEntry(h_good_bdt, "BDT Good", "lep");
-    legd_cv -> AddEntry(h_bad_bdt, "BDT Comb. BKG", "f");
+    //legd_cv -> AddEntry(h_bdt, "BDT Selection", "lep");
+    legd_cv -> AddEntry(h_good_bdt, "BDT Selected", "lep");
+    legd_cv -> AddEntry(h_bad_bdt, "BDT Discarded", "f");
     
   }
   
@@ -282,7 +282,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     
     format_h(hM3pi_BDT_TDATA, 2, 2);
     format_h(hM3pi_BDT_good_TDATA, 4, 2);
-    format_h(hM3pi_BDT_bad_TDATA, 8, 2);
+    format_h(hM3pi_BDT_bad_TDATA, 2, 2);
     
 
     // Plot KLOE results, hM3pi MC and data
@@ -291,7 +291,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     
     TCanvas *cv_m3pi_data = cv_plot("TDATA", hM3pi_TDATA, hM3pi_good_TDATA, hM3pi_bad_TDATA, hM3pi_BDT_TDATA, hM3pi_BDT_good_TDATA, hM3pi_BDT_bad_TDATA, "Events", "M_{3#pi} [MeV/c^{2}]", "Data", "Invariant mass of 3pi (Data)");
     
-    //TCanvas *cv_m3pi_isr3pi = cv_plot("TISR3PI_SIG", hM3pi_TISR3PI_SIG, hM3pi_good_TISR3PI_SIG, hM3pi_bad_TISR3PI_SIG, hM3pi_BDT_TISR3PI_SIG, hM3pi_BDT_good_TISR3PI_SIG, hM3pi_BDT_bad_TISR3PI_SIG, "Events", "M_{3#pi} [MeV/c^{2}]", "MC", "Invariant mass of 3pi (Signal)");
+    TCanvas *cv_m3pi_isr3pi = cv_plot("TISR3PI_SIG", hM3pi_TISR3PI_SIG, hM3pi_good_TISR3PI_SIG, hM3pi_bad_TISR3PI_SIG, hM3pi_BDT_TISR3PI_SIG, hM3pi_BDT_good_TISR3PI_SIG, hM3pi_BDT_bad_TISR3PI_SIG, "Events", "M_{3#pi} [MeV/c^{2}]", "MC", "Invariant mass of 3pi (Signal)");
     
     //int nentries = outtree -> GetEntries();
     //cout << "Tree has " << nentries << " entries" << endl;
@@ -311,6 +311,14 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     cv_mcsum_noeta -> SaveAs("./plots/cv_sfw2d_TMCSUM_NOETA.pdf");
     cv_data -> SaveAs("./plots/cv_sfw2d_TDATA.pdf");
     */
+
+    cv_m3pi_data -> SaveAs("cv_m3pi_data.pdf");
+    cv_m3pi_isr3pi -> SaveAs("cv_m3pi_isr3pi.pdf");
+      
+    cv_signal -> SaveAs("cv_sfw2d_TISR3PI_SIG.pdf");
+    cv_etagam -> SaveAs("cv_sfw2d_TETAGAM.pdf");
+    cv_mcsum_noeta -> SaveAs("cv_sfw2d_TMCSUM_NOETA.pdf");
+    cv_data -> SaveAs("cv_sfw2d_TDATA.pdf");
     
   }// end check input file existence.
 
