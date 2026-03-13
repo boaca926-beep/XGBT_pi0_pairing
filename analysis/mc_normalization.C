@@ -1,8 +1,17 @@
 #include "helper.h"
 #include "sfw2d.h"
 
-const double pt1_x0 = 0.4;
-const double pt1_x1 = 0.7;
+const double pt1_x0 = 0.2;
+const double pt1_x1 = 0.3;
+
+TLine *line1 = new TLine(400., 900., 1000., 900.); // horiz upper
+line1 -> SetLineColor(kRed);
+line1 -> SetLineWidth(2);
+
+TLine *line2 = new TLine(400., 650., 1000., 650.); // horiz upper
+line2 -> SetLineColor(kRed);
+line2 -> SetLineWidth(2);
+
 
 TList *HSFW1D = new TList();
 
@@ -16,6 +25,68 @@ double getbinwidth(TH1D* h) {
   width=(xmax-xmin)/binsize; //cout<<width<<endl;
 
   return width;
+}
+
+TCanvas *plot_corr(TH2D* h2d, const TString hist_type, const TString cv_nm, const TString pt_str) {
+
+  TH1D *h2d_projx = h2d -> ProjectionX();
+  TH1D *h2d_projy = h2d -> ProjectionY();
+  
+  double binwidth_x = getbinwidth(h2d_projx);
+  double binwidth_y = getbinwidth(h2d_projy);
+  
+  TCanvas * cv2d =  new TCanvas("cv2d_" + hist_type, cv_nm, 0, 0, 700, 700);
+
+  cv2d -> SetBottomMargin(0.15);//0.007
+  cv2d -> SetLeftMargin(0.15);
+  cv2d -> SetRightMargin(0.15);
+
+  //h2d -> SetMinimum(10);
+
+  h2d -> GetXaxis() -> SetNdivisions(5);
+  h2d -> GetXaxis() -> SetTitle("M^{KLOE}_{3#pi} " + TString::Format("Events/[%0.2f", binwidth_x) + " MeV/c^{2}]"); //SetTitle(x_label + " " + x_unit);
+  h2d -> GetXaxis() -> SetTitleOffset(1.2);
+  h2d -> GetXaxis() -> SetTitleSize(0.06);
+  h2d -> GetXaxis() -> CenterTitle();
+  h2d -> GetXaxis() -> SetLabelSize(0.06);
+  h2d -> GetXaxis() -> SetLabelOffset(0.01);
+  //h2d -> GetXaxis() -> SetRangeUser(0.2, 0.6);
+  
+  h2d -> GetYaxis() -> SetTitle("M^{BDT}_{3#gamma} " + TString::Format("Events/[%0.2f", binwidth_y) + " MeV/c^{2}]"); //SetTitle(x_label + " " + x_unit);
+  h2d -> GetYaxis() -> SetLabelOffset(0.01);
+  h2d -> GetYaxis() -> SetTitleOffset(1.2);
+  h2d -> GetYaxis() -> SetLabelSize(0.05);
+  h2d -> GetYaxis() -> SetTitleSize(0.06);
+  h2d -> GetYaxis() -> CenterTitle();
+
+  h2d -> Draw("COLZ");
+  //h2d -> Draw("TEXT0COLZ");
+
+  gPad->SetLogz(1);
+
+  char display[50];
+
+  //sprintf(display, "#frac{N_{sig}}{N_{data}-N_{bkg}}");
+  
+  TPaveText *pt = new TPaveText(pt1_x0, 0.8, pt1_x1, 0.85, "NDC");
+
+  pt -> SetTextSize(0.08);
+  pt -> SetFillColor(0);
+  pt -> SetTextAlign(12);
+  
+  //pt -> AddText("Relative Error [%]");
+  pt -> AddText(pt_str);
+  
+  pt -> Draw("Same");
+  line1 -> Draw("Same");
+  line2 -> Draw("Same");
+
+  h2d -> GetZaxis() -> SetLabelSize(0.045);
+  
+  gPad -> SetLogz();
+  
+  return cv2d;
+  
 }
 
 TCanvas *plot_sfw(const TString hist_type, const TString cv_nm, TH2D *h2d, const TString pt_str)
@@ -212,6 +283,10 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     file -> cd(); // Make sure we're in the output file
 
     // TH2D
+    TH2D* h2d_kloe_BDT_corr_TDATA = (TH2D *) file -> Get("h2d_kloe_BDT_corr_TDATA");
+    TH2D* h2d_kloe_BDT_corr_TISR3PI_SIG = (TH2D *) file -> Get("h2d_kloe_BDT_corr_TISR3PI_SIG");
+    TH2D* h2d_kloe_BDT_corr_TETAGAM = (TH2D *) file -> Get("h2d_kloe_BDT_corr_TETAGAM");
+
     /*
     TH2D *h2d_sfw_BDT_good_TDATA = (TH2D *) file -> Get("h2d_sfw_BDT_good_TDATA");
     TH2D *h2d_sfw_BDT_good_TISR3PI_SIG = (TH2D *) file -> Get("h2d_sfw_BDT_good_TISR3PI_SIG"); // sig mc 1
@@ -579,6 +654,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 	 << ", " << hM3pi_BDT_good_TISR3PI_SIG->GetXaxis()->GetXmax() << "]" << endl;
     cout << "Maximum value: " << hM3pi_BDT_good_TISR3PI_SIG->GetMaximum() << endl;
 
+    /*
     TCanvas *cv_scaled = new TCanvas("cv_scaled", "Scaled Signal", 1000, 800);
     cv_scaled->SetLeftMargin(0.15);
     cv_scaled->SetBottomMargin(0.15);
@@ -610,6 +686,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     // Update and save
     cv_scaled->Update();
     //cv_scaled->SaveAs("plots/scaled_signal.pdf");
+    */
     
     // Print clone info
     cout << "\n========== CLONE INFO ==========" << endl;
@@ -644,10 +721,15 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     //cout << "Tree has " << nentries << " entries" << endl;
 
     // Plot
-    TCanvas *cv_signal = plot_sfw("TISR3PI_SIG", "Singal", h2d_sfw_BDT_good_TISR3PI_SIG, "Singal");
-    TCanvas *cv_etagam = plot_sfw("TETAGAM", "etagam", h2d_sfw_BDT_good_TETAGAM, "#eta#gamma");
-    TCanvas *cv_data = plot_sfw("TDATA", "data", h2d_sfw_BDT_good_TDATA, "Data");
-    TCanvas *cv_mcsum_noeta = plot_sfw("MCSUM_NOETA", "MC sum (no etagam)", h2d_sfw_BDT_good_MCSUM_NOETA, "Others");
+    TCanvas* cv2d_corr_data = plot_corr(h2d_kloe_BDT_corr_TDATA, "TDATA", "", "Data");
+    TCanvas* cv2d_corr_sig = plot_corr(h2d_kloe_BDT_corr_TISR3PI_SIG, "TISR3PI_SIG", "", "Signal");
+    TCanvas* cv2d_corr_etagam = plot_corr(h2d_kloe_BDT_corr_TETAGAM, "TETAGAM", "", "#eta#gamma");
+
+    
+    //TCanvas *cv_signal = plot_sfw("TISR3PI_SIG", "Singal", h2d_sfw_BDT_good_TISR3PI_SIG, "Singal");
+    //TCanvas *cv_etagam = plot_sfw("TETAGAM", "etagam", h2d_sfw_BDT_good_TETAGAM, "#eta#gamma");
+    //TCanvas *cv_data = plot_sfw("TDATA", "data", h2d_sfw_BDT_good_TDATA, "Data");
+    //TCanvas *cv_mcsum_noeta = plot_sfw("MCSUM_NOETA", "MC sum (no etagam)", h2d_sfw_BDT_good_MCSUM_NOETA, "Others");
 
     /*
     cv_m3pi_data -> SaveAs("./plots/cv_m3pi_data.pdf");
