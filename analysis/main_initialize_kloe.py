@@ -136,8 +136,8 @@ if __name__ == '__main__':
     #============================================================
     # LOAD INPUT ROOT FILES
     #============================================================
-    #f_nm = "../data/kloe_small_sample.root"
-    f_nm = "../data/kloe_sample_chain.root"
+    f_nm = "../data/kloe_small_sample.root"
+    #f_nm = "../data/kloe_sample_chain.root"
 
 
     # Create ooutput directory
@@ -166,7 +166,7 @@ if __name__ == '__main__':
     #           'T3PIGAM;1', (no)
     #           'TRHOPI;1', (skipped if too few events)
     #           'TETAGAM;1', (done)
-    #           'TBKGREST;1', ()
+    #           'TBKGREST;1', (done)
     #           'TDATA;1', (no)
     #           'TEEG;1']
 
@@ -186,16 +186,19 @@ if __name__ == '__main__':
         #elif base_br_nm == "TKSL":
         #    br_title = rf"$e^{{+}}e^{{-}}\to\phi\to K_{{S}}K_{{L}}$"
         #    category = "background"
-        elif base_br_nm == "TRHOPI":
-            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to \rho\pi$"
-            category = "background"
+        #elif base_br_nm == "TRHOPI":
+        #    br_title = rf"$e^{{+}}e^{{-}}\to\phi\to \rho\pi$"
+        #    category = "background"
         #elif base_br_nm == "TBKGREST":
         #    br_title = rf"Others"
         #    category = "background"
-        #elif base_br_nm == "TETAGAM":
-        #    br_title = rf"$e^{{+}}e^{{-}}\to\phi\to\eta\gamma$"
-        #    category = "signal"
-        
+        #elif base_br_nm == "TEEG":
+        #    br_title = rf"$e^{{+}}e^{{-}}\to\phi\to e^{{+}}e^{{-}}\gamma$"
+        #    category = "background"
+        elif base_br_nm == "TETAGAM":
+            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to\eta\gamma$"
+            category = "signal"
+
         else:
             #br_title = "br_title"
             #category = "rest"
@@ -320,6 +323,7 @@ if __name__ == '__main__':
 
         # Combining dataset
         df_list.append(all_df) # Add each channel's dataframe
+        
         #else:
         #    continue
 
@@ -359,15 +363,14 @@ if __name__ == '__main__':
         joblib.dump(all_df_val_comb, f'{data_dir}/all_df_val_TCOMB.pkl')
         joblib.dump(all_df_test_comb, f'{data_dir}/all_df_test_TCOMB.pkl')
 
-        joblib.dump(X_train_comb, f'{data_dir}/X_train_TCOMB.pkl')
         joblib.dump(X_val_comb, f'{data_dir}/X_val_TCOMB.pkl')
         joblib.dump(X_test_comb, f'{data_dir}/X_test_TCOMB.pkl')
 
         joblib.dump(y_train_comb, f'{data_dir}/y_train_TCOMB.pkl')
         joblib.dump(y_val_comb, f'{data_dir}/y_val_TCOMB.pkl')
-        joblib.dump(y_test_comb, f'{data_dir}/y_test_TCOMB.pkl')    
-
-        print(f"Combined phys. channels: {phys_map.keys()}")
+        joblib.dump(y_test_comb, f'{data_dir}/y_test_TCOMB.pkl')  
+        
+        print(f"Combined data contains: {[k for k in phys_map.keys() if k != 'TDATA']}")  
     else:
         print(f"df_list is empty, no channels can be combined!")
         raise ValueError("No data to combine!")
@@ -385,6 +388,7 @@ if __name__ == '__main__':
     # Combining dataset 
     # (later, after signal and background are separated)
     if df_list:
+        joblib.dump(X_train_comb, f'{data_dir}/X_train_TCOMB.pkl')
         df_combined = pd.concat(df_list, ignore_index=True)
 
         # Shuffle together using the same index
