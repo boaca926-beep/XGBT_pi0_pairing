@@ -189,8 +189,8 @@ void fcn_sfw2d(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t ifl
   }
   
   // Total FCN = likelihood + constraints
-  f = llh_sum + sum_penalty + neg_penalty;
-  //f = llh_sum;
+  //f = llh_sum + sum_penalty + neg_penalty;
+  f = llh_sum;
   
 
 }

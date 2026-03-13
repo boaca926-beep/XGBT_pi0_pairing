@@ -40,7 +40,7 @@ double GetFBeta(double a1_temp, double b1_temp, double c1_temp, double m2pi_temp
 }
 
 void test_model(const char* model_filename = "../training/models/bdt_pi0_TCOMB.root",
-                const char* data_filename = "../data/kloe_small_sample.root"){
+                const char* data_filename = "../data/kloe_sample_chain.root"){
 
     gErrorIgnoreLevel = kError;
     TGaxis::SetMaxDigits(4);

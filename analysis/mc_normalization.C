@@ -212,6 +212,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     file -> cd(); // Make sure we're in the output file
 
     // TH2D
+    /*
     TH2D *h2d_sfw_BDT_good_TDATA = (TH2D *) file -> Get("h2d_sfw_BDT_good_TDATA");
     TH2D *h2d_sfw_BDT_good_TISR3PI_SIG = (TH2D *) file -> Get("h2d_sfw_BDT_good_TISR3PI_SIG"); // sig mc 1
     TH2D *h2d_sfw_BDT_good_TEEG = (TH2D *) file -> Get("h2d_sfw_BDT_good_TEEG"); // bkg 1, mc 2
@@ -222,7 +223,20 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     TH2D *h2d_sfw_BDT_good_TRHOPI = (TH2D *) file -> Get("h2d_sfw_BDT_good_TRHOPI"); // bkg 5, mc 6
     TH2D *h2d_sfw_BDT_good_TETAGAM = (TH2D *) file -> Get("h2d_sfw_BDT_good_TETAGAM"); // bkg 6, mc 7
     TH2D *h2d_sfw_BDT_good_TBKGREST = (TH2D *) file -> Get("h2d_sfw_BDT_good_TBKGREST"); // bkg 7, mc 8
+    */
 
+    // KLOE Selection
+    TH2D *h2d_sfw_BDT_good_TDATA = (TH2D *) file -> Get("h2d_sfw_good_TDATA");
+    TH2D *h2d_sfw_BDT_good_TISR3PI_SIG = (TH2D *) file -> Get("h2d_sfw_good_TISR3PI_SIG"); // sig mc 1
+    TH2D *h2d_sfw_BDT_good_TEEG = (TH2D *) file -> Get("h2d_sfw_good_TEEG"); // bkg 1, mc 2
+    TH2D *h2d_sfw_BDT_good_TOMEGAPI = (TH2D *) file -> Get("h2d_sfw_good_TOMEGAPI"); // bkg 2, mc 3
+    TH2D *h2d_sfw_BDT_good_TKPM = (TH2D *) file -> Get("h2d_sfw_good_TKPM"); // bkg 3, mc 4
+    TH2D *h2d_sfw_BDT_good_TKSL = (TH2D *) file -> Get("h2d_sfw_good_TKSL"); // bkg 4, mc 5
+    //TH2D *h2d_sfw_BDT_good_T3PIGAM = (TH2D *) file -> Get("h2d_sfw_good_T3PIGAM");
+    TH2D *h2d_sfw_BDT_good_TRHOPI = (TH2D *) file -> Get("h2d_sfw_good_TRHOPI"); // bkg 5, mc 6
+    TH2D *h2d_sfw_BDT_good_TETAGAM = (TH2D *) file -> Get("h2d_sfw_good_TETAGAM"); // bkg 6, mc 7
+    TH2D *h2d_sfw_BDT_good_TBKGREST = (TH2D *) file -> Get("h2d_sfw_good_TBKGREST"); // bkg 7, mc 8
+    
     TH2D * h2d_sfw_BDT_good_MCREST;
     TH2D * h2d_sfw_BDT_good_MCSUM;
 
@@ -578,6 +592,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     hM3pi_BDT_good_TISR3PI_SIG_SCALED->GetYaxis()->SetTitle("Events");
     hM3pi_BDT_good_TISR3PI_SIG_SCALED->GetYaxis()->SetTitleOffset(1.4);
     
+
     // Set colors to make it visible
     hM3pi_BDT_good_TISR3PI_SIG_SCALED->SetLineColor(kRed);
     hM3pi_BDT_good_TISR3PI_SIG_SCALED->SetLineWidth(2);
@@ -620,20 +635,20 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     //hM3pi_TDATA -> Draw("E");
     //hM3pi_bad_TDATA -> Draw("Same");
     
-    //TCanvas *cv_m3pi_data = cv_plot("TDATA", hM3pi_TDATA, hM3pi_good_TDATA, hM3pi_bad_TDATA, hM3pi_BDT_TDATA, hM3pi_BDT_good_TDATA, hM3pi_BDT_bad_TDATA, "Events", "M_{3#pi} [MeV/c^{2}]", "Data", "Invariant mass of 3pi (Data)");
+    TCanvas *cv_m3pi_data = cv_plot("TDATA", hM3pi_TDATA, hM3pi_good_TDATA, hM3pi_bad_TDATA, hM3pi_BDT_TDATA, hM3pi_BDT_good_TDATA, hM3pi_BDT_bad_TDATA, "Events", "M_{3#pi} [MeV/c^{2}]", "Data", "Invariant mass of 3pi (Data)");
     
-    //TCanvas *cv_m3pi_isr3pi = cv_plot("TISR3PI_SIG", hM3pi_TISR3PI_SIG, hM3pi_good_TISR3PI_SIG, hM3pi_bad_TISR3PI_SIG, hM3pi_BDT_TISR3PI_SIG, hM3pi_BDT_good_TISR3PI_SIG, hM3pi_BDT_bad_TISR3PI_SIG, "Events", "M_{3#pi} [MeV/c^{2}]", "MC", "Invariant mass of 3pi (Signal)");
+    TCanvas *cv_m3pi_isr3pi = cv_plot("TISR3PI_SIG", hM3pi_TISR3PI_SIG, hM3pi_good_TISR3PI_SIG, hM3pi_bad_TISR3PI_SIG, hM3pi_BDT_TISR3PI_SIG, hM3pi_BDT_good_TISR3PI_SIG, hM3pi_BDT_bad_TISR3PI_SIG, "Events", "M_{3#pi} [MeV/c^{2}]", "MC", "Invariant mass of 3pi (Signal)");
 
     
     //int nentries = outtree -> GetEntries();
     //cout << "Tree has " << nentries << " entries" << endl;
 
     // Plot
-    //TCanvas *cv_signal = plot_sfw("TISR3PI_SIG", "Singal", h2d_sfw_BDT_good_TISR3PI_SIG, "Singal");
-    //TCanvas *cv_etagam = plot_sfw("TETAGAM", "etagam", h2d_sfw_BDT_good_TETAGAM, "#eta#gamma");
-    //TCanvas *cv_data = plot_sfw("TDATA", "data", h2d_sfw_BDT_good_TDATA, "Data");
-    //TCanvas *cv_mcsum_noeta = plot_sfw("MCSUM_NOETA", "MC sum (no etagam)", h2d_sfw_BDT_good_MCSUM_NOETA, "Others");
-    
+    TCanvas *cv_signal = plot_sfw("TISR3PI_SIG", "Singal", h2d_sfw_BDT_good_TISR3PI_SIG, "Singal");
+    TCanvas *cv_etagam = plot_sfw("TETAGAM", "etagam", h2d_sfw_BDT_good_TETAGAM, "#eta#gamma");
+    TCanvas *cv_data = plot_sfw("TDATA", "data", h2d_sfw_BDT_good_TDATA, "Data");
+    TCanvas *cv_mcsum_noeta = plot_sfw("MCSUM_NOETA", "MC sum (no etagam)", h2d_sfw_BDT_good_MCSUM_NOETA, "Others");
+
     /*
     cv_m3pi_data -> SaveAs("./plots/cv_m3pi_data.pdf");
     cv_m3pi_isr3pi -> SaveAs("./plots/cv_m3pi_isr3pi.pdf");
@@ -643,7 +658,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     cv_mcsum_noeta -> SaveAs("./plots/cv_sfw2d_TMCSUM_NOETA.pdf");
     cv_data -> SaveAs("./plots/cv_sfw2d_TDATA.pdf");
     */
-
+    
     /*
     cv_m3pi_data -> SaveAs("cv_m3pi_data.pdf");
     cv_m3pi_isr3pi -> SaveAs("cv_m3pi_isr3pi.pdf");

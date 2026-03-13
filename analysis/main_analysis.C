@@ -32,7 +32,7 @@ double GetFBeta(double a1_temp, double b1_temp, double c1_temp, double m2pi_temp
 
 
 void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOMB.root",
-		   const char* data_filename = "../data/kloe_small_sample.root"){
+		   const char* data_filename = "../data/kloe_sample_chain.root"){
 
   gErrorIgnoreLevel = kError;
   TGaxis::SetMaxDigits(4);
@@ -245,6 +245,8 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       // sfw2d
       TH2D* h2d_sfw_BDT_good = new TH2D(Form("h2d_sfw_BDT_good_%s", objnm_tree.Data()), "", ppIM_bin, ppIM_min, ppIM_max, Eisr_bin, Eisr_min, Eisr_max);
       TH2D* h2d_sfw_BDT_bad = new TH2D(Form("h2d_sfw_BDT_bad_%s", objnm_tree.Data()), "", ppIM_bin, ppIM_min, ppIM_max, Eisr_bin, Eisr_min, Eisr_max);
+
+      TH2D* h2d_sfw_good = new TH2D(Form("h2d_sfw_good_%s", objnm_tree.Data()), "", ppIM_bin, ppIM_min, ppIM_max, Eisr_bin, Eisr_min, Eisr_max);
       
       //hsfw2d_tmp -> Sumw2();
 
@@ -470,8 +472,35 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	outtree -> Fill();
 
 	if (m3pi_bdt > 900. || m3pi_bdt < 650.) continue;
+	//if (m3pi > 900. || m3pi < 650.) continue;
+
+	// KLOE selection
+
+	hM_gg -> Fill(m_gg);
+	hM3pi -> Fill(m3pi);
+	if (recon_indx == 2 && bkg_indx == 1){//  true pi0 gg
+	  hE1_good -> Fill(photons[0][0]);
+	  hE2_good -> Fill(photons[1][0]);
+	  hM_gg_good -> Fill(m_gg);
+	  hM3pi_good -> Fill(m3pi);
+          //cout << ppIM << ", " << photons[2][0] << endl;
+	  evnt_good += 1;
+	  kloe_indx = 1;
+	}
+	else{// false pi0 gg
+	  hE1_bad -> Fill(photons[0][0]);
+	  hE2_bad -> Fill(photons[1][0]);
+	  hM_gg_bad -> Fill(m_gg);
+	  hM3pi_bad -> Fill(m3pi);
+          
+	  evnt_bad += 1;
+	  kloe_indx = 0;
+	} 
 	
+	evnt_KLOE += 1;
+
 	// BDT selection
+
 	hM_gg_BDT -> Fill(m_gg_bdt);
 	hM3pi_BDT -> Fill(m3pi_bdt);
 	
@@ -482,6 +511,8 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	  hM_gg_BDT_good -> Fill(m_gg_bdt);
 	  hM3pi_BDT_good -> Fill(m3pi_bdt);
 	  h2d_sfw_BDT_good -> Fill(ppIM, e3_bdt);
+	  h2d_sfw_good -> Fill(ppIM, photons[2][0]);
+	
 	  //cout << m_gg_bdt << endl;
 	  //cout << ppIM << ", " << e3_bdt << endl;
 	  
@@ -497,32 +528,7 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	  bdt_indx = 0;
 	}
 
-	// KLOE selection
-	hM_gg -> Fill(m_gg);
-	hM3pi -> Fill(m3pi);
-	if (recon_indx == 2 && bkg_indx == 1){//  true pi0 gg
-	  hE1_good -> Fill(photons[0][0]);
-	  hE2_good -> Fill(photons[1][0]);
-	  hM_gg_good -> Fill(m_gg);
-	  hM3pi_good -> Fill(m3pi);
-          
-	  evnt_good += 1;
-	  kloe_indx = 1;
-
-	  
-	}
-	else{// false pi0 gg
-	  hE1_bad -> Fill(photons[0][0]);
-	  hE2_bad -> Fill(photons[1][0]);
-	  hM_gg_bad -> Fill(m_gg);
-	  hM3pi_bad -> Fill(m3pi);
-          
-	  evnt_bad += 1;
-	  kloe_indx = 0;
-	} 
 	
-	evnt_KLOE += 1;
-
       } // end loop entries
       
       cout << "===============End Pi0 Selection=============" << endl;
@@ -572,7 +578,8 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 
       h2d_sfw_BDT_good -> Write();
       h2d_sfw_BDT_bad -> Write();
-
+      h2d_sfw_good -> Write();
+      
       // Delete hist, canvases to avoid memory leak
       delete he1;
       delete he2;
@@ -618,6 +625,7 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 
       delete h2d_sfw_BDT_good;
       delete h2d_sfw_BDT_bad;
+      delete h2d_sfw_good;
       
       ch_nb ++;
       //cout << ch_nb << endl;
