@@ -8,9 +8,17 @@ TLine *line1 = new TLine(400., 900., 1000., 900.); // horiz upper
 line1 -> SetLineColor(kRed);
 line1 -> SetLineWidth(2);
 
-TLine *line2 = new TLine(400., 650., 1000., 650.); // horiz upper
+TLine *line2 = new TLine(400., 650., 1000., 650.); // horiz lower
 line2 -> SetLineColor(kRed);
 line2 -> SetLineWidth(2);
+
+TLine *line11 = new TLine(650., 0., 650., 1500.); // horiz left
+line11 -> SetLineColor(kRed);
+line11 -> SetLineWidth(2);
+
+TLine *line22 = new TLine(900., 0., 900., 1500.); // horiz right
+line22 -> SetLineColor(kRed);
+line22 -> SetLineWidth(2);
 
 
 TList *HSFW1D = new TList();
@@ -173,7 +181,7 @@ TCanvas *cv_plot(const TString hist_type, TH1D* h_kloe, TH1D* h_good_kloe, TH1D*
   h_kloe -> GetXaxis() -> SetTitleSize(0.04);
   h_kloe -> GetXaxis() -> SetRangeUser(xmin, xmax); 
   
-  gPad->SetLogy(1); 
+  //gPad->SetLogy(1); 
   
   TLegend *legd_cv = new TLegend(0.6, 0.65, 0.85, 0.9);
   
@@ -193,6 +201,8 @@ TCanvas *cv_plot(const TString hist_type, TH1D* h_kloe, TH1D* h_good_kloe, TH1D*
     //h_bdt -> Draw("ESame");
     h_good_bdt -> Draw("ESame");
     h_bad_bdt -> Draw("ESame");
+    line11 -> Draw("Same");
+    line22 -> Draw("Same");
 
     //legd_cv -> AddEntry(h_bdt, "BDT Selection", "lep");
     legd_cv -> AddEntry(h_good_bdt, "BDT Selected", "lep");
@@ -272,7 +282,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 
       //if (classnm_tree == "TH2D") { // list all TH2D
       if (classnm_tree == "TH1D") { // list all TH1D
-	//cout << "classnm = " << classnm_tree << ", objnm = " << objnm_tree << endl;
+	cout << "classnm = " << classnm_tree << ", objnm = " << objnm_tree << endl;
       }
       
       TTree *tree_tmp = (TTree*)file -> Get(objnm_tree);
@@ -339,7 +349,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 
 
     // TH1D
-    // TISR3PI_SIG
+    // M3pi TISR3PI_SIG
     TH1D* hM3pi_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_TISR3PI_SIG");
     TH1D* hM3pi_good_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_good_TISR3PI_SIG");
     TH1D* hM3pi_bad_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_bad_TISR3PI_SIG");
@@ -356,7 +366,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     format_h(hM3pi_BDT_good_TISR3PI_SIG, 3, 2);
     formatfill_h(hM3pi_BDT_bad_TISR3PI_SIG, 2, 3001);
 
-    //
+    //  
     TH1D* hM3pi_TDATA = (TH1D*)file -> Get("hM3pi_TDATA");
     TH1D* hM3pi_good_TDATA = (TH1D*)file -> Get("hM3pi_good_TDATA");
     TH1D* hM3pi_bad_TDATA = (TH1D*)file -> Get("hM3pi_bad_TDATA");
@@ -369,11 +379,72 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     format_h(hM3pi_good_TDATA, 4, 2);
     formatfill_h(hM3pi_bad_TDATA, 4, 3001);
     
-    
     format_h(hM3pi_BDT_TDATA, 2, 2);
     format_h(hM3pi_BDT_good_TDATA, 4, 2);
     format_h(hM3pi_BDT_bad_TDATA, 2, 2);
 
+    // M_gg
+    TH1D* hM_gg_BDT_good_TDATA = (TH1D*)file -> Get("hM_gg_BDT_good_TDATA");
+    format_h(hM3pi_TDATA, 1, 2);
+
+    TH1D* hM_gg_BDT_good_T3PIGAM = (TH1D*)file -> Get("hM_gg_BDT_good_T3PIGAM");
+    TH1D* hM_gg_BDT_good_TISR3PI_SIG = (TH1D*)file -> Get("hM_gg_BDT_good_TISR3PI_SIG");
+    formatfill_h(hM_gg_BDT_good_T3PIGAM, 4, 3001);
+
+    TH1D* hM_gg_BDT_good_TEEG = (TH1D*)file -> Get("hM_gg_BDT_good_TEEG");
+    format_h(hM_gg_BDT_good_TEEG, 5, 2);
+
+    TH1D* hM_gg_BDT_good_TOMEGAPI = (TH1D*)file -> Get("hM_gg_BDT_good_TOMEGAPI");
+    format_h(hM_gg_BDT_good_TOMEGAPI, 6, 2);
+
+    TH1D* hM_gg_BDT_good_TKPM = (TH1D*)file -> Get("hM_gg_BDT_good_TKPM");
+    format_h(hM_gg_BDT_good_TKPM, 7, 2);
+
+    TH1D* hM_gg_BDT_good_TKSL = (TH1D*)file -> Get("hM_gg_BDT_good_TKSL");
+    format_h(hM_gg_BDT_good_TKSL, 8, 2);
+
+    TH1D* hM_gg_BDT_good_TRHOPI = (TH1D*)file -> Get("hM_gg_BDT_good_TRHOPI");
+    format_h(hM_gg_BDT_good_TRHOPI, 9, 2);
+
+    TH1D* hM_gg_BDT_good_TETAGAM = (TH1D*)file -> Get("hM_gg_BDT_good_TETAGAM");
+    format_h(hM_gg_BDT_good_TETAGAM, 10, 2);
+
+    TH1D* hM_gg_BDT_good_TMCREST = (TH1D*)file -> Get("hM_gg_BDT_good_TBKGREST");
+    format_h(hM_gg_BDT_good_TMCREST, 11, 2);
+    
+    // Get sfw for ISR3PI_SIG
+    const double sf_tmp = hM_gg_BDT_good_T3PIGAM -> GetEntries() / hM_gg_BDT_good_TISR3PI_SIG -> GetEntries();
+    cout << "sf_tmp = " << sf_tmp << endl;
+    
+    TH1D* hM_gg_BDT_good_TISR3PI_SIG_TMP = (TH1D*)hM_gg_BDT_good_TISR3PI_SIG -> Clone("hM_gg_BDT_good_TISR3PI_SIG_TMP"); // MC 1
+    hM_gg_BDT_good_TISR3PI_SIG_TMP -> Scale(sf_tmp);
+    format_h(hM_gg_BDT_good_TISR3PI_SIG_TMP, 4, 2);
+
+    TH1D* hM_gg_BDT_good_MCSUM = (TH1D*) hM_gg_BDT_good_TISR3PI_SIG_TMP -> Clone("hM_gg_BDT_good_MCSUM");
+    hM_gg_BDT_good_MCSUM -> Add(hM_gg_BDT_good_TEEG, 1.);
+    hM_gg_BDT_good_MCSUM -> Add(hM_gg_BDT_good_TOMEGAPI, 1.);
+    hM_gg_BDT_good_MCSUM -> Add(hM_gg_BDT_good_TKPM, 1.);
+    hM_gg_BDT_good_MCSUM -> Add(hM_gg_BDT_good_TKSL, 1.);
+    hM_gg_BDT_good_MCSUM -> Add(hM_gg_BDT_good_TRHOPI, 1.);
+    hM_gg_BDT_good_MCSUM -> Add(hM_gg_BDT_good_TETAGAM, 1.);
+    hM_gg_BDT_good_MCSUM -> Add(hM_gg_BDT_good_TMCREST, 1.);
+    
+    
+    format_h(hM_gg_BDT_good_MCSUM, 2, 2);
+
+    hM_gg_BDT_good_TDATA -> Draw("E");
+    hM_gg_BDT_good_TISR3PI_SIG_TMP -> Draw("HistSame");
+    hM_gg_BDT_good_T3PIGAM -> Draw("HistSame");
+    hM_gg_BDT_good_TEEG -> Draw("HistSame");
+    hM_gg_BDT_good_TOMEGAPI -> Draw("HistSame");
+    hM_gg_BDT_good_TKPM -> Draw("HistSame");
+    hM_gg_BDT_good_TKSL -> Draw("HistSame");
+    hM_gg_BDT_good_TRHOPI -> Draw("HistSame");
+    hM_gg_BDT_good_TETAGAM -> Draw("HistSame");
+    
+    
+    hM_gg_BDT_good_MCSUM -> Draw("HistSame");
+    
     // Preparing MC normalization
     // define and initialize variable variables
     double nb_data = 0.;
@@ -445,7 +516,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     //h2d_sfw_BDT_good_TRHOPI -> Draw();
     //h2d_sfw_BDT_good_TETAGAM -> Draw();
     //h2d_sfw_BDT_good_TBKGREST -> Draw();
-    h2d_sfw_BDT_good_MCSUM -> Draw();
+    //h2d_sfw_BDT_good_MCSUM -> Draw();
     
     // loop over histos
     int evnt_indx = 0;
@@ -583,7 +654,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 
     // ready for minimization step
     arglist[0] = 500;
-    gMinuit -> mnexcm("MIGRAD", arglist, 1, ierflg); // fit sfw2d
+    //gMinuit -> mnexcm("MIGRAD", arglist, 1, ierflg); // fit sfw2d
 
     // get sfw2d fit results
 
@@ -714,16 +785,16 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     
     TCanvas *cv_m3pi_data = cv_plot("TDATA", hM3pi_TDATA, hM3pi_good_TDATA, hM3pi_bad_TDATA, hM3pi_BDT_TDATA, hM3pi_BDT_good_TDATA, hM3pi_BDT_bad_TDATA, "Events", "M_{3#pi} [MeV/c^{2}]", "Data", "Invariant mass of 3pi (Data)");
     
-    TCanvas *cv_m3pi_isr3pi = cv_plot("TISR3PI_SIG", hM3pi_TISR3PI_SIG, hM3pi_good_TISR3PI_SIG, hM3pi_bad_TISR3PI_SIG, hM3pi_BDT_TISR3PI_SIG, hM3pi_BDT_good_TISR3PI_SIG, hM3pi_BDT_bad_TISR3PI_SIG, "Events", "M_{3#pi} [MeV/c^{2}]", "MC", "Invariant mass of 3pi (Signal)");
+    //TCanvas *cv_m3pi_isr3pi = cv_plot("TISR3PI_SIG", hM3pi_TISR3PI_SIG, hM3pi_good_TISR3PI_SIG, hM3pi_bad_TISR3PI_SIG, hM3pi_BDT_TISR3PI_SIG, hM3pi_BDT_good_TISR3PI_SIG, hM3pi_BDT_bad_TISR3PI_SIG, "Events", "M_{3#pi} [MeV/c^{2}]", "MC", "Invariant mass of 3pi (Signal)");
 
     
     //int nentries = outtree -> GetEntries();
     //cout << "Tree has " << nentries << " entries" << endl;
 
     // Plot
-    TCanvas* cv2d_corr_data = plot_corr(h2d_kloe_BDT_corr_TDATA, "TDATA", "", "Data");
-    TCanvas* cv2d_corr_sig = plot_corr(h2d_kloe_BDT_corr_TISR3PI_SIG, "TISR3PI_SIG", "", "Signal");
-    TCanvas* cv2d_corr_etagam = plot_corr(h2d_kloe_BDT_corr_TETAGAM, "TETAGAM", "", "#eta#gamma");
+    //TCanvas* cv2d_corr_data = plot_corr(h2d_kloe_BDT_corr_TDATA, "TDATA", "", "Data");
+    //TCanvas* cv2d_corr_sig = plot_corr(h2d_kloe_BDT_corr_TISR3PI_SIG, "TISR3PI_SIG", "", "Signal");
+    //TCanvas* cv2d_corr_etagam = plot_corr(h2d_kloe_BDT_corr_TETAGAM, "TETAGAM", "", "#eta#gamma");
 
     
     //TCanvas *cv_signal = plot_sfw("TISR3PI_SIG", "Singal", h2d_sfw_BDT_good_TISR3PI_SIG, "Singal");
