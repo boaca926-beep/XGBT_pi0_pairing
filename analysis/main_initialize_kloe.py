@@ -136,7 +136,9 @@ if __name__ == '__main__':
     #============================================================
     # LOAD INPUT ROOT FILES
     #============================================================
-    f_nm = "../data/kloe_small_sample.root"
+    #f_nm = "../data/kloe_small_sample.root"
+    f_nm = "../data/kloe_sample_chain.root"
+
 
     # Create ooutput directory
     data_dir = rf'./dataset' 
@@ -157,11 +159,16 @@ if __name__ == '__main__':
 
     # Check first few braches and create a phys_map dynamically
     phys_map = {}
-    #All keys: ['TISR3PI_SIG;1' (done), 'TOMEGAPI;1' (done), 
-    #           'TKPM;1', 'TKSL;1' (done), 
-    #           'T3PIGAM;1' (done), 'TRHOPI;1', 
-    #           'TETAGAM;1', 'TBKGREST;1', 
-    #           'TDATA;1', 'TEEG;1']
+    #All keys: ['TISR3PI_SIG;1', (done) 
+    #           'TOMEGAPI;1', (done) 
+    #           'TKPM;1', (done)
+    #           'TKSL;1', (done) 
+    #           'T3PIGAM;1', (no)
+    #           'TRHOPI;1', (skipped if too few events)
+    #           'TETAGAM;1', (done)
+    #           'TBKGREST;1', ()
+    #           'TDATA;1', (no)
+    #           'TEEG;1']
 
     for i, br_nm in enumerate(branches):
         # Remove ROOT cycle number (;1, ;2, etc.) for comparison
@@ -170,15 +177,25 @@ if __name__ == '__main__':
         if base_br_nm == "TISR3PI_SIG":
             br_title = rf"$e^{{+}}e^{{-}}\to\pi^{{+}}\pi^{{-}}\pi^{{0}}\gamma$"
             category = "signal"
-        elif base_br_nm == "TETAGAM":
-            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to\eta\gamma$"
-            category = "signal"
-        elif base_br_nm == "TKSL":
-            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to K_{{S}}K_{{L}}$"
+        #elif base_br_nm == "TOMEGAPI":
+        #    br_title = rf"$\omega\pi^{0}$"
+        #    category = "background"
+        #elif base_br_nm == "TKPM":
+        #    br_title = rf"$e^{{+}}e^{{-}}\to\phi\to K\bar{{K}}$"
+        #    category = "background"
+        #elif base_br_nm == "TKSL":
+        #    br_title = rf"$e^{{+}}e^{{-}}\to\phi\to K_{{S}}K_{{L}}$"
+        #    category = "background"
+        elif base_br_nm == "TRHOPI":
+            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to \rho\pi$"
             category = "background"
-        elif base_br_nm == "TOMEGAPI":
-            br_title = rf"$\omega\pi^{0}$"
-            category = "background"
+        #elif base_br_nm == "TBKGREST":
+        #    br_title = rf"Others"
+        #    category = "background"
+        #elif base_br_nm == "TETAGAM":
+        #    br_title = rf"$e^{{+}}e^{{-}}\to\phi\to\eta\gamma$"
+        #    category = "signal"
+        
         else:
             #br_title = "br_title"
             #category = "rest"
@@ -280,6 +297,10 @@ if __name__ == '__main__':
         #print(betapi0_values.describe())
 
         # Data splitting
+        if len(all_df) < 10:
+            print("WARNING: Very few background events!")  
+            continue
+
         all_df_train, all_df_val, all_df_test, X_train, y_train, X_val, y_val, X_test, y_test = data_splitting(all_df)
 
         joblib.dump(all_df, f'{data_dir}/all_df_{data_nm}.pkl')

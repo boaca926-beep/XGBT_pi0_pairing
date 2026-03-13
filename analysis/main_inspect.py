@@ -41,10 +41,14 @@ if __name__ == '__main__':
     #============================================================
     
     #phys_ch = ['TISR3PI_SIG', 'signal']
-    #phys_ch = ['TETAGAM', 'signal']
-    #phys_ch = ['TKSL', 'background']
     #phys_ch = ['TOMEGAPI', 'background']
-    phys_ch = ['TCOMB', 'combined']
+    #phys_ch = ['TETAGAM', 'signal']
+    #phys_ch = ['TKPM', 'background']
+    #phys_ch = ['TKSL', 'background']
+    #phys_ch = ['TRHOPI', 'background']
+    phys_ch = ['TBKGREST', 'background']
+
+    #phys_ch = ['TCOMB', 'combined']
 
     # Create output folder
     plot_dir = rf'./plots'
