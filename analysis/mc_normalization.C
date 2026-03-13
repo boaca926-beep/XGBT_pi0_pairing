@@ -496,22 +496,143 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     arglist[0] = 500;
     gMinuit -> mnexcm("MIGRAD", arglist, 1, ierflg); // fit sfw2d
 
+    // get sfw2d fit results
+
+    gMinuit -> GetParameter(0, fisr3pi, fisr3pi_err);
+    gMinuit -> GetParameter(1, feeg, feeg_err);
+    gMinuit -> GetParameter(2, fomegapi, fomegapi_err);
+    gMinuit -> GetParameter(3, fkpm, fkpm_err);
+    gMinuit -> GetParameter(4, fksl, fksl_err);
+    gMinuit -> GetParameter(5, fetagam, fetagam_err);
+    gMinuit -> GetParameter(6, fmcrest, fmcrest_err);
+
+    isr3pi_sfw = getscale(nb_data_sum, fisr3pi, nb_isr3pi_sum);
+    isr3pi_sfw_err = GetScalError(nb_data_sum, nb_isr3pi_sum, fisr3pi, fisr3pi_err);
+
+    eeg_sfw = getscale(nb_data_sum, feeg, nb_eeg_sum);
+    eeg_sfw_err = GetScalError(nb_data_sum, nb_eeg_sum, feeg, feeg_err);
+
+    omegapi_sfw = getscale(nb_data_sum, fomegapi, nb_omegapi_sum);
+    omegapi_sfw_err = GetScalError(nb_data_sum, nb_omegapi_sum, fomegapi, fomegapi_err);
+
+    kpm_sfw = getscale(nb_data_sum, fkpm, nb_kpm_sum);
+    kpm_sfw_err = GetScalError(nb_data_sum, nb_kpm_sum, fkpm, fkpm_err);
+
+    ksl_sfw = getscale(nb_data_sum, fksl, nb_ksl_sum);
+    ksl_sfw_err = GetScalError(nb_data_sum, nb_ksl_sum, fksl, fksl_err);
+
+    etagam_sfw = getscale(nb_data_sum, fetagam, nb_etagam_sum);
+    etagam_sfw_err = GetScalError(nb_data_sum, nb_etagam_sum, fetagam, fetagam_err);
+    
+    mcrest_sfw  = getscale(nb_data_sum, fmcrest, nb_mcrest_sum);
+    mcrest_sfw_err = GetScalError(nb_data_sum, nb_mcrest_sum, fmcrest, fmcrest_err);
+
+    // write in the output file
+    cout << "fisr3pi = " << fisr3pi << "+/-" << fisr3pi_err << "\n"
+	 << "feeg = " << feeg << "+/-" << feeg_err << "\n"
+	 << "fomegapi = " << fomegapi << "+/-" << fomegapi_err << "\n"
+	 << "fkpm = " << fkpm << "+/-" << fkpm_err << "\n"   
+ 	 << "fksl = " << fksl << "+/-" << fksl_err << "\n"
+	 << "fetagam = " << fetagam << "+/-" << fetagam_err << "\n"
+	 << "fmcrest = " << fmcrest << "+/-" << fmcrest_err << "\n\n";
+
+    cout << "isr3pi_sfw = " << isr3pi_sfw << "+/-" << isr3pi_sfw_err << "\n"
+	 << "eeg_sfw = " << eeg_sfw << "+/-" << eeg_sfw_err << "\n"
+	 << "omegapi_sfw = " << omegapi_sfw << "+/-" << omegapi_sfw_err << "\n"
+	 << "kpm_sfw = " << kpm_sfw << "+/-" << kpm_sfw_err << "\n"    
+	 << "ksl_sfw = " << ksl_sfw << "+/-" << ksl_sfw_err << "\n"
+	 << "etagam_sfw = " << etagam_sfw << "+/-" << etagam_sfw_err << "\n"
+	 << "mcrest_sfw = " << mcrest_sfw << "+/-" << mcrest_sfw_err << "\n";
+      
+      
+    // << "const double etagam_sfw = " << etagam_sfw << ";\n"
+    // << "const double mcrest_sfw = " << mcrest_sfw << ";\n";
+
+    // Create scaled histograms
+    TH1D* hM3pi_BDT_good_TISR3PI_SIG_SCALED = (TH1D*)hM3pi_BDT_good_TISR3PI_SIG -> Clone("hM3pi_BDT_good_TISR3PI_SIG_SCALED");
+    hM3pi_BDT_good_TISR3PI_SIG_SCALED -> Scale(isr3pi_sfw);
+
+    double orig_integral = hM3pi_BDT_good_TISR3PI_SIG->Integral();
+    cout << "Original histogram: " << hM3pi_BDT_good_TISR3PI_SIG->GetName() << endl;
+    cout << "  Integral: " << orig_integral << " events" << endl;
+    cout << "  Entries: " << hM3pi_BDT_good_TISR3PI_SIG->GetEntries() << endl;
+    
+    cout << "Original name: " << hM3pi_BDT_good_TISR3PI_SIG->GetName() << endl;
+    cout << "Original title: " << hM3pi_BDT_good_TISR3PI_SIG->GetTitle() << endl;
+    cout << "Integral: " << hM3pi_BDT_good_TISR3PI_SIG->Integral() << endl;
+    cout << "Entries: " << hM3pi_BDT_good_TISR3PI_SIG->GetEntries() << endl;
+    cout << "X range: [" << hM3pi_BDT_good_TISR3PI_SIG->GetXaxis()->GetXmin() 
+	 << ", " << hM3pi_BDT_good_TISR3PI_SIG->GetXaxis()->GetXmax() << "]" << endl;
+    cout << "Maximum value: " << hM3pi_BDT_good_TISR3PI_SIG->GetMaximum() << endl;
+
+    TCanvas *cv_scaled = new TCanvas("cv_scaled", "Scaled Signal", 1000, 800);
+    cv_scaled->SetLeftMargin(0.15);
+    cv_scaled->SetBottomMargin(0.15);
+    cv_scaled->SetGrid();
+    cv_scaled->SetLogy(0);  // Turn off log scale
+    
+    // Style the histogram
+    hM3pi_BDT_good_TISR3PI_SIG_SCALED->SetTitle("Scaled Signal Histogram");
+    hM3pi_BDT_good_TISR3PI_SIG_SCALED->GetXaxis()->SetTitle("M_{3#pi} [MeV/c^{2}]");
+    hM3pi_BDT_good_TISR3PI_SIG_SCALED->GetXaxis()->SetTitleOffset(1.2);
+    hM3pi_BDT_good_TISR3PI_SIG_SCALED->GetYaxis()->SetTitle("Events");
+    hM3pi_BDT_good_TISR3PI_SIG_SCALED->GetYaxis()->SetTitleOffset(1.4);
+    
+    // Set colors to make it visible
+    hM3pi_BDT_good_TISR3PI_SIG_SCALED->SetLineColor(kRed);
+    hM3pi_BDT_good_TISR3PI_SIG_SCALED->SetLineWidth(2);
+    hM3pi_BDT_good_TISR3PI_SIG_SCALED->SetFillColor(kRed-9);
+    hM3pi_BDT_good_TISR3PI_SIG_SCALED->SetFillStyle(3001);
+    
+    // Set Y-axis range based on the scaled maximum (361)
+    double max_val = hM3pi_BDT_good_TISR3PI_SIG_SCALED->GetMaximum();
+    hM3pi_BDT_good_TISR3PI_SIG_SCALED->SetMaximum(max_val * 1.2);  // Add 20% headroom
+    hM3pi_BDT_good_TISR3PI_SIG_SCALED->SetMinimum(0);
+    
+    // Draw
+    hM3pi_BDT_good_TISR3PI_SIG_SCALED->Draw("HIST");
+    
+    // Update and save
+    cv_scaled->Update();
+    //cv_scaled->SaveAs("plots/scaled_signal.pdf");
+    
+    // Print clone info
+    cout << "\n========== CLONE INFO ==========" << endl;
+    cout << "Clone integral: " << hM3pi_BDT_good_TISR3PI_SIG_SCALED->Integral() << endl;
+    cout << "Clone entries: " << hM3pi_BDT_good_TISR3PI_SIG_SCALED->GetEntries() << endl;
+    cout << "Clone maximum: " << hM3pi_BDT_good_TISR3PI_SIG_SCALED->GetMaximum() << endl;
+    cout << "X range: [" << hM3pi_BDT_good_TISR3PI_SIG_SCALED->GetXaxis()->GetXmin()
+	 << ", " << hM3pi_BDT_good_TISR3PI_SIG_SCALED->GetXaxis()->GetXmax() << "]" << endl;
+
+    /*
+    
+    // Sum all components
+    //TH2D *h_mc_total = (TH2D*)h_isr3pi_scaled->Clone("h_mc_total");
+    //h_mc_total->Add(h_eeg_scaled);
+    //h_mc_total->Add(h_omegapi_scaled);
+    //h_mc_total->Add(h_kpm_scaled);
+    //h_mc_total->Add(h_ksl_scaled);
+    //h_mc_total->Add(h_etagam_scaled);
+    //h_mc_total->Add(h_mcrest_scaled);
+    */
+    
     // Plot KLOE results, hM3pi MC and data
-    hM3pi_TDATA -> Draw("E");
-    hM3pi_bad_TDATA -> Draw("Same");
+    //hM3pi_TDATA -> Draw("E");
+    //hM3pi_bad_TDATA -> Draw("Same");
     
-    TCanvas *cv_m3pi_data = cv_plot("TDATA", hM3pi_TDATA, hM3pi_good_TDATA, hM3pi_bad_TDATA, hM3pi_BDT_TDATA, hM3pi_BDT_good_TDATA, hM3pi_BDT_bad_TDATA, "Events", "M_{3#pi} [MeV/c^{2}]", "Data", "Invariant mass of 3pi (Data)");
+    //TCanvas *cv_m3pi_data = cv_plot("TDATA", hM3pi_TDATA, hM3pi_good_TDATA, hM3pi_bad_TDATA, hM3pi_BDT_TDATA, hM3pi_BDT_good_TDATA, hM3pi_BDT_bad_TDATA, "Events", "M_{3#pi} [MeV/c^{2}]", "Data", "Invariant mass of 3pi (Data)");
     
-    TCanvas *cv_m3pi_isr3pi = cv_plot("TISR3PI_SIG", hM3pi_TISR3PI_SIG, hM3pi_good_TISR3PI_SIG, hM3pi_bad_TISR3PI_SIG, hM3pi_BDT_TISR3PI_SIG, hM3pi_BDT_good_TISR3PI_SIG, hM3pi_BDT_bad_TISR3PI_SIG, "Events", "M_{3#pi} [MeV/c^{2}]", "MC", "Invariant mass of 3pi (Signal)");
+    //TCanvas *cv_m3pi_isr3pi = cv_plot("TISR3PI_SIG", hM3pi_TISR3PI_SIG, hM3pi_good_TISR3PI_SIG, hM3pi_bad_TISR3PI_SIG, hM3pi_BDT_TISR3PI_SIG, hM3pi_BDT_good_TISR3PI_SIG, hM3pi_BDT_bad_TISR3PI_SIG, "Events", "M_{3#pi} [MeV/c^{2}]", "MC", "Invariant mass of 3pi (Signal)");
+
     
     //int nentries = outtree -> GetEntries();
     //cout << "Tree has " << nentries << " entries" << endl;
 
     // Plot
-    TCanvas *cv_signal = plot_sfw("TISR3PI_SIG", "Singal", h2d_sfw_BDT_good_TISR3PI_SIG, "Singal");
-    TCanvas *cv_etagam = plot_sfw("TETAGAM", "etagam", h2d_sfw_BDT_good_TETAGAM, "#eta#gamma");
-    TCanvas *cv_data = plot_sfw("TDATA", "data", h2d_sfw_BDT_good_TDATA, "Data");
-    TCanvas *cv_mcsum_noeta = plot_sfw("MCSUM_NOETA", "MC sum (no etagam)", h2d_sfw_BDT_good_MCSUM_NOETA, "Others");
+    //TCanvas *cv_signal = plot_sfw("TISR3PI_SIG", "Singal", h2d_sfw_BDT_good_TISR3PI_SIG, "Singal");
+    //TCanvas *cv_etagam = plot_sfw("TETAGAM", "etagam", h2d_sfw_BDT_good_TETAGAM, "#eta#gamma");
+    //TCanvas *cv_data = plot_sfw("TDATA", "data", h2d_sfw_BDT_good_TDATA, "Data");
+    //TCanvas *cv_mcsum_noeta = plot_sfw("MCSUM_NOETA", "MC sum (no etagam)", h2d_sfw_BDT_good_MCSUM_NOETA, "Others");
     
     /*
     cv_m3pi_data -> SaveAs("./plots/cv_m3pi_data.pdf");
@@ -533,6 +654,9 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     cv_data -> SaveAs("cv_sfw2d_TDATA.pdf");
     */
 
+    hM3pi_BDT_good_TISR3PI_SIG_SCALED -> Write();
+    hM3pi_BDT_good_TDATA -> Write();
+    
     TSFW2D -> Write();
     f_output -> Close();
   

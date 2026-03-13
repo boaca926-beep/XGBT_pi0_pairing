@@ -12,7 +12,7 @@ double nb_mcsum = 0.;
 double chi2_sfw2d_sum = 0., residul_size_sfw2d = 0.;
 
 // Add a penalty strength parameter (you can adjust this)
-double g_penalty_strength = 1000.0;  // Start with this value
+double g_penalty_strength = 10000.0;  // Start with this value
 
 TTree* TSFW2D = new TTree("TSFW2D", "recreate");
     

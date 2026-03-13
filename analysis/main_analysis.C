@@ -433,6 +433,7 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	
 	e1_bdt = photons[pi0_pho1_idx][0];
 	e2_bdt = photons[pi0_pho2_idx][0];
+	e3_bdt = photons[prompt_idx][0];
 	
 	m_gg_bdt = inv_mass_4vector(pi0_pho1_idx, pi0_pho2_idx, photons);
 	//m_gg = inv_mass_4vector(0, 1, photons);
@@ -468,7 +469,7 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	//cout << out_event << endl;
 	outtree -> Fill();
 
-	//if (m3pi_bdt > 900. || m3pi_bdt < 650.) continue;
+	if (m3pi_bdt > 900. || m3pi_bdt < 650.) continue;
 	
 	// BDT selection
 	hM_gg_BDT -> Fill(m_gg_bdt);
@@ -480,9 +481,9 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	  hE2_BDT_good -> Fill(e2_bdt);
 	  hM_gg_BDT_good -> Fill(m_gg_bdt);
 	  hM3pi_BDT_good -> Fill(m3pi_bdt);
-	  h2d_sfw_BDT_good -> Fill(ppIM, Eisr);
+	  h2d_sfw_BDT_good -> Fill(ppIM, e3_bdt);
 	  //cout << m_gg_bdt << endl;
-	  //cout << ppIM << ", " << Eisr << endl;
+	  //cout << ppIM << ", " << e3_bdt << endl;
 	  
 	  bdt_indx = 1;
 	}
@@ -491,7 +492,7 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	  hE2_BDT_bad -> Fill(e2_bdt);
 	  hM_gg_BDT_bad -> Fill(m_gg_bdt);
 	  hM3pi_BDT_bad -> Fill(m3pi_bdt);
-	  h2d_sfw_BDT_bad -> Fill(ppIM, Eisr);
+	  h2d_sfw_BDT_bad -> Fill(ppIM, e3_bdt);
 	  
 	  bdt_indx = 0;
 	}
