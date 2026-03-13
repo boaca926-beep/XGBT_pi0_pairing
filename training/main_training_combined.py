@@ -11,7 +11,7 @@ import xgboost as xgb
 import joblib
 import random
 
-def load_dataset():
+def load_dataset(data_type):
     """
     Load train, val dataset
     """
@@ -34,8 +34,8 @@ if __name__ == '__main__':
     os.makedirs('models', exist_ok=True)  
 
     ## Bayesian optimization (look for best model parameters)
-    data_type = 'combined'
-    X_train, y_train, X_val, y_val = load_dataset()
+    data_type = 'TCOMB'
+    X_train, y_train, X_val, y_val = load_dataset(data_type)
     
     params = baye_opti(X_train, y_train) # Find best model parameters
     #params = set_model_params(X_train, y_train) # Initial model parameters

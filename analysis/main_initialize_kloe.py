@@ -13,7 +13,7 @@ from sklearn.model_selection import train_test_split
 import random
 import awkward as ak
 
-def create_dataset(df): # For photon 4-momentum
+def create_dataset(df, category): # For photon 4-momentum
     print(f'\n✅ Creating dataset ...')
     # Define photon 4-momentum
     br_nm = ['Br_E1', 'Br_px1', 'Br_py1', 'Br_pz1', 
@@ -33,8 +33,8 @@ def create_dataset(df): # For photon 4-momentum
     # Create all_df, pos_df, neg_df for signal and background events
     if len(br_nm): # Check para length and br_nm length are consistent
         
-        if info['category'] == 'signal':
-            print(f"Creating all_df for {info['category']} {df.columns}...")
+        if category == 'signal':
+            print(f"Creating all_df for {category} {df.columns}...")
 
             pos_df = df[(df['Br_recon_indx'] == 2) & (df['Br_bkg_indx'] == 1)][br_nm]
             neg_df = df[~((df['Br_recon_indx'] == 2) & (df['Br_bkg_indx'] == 1))][br_nm]
@@ -63,8 +63,8 @@ def create_dataset(df): # For photon 4-momentum
             all_df = pd.concat([pos_df, neg_df], ignore_index=True)
             all_df = all_df.sample(frac=1).reset_index(drop=True)
       
-        elif info['category'] == 'background':
-            print(f"Creating pho4mom_all_df for {info['category']} {df.columns} ...")
+        elif category == 'background':
+            print(f"Creating pho4mom_all_df for {category} {df.columns} ...")
 
             all_df = df
 
@@ -76,10 +76,10 @@ def create_dataset(df): # For photon 4-momentum
 
             true_pi0_index  = [(-1, -1)] * len(all_df)
             all_df['true_pi0_pair'] = true_pi0_index # Add true_pi0_pair column
-        else:
-            print("No dataset other than signal or bkg is expected!")
-    else:
-
+        else: # combined or others
+            raise ValueError("Only sig and bkg allow!")
+    else: 
+        print("No dataset other than signal or bkg or combined is expected!")
         raise ValueError("Array length mismatch - cannot proceed")
 
     # pi0 features for ML learning
@@ -124,9 +124,9 @@ def data_splitting(all_df):
     y_test = pair_test['is_pi0']
 
     print(f"\n✅ Data ready for training:")
-    print(f"  X_train shape: {X_train.shape}")
-    print(f"  X_val shape:   {X_val.shape}")
-    print(f"  X_test shape:  {X_test.shape}")
+    print(f"  X_train shape: {X_train.shape}, y_train shape: {y_train.shape}")
+    print(f"  X_val shape:   {X_val.shape}, y_val shape:   {y_val.shape}")
+    print(f"  X_test shape:  {X_test.shape}, y_test shape:  {y_test.shape}")
 
     return all_df_train, all_df_val, all_df_test, X_train, y_train, X_val, y_val, X_test, y_test
 
@@ -177,24 +177,24 @@ if __name__ == '__main__':
         if base_br_nm == "TISR3PI_SIG":
             br_title = rf"$e^{{+}}e^{{-}}\to\pi^{{+}}\pi^{{-}}\pi^{{0}}\gamma$"
             category = "signal"
-        #elif base_br_nm == "TOMEGAPI":
-        #    br_title = rf"$\omega\pi^{0}$"
-        #    category = "background"
-        #elif base_br_nm == "TKPM":
-        #    br_title = rf"$e^{{+}}e^{{-}}\to\phi\to K\bar{{K}}$"
-        #    category = "background"
-        #elif base_br_nm == "TKSL":
-        #    br_title = rf"$e^{{+}}e^{{-}}\to\phi\to K_{{S}}K_{{L}}$"
-        #    category = "background"
-        #elif base_br_nm == "TRHOPI":
-        #    br_title = rf"$e^{{+}}e^{{-}}\to\phi\to \rho\pi$"
-        #    category = "background"
-        #elif base_br_nm == "TBKGREST":
-        #    br_title = rf"Others"
-        #    category = "background"
-        #elif base_br_nm == "TEEG":
-        #    br_title = rf"$e^{{+}}e^{{-}}\to\phi\to e^{{+}}e^{{-}}\gamma$"
-        #    category = "background"
+        elif base_br_nm == "TOMEGAPI":
+            br_title = rf"$\omega\pi^{0}$"
+            category = "background"
+        elif base_br_nm == "TKPM":
+            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to K\bar{{K}}$"
+            category = "background"
+        elif base_br_nm == "TKSL":
+            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to K_{{S}}K_{{L}}$"
+            category = "background"
+        elif base_br_nm == "TRHOPI":
+            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to \rho\pi$"
+            category = "background"
+        elif base_br_nm == "TBKGREST":
+            br_title = rf"Others"
+            category = "background"
+        elif base_br_nm == "TEEG":
+            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to e^{{+}}e^{{-}}\gamma$"
+            category = "background"
         elif base_br_nm == "TETAGAM":
             br_title = rf"$e^{{+}}e^{{-}}\to\phi\to\eta\gamma$"
             category = "signal"
@@ -292,7 +292,7 @@ if __name__ == '__main__':
         #print(df.isnull().sum())
 
         # Create pho4mom_all_df for signal and bkg separately
-        all_df, pi0_all_df = create_dataset(df)
+        all_df, pi0_all_df = create_dataset(df, info['category'])
             
         # Check for anomalies
         #print(all_df.columns)
@@ -341,7 +341,9 @@ if __name__ == '__main__':
         print(f"Shuffled combined shape: {df_comb.shape}")
 
         # Creat datasets
-        all_df_comb, pi0_all_df_comb = create_dataset(df_comb)
+        all_df_comb = df_comb
+        pi0_all_df_comb = prepare_3photon_paris(all_df_comb)  # This should work now
+        #all_df_comb, pi0_all_df_comb = create_dataset(df_comb, 'combined')
 
         # Split
         all_df_train_comb, all_df_val_comb, all_df_test_comb, X_train_comb, y_train_comb, X_val_comb, y_val_comb, X_test_comb, y_test_comb = data_splitting(all_df_comb)
@@ -363,6 +365,7 @@ if __name__ == '__main__':
         joblib.dump(all_df_val_comb, f'{data_dir}/all_df_val_TCOMB.pkl')
         joblib.dump(all_df_test_comb, f'{data_dir}/all_df_test_TCOMB.pkl')
 
+        joblib.dump(X_train_comb, f'{data_dir}/X_train_TCOMB.pkl')
         joblib.dump(X_val_comb, f'{data_dir}/X_val_TCOMB.pkl')
         joblib.dump(X_test_comb, f'{data_dir}/X_test_TCOMB.pkl')
 

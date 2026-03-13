@@ -10,7 +10,7 @@ import pandas as pd
 from bayes_opti import baye_opti
 import joblib
 import xgboost as xgb # xgboost must be imported before ROOT to prevent a crash caused by conflicting C++ std::regex symbols
-import ROOT
+import ROOT # This order is important!
 import json
 
 # Define the patch function
@@ -22,7 +22,7 @@ def patched_get_basescore(model):
     base_score_str = base_score_str.strip('[]')
     return float(base_score_str)
 
-def load_dataset():
+def load_dataset(br_type):
     """
     Load train, val dataset
     """
@@ -63,10 +63,9 @@ if __name__ == '__main__':
 
         if (data_type == br_type):
             ## Bayesian optimization (look for best model parameters)
-            X_train, y_train, X_val, y_val = load_dataset()
+            X_train, y_train, X_val, y_val = load_dataset(br_type)
             print(f"X_train columns: {X_train.columns}")
             print(f"Number of features in the training: {len(X_train.columns.tolist())}")
-
 
             params = baye_opti(X_train, y_train) # Find best model parameters
             #params = set_model_params(X_train, y_train) # Initial model parameters
@@ -89,7 +88,8 @@ if __name__ == '__main__':
             # Fit with the model
             model.fit(X_train_np, y_train_np,
                     eval_set = [(X_train_np, y_train_np), (X_val_np, y_val_np)],
-                    verbose=False     
+                    #verbose=False
+                    verbose=50     
             )
 
             # Save the model

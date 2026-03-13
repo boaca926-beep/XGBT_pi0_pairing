@@ -22,6 +22,12 @@ if __name__ == '__main__':
         #br_nm = data_type.split(';')[0]
         br_title = info['br_title']
         category = info['category']
+
+        file_path = os.path.join(input_data_dir, f'all_df_{data_type}.pkl')
+        if not os.path.exists(file_path):
+            print(f"❌ File not found: {file_path}")
+            print(f"   This channel was likely skipped due to low statistics (<10 events)")
+            continue
         
         df_tmp = joblib.load(os.path.join(input_data_dir, f'all_df_{data_type}.pkl'))
         nb_evnt_tmp = len(df_tmp)
@@ -42,7 +48,6 @@ if __name__ == '__main__':
     
     #phys_ch = ['TISR3PI_SIG', 'signal']
     #phys_ch = ['TOMEGAPI', 'background']
-    #phys_ch = ['TETAGAM', 'signal']
     #phys_ch = ['TKPM', 'background']
     #phys_ch = ['TKSL', 'background']
     #phys_ch = ['TRHOPI', 'background']
@@ -66,6 +71,8 @@ if __name__ == '__main__':
             print(f'{info}')
 
             ## Check if dataset exists
+            
+            
             try:
                 all_df = joblib.load(os.path.join(input_data_dir, f'all_df_{data_type}.pkl'))
                 print("Loaded existing pickle file")
