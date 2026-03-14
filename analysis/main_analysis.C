@@ -225,13 +225,13 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       TH1D* hE2_bad = new TH1D(Form("hE2_bad_%s", objnm_tree.Data()), "", 200, 0, 500);
 
       // M_gg
-      TH1D* hM_gg_BDT = new TH1D(Form("hM_gg_BDT_%s", objnm_tree.Data()), "", 200, 50, 200); 
-      TH1D* hM_gg_BDT_good = new TH1D(Form("hM_gg_BDT_good_%s", objnm_tree.Data()), "", 200, 50, 200);
-      TH1D* hM_gg_BDT_bad = new TH1D(Form("hM_gg_BDT_bad_%s", objnm_tree.Data()), "", 200, 50, 200);
+      TH1D* hM_gg_BDT = new TH1D(Form("hM_gg_BDT_%s", objnm_tree.Data()), "", 200, 50, 400); 
+      TH1D* hM_gg_BDT_good = new TH1D(Form("hM_gg_BDT_good_%s", objnm_tree.Data()), "", 200, 50, 400);
+      TH1D* hM_gg_BDT_bad = new TH1D(Form("hM_gg_BDT_bad_%s", objnm_tree.Data()), "", 200, 50, 400);
       
-      TH1D* hM_gg = new TH1D(Form("hM_gg_%s", objnm_tree.Data()), "", 200, 50, 200); 
-      TH1D* hM_gg_good = new TH1D(Form("hM_gg_good_%s", objnm_tree.Data()), "", 200, 50, 200);
-      TH1D* hM_gg_bad = new TH1D(Form("hM_gg_bad_%s", objnm_tree.Data()), "", 200, 50, 200);
+      TH1D* hM_gg = new TH1D(Form("hM_gg_%s", objnm_tree.Data()), "", 200, 50, 400); 
+      TH1D* hM_gg_good = new TH1D(Form("hM_gg_good_%s", objnm_tree.Data()), "", 200, 50, 400);
+      TH1D* hM_gg_bad = new TH1D(Form("hM_gg_bad_%s", objnm_tree.Data()), "", 200, 50, 400);
 
       // m3pi
       TH1D* hM3pi = new TH1D(Form("hM3pi_%s", objnm_tree.Data()), "", 200, 400, 1000);

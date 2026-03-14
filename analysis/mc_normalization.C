@@ -35,6 +35,59 @@ double getbinwidth(TH1D* h) {
   return width;
 }
 
+
+TCanvas* plot_kine_var(TObjArray* HM_gg, const double sf_tmp, const TString var_type){
+
+  /*
+  TH1D* hM_gg_TDATA = (TH1D*)file -> Get("hM_gg_TDATA");
+    
+  TH1D* hM_gg_BDT_TDATA = (TH1D*)file -> Get("hM_gg_BDT_TDATA");
+  
+  TH1D* hM_gg_BDT_good_TDATA = (TH1D*)file -> Get("hM_gg_BDT_good_TDATA");
+  
+  TH1D* hM_gg_BDT_bad_TDATA = (TH1D*)file -> Get("hM_gg_BDT_bad_TDATA");
+  
+  TH1D* hM_gg_BDT_good_T3PIGAM = (TH1D*)file -> Get("hM_gg_BDT_good_T3PIGAM");
+  TH1D* hM_gg_BDT_good_TISR3PI_SIG = (TH1D*)file -> Get("hM_gg_BDT_good_TISR3PI_SIG");
+  
+  TH1D* hM_gg_BDT_good_TEEG = (TH1D*)file -> Get("hM_gg_BDT_good_TEEG");
+  
+  TH1D* hM_gg_BDT_good_TOMEGAPI = (TH1D*)file -> Get("hM_gg_BDT_good_TOMEGAPI");
+  
+  TH1D* hM_gg_BDT_good_TKPM = (TH1D*)file -> Get("hM_gg_BDT_good_TKPM");
+  
+  TH1D* hM_gg_BDT_good_TKSL = (TH1D*)file -> Get("hM_gg_BDT_good_TKSL");
+  
+  TH1D* hM_gg_BDT_good_TRHOPI = (TH1D*)file -> Get("hM_gg_BDT_good_TRHOPI");
+  
+  TH1D* hM_gg_BDT_good_TETAGAM = (TH1D*)file -> Get("hM_gg_BDT_good_TETAGAM");
+  
+  TH1D* hM_gg_BDT_good_TMCREST = (TH1D*)file -> Get("hM_gg_BDT_good_TBKGREST");
+    
+  TH1D *hist_bkgrest = (TH1D *) Hlist.FindObject("hist_bkgrest");
+  */
+  
+  TH1D *h1d_kloe_data = (TH1D *) HM_gg -> FindObject(var_type + "_TDATA");
+  TH1D *h1d_bdt_data = (TH1D *) HM_gg -> FindObject(var_type + "_BDT_TDATA");
+  TH1D *h1d_bdt_good_data = (TH1D *) HM_gg -> FindObject(var_type + "_BDT_good_TDATA");
+  TH1D *h1d_bdt_bad_data = (TH1D *) HM_gg -> FindObject(var_type + "_BDT_bad_TDATA");
+
+  TCanvas* cv =  new TCanvas("cv_" + var_type, "", 0, 0, 1200, 800);
+
+  cv -> SetBottomMargin(0.15);//0.007
+  cv -> SetLeftMargin(0.15);
+  cv -> SetRightMargin(0.15);
+
+  h1d_kloe_data -> Draw("E");
+  h1d_bdt_data -> Draw("ESame");
+  h1d_bdt_good_data -> Draw("ESame");
+  h1d_bdt_bad_data -> Draw("ESame");
+
+
+  return cv;
+  
+}
+    
 TCanvas *plot_corr(TH2D* h2d, const TString hist_type, const TString cv_nm, const TString pt_str) {
 
   TH1D *h2d_projx = h2d -> ProjectionX();
@@ -349,7 +402,9 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 
 
     // TH1D
-    // M3pi TISR3PI_SIG
+    // M3pi
+    TObjArray* HM3pi = new TObjArray(100); // Hist. Array
+    
     TH1D* hM3pi_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_TISR3PI_SIG");
     TH1D* hM3pi_good_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_good_TISR3PI_SIG");
     TH1D* hM3pi_bad_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_bad_TISR3PI_SIG");
@@ -368,25 +423,45 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 
     //  
     TH1D* hM3pi_TDATA = (TH1D*)file -> Get("hM3pi_TDATA");
+    format_h(hM3pi_TDATA, 1, 2);
+    HM3pi -> Add(hM3pi_TDATA);
+    
     TH1D* hM3pi_good_TDATA = (TH1D*)file -> Get("hM3pi_good_TDATA");
     TH1D* hM3pi_bad_TDATA = (TH1D*)file -> Get("hM3pi_bad_TDATA");
-    
-    TH1D* hM3pi_BDT_TDATA = (TH1D*)file -> Get("hM3pi_BDT_TDATA");
-    TH1D* hM3pi_BDT_good_TDATA = (TH1D*)file -> Get("hM3pi_BDT_good_TDATA");
-    TH1D* hM3pi_BDT_bad_TDATA = (TH1D*)file -> Get("hM3pi_BDT_bad_TDATA");
-
-    format_h(hM3pi_TDATA, 1, 2);
     format_h(hM3pi_good_TDATA, 4, 2);
     formatfill_h(hM3pi_bad_TDATA, 4, 3001);
     
-    format_h(hM3pi_BDT_TDATA, 2, 2);
-    format_h(hM3pi_BDT_good_TDATA, 4, 2);
+    TH1D* hM3pi_BDT_TDATA = (TH1D*)file -> Get("hM3pi_BDT_TDATA");
+    format_h(hM3pi_BDT_TDATA, 4, 2);
+    HM3pi -> Add(hM3pi_BDT_TDATA);
+      
+    TH1D* hM3pi_BDT_good_TDATA = (TH1D*)file -> Get("hM3pi_BDT_good_TDATA");
+    format_h(hM3pi_BDT_good_TDATA, 3, 2);
+    HM3pi -> Add(hM3pi_BDT_good_TDATA);
+    
+    TH1D* hM3pi_BDT_bad_TDATA = (TH1D*)file -> Get("hM3pi_BDT_bad_TDATA");
     format_h(hM3pi_BDT_bad_TDATA, 2, 2);
-
+    HM3pi -> Add(hM3pi_BDT_bad_TDATA);
+    
     // M_gg
+    TObjArray* HM_gg = new TObjArray(100); // Hist. Array
+    
+    TH1D* hM_gg_TDATA = (TH1D*)file -> Get("hM_gg_TDATA");
+    format_h(hM_gg_TDATA, 1, 2);
+    HM_gg -> Add(hM_gg_TDATA);
+    
+    TH1D* hM_gg_BDT_TDATA = (TH1D*)file -> Get("hM_gg_BDT_TDATA");
+    format_h(hM_gg_BDT_TDATA, 4, 2);
+    HM_gg -> Add(hM_gg_BDT_TDATA);
+    
     TH1D* hM_gg_BDT_good_TDATA = (TH1D*)file -> Get("hM_gg_BDT_good_TDATA");
-    format_h(hM3pi_TDATA, 1, 2);
-
+    format_h(hM_gg_BDT_good_TDATA, 3, 2);
+    HM_gg -> Add(hM_gg_BDT_good_TDATA);
+    
+    TH1D* hM_gg_BDT_bad_TDATA = (TH1D*)file -> Get("hM_gg_BDT_bad_TDATA");
+    format_h(hM_gg_BDT_bad_TDATA, 2, 2);
+    HM_gg -> Add(hM_gg_BDT_bad_TDATA);
+    
     TH1D* hM_gg_BDT_good_T3PIGAM = (TH1D*)file -> Get("hM_gg_BDT_good_T3PIGAM");
     TH1D* hM_gg_BDT_good_TISR3PI_SIG = (TH1D*)file -> Get("hM_gg_BDT_good_TISR3PI_SIG");
     formatfill_h(hM_gg_BDT_good_T3PIGAM, 4, 3001);
@@ -432,19 +507,91 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     
     format_h(hM_gg_BDT_good_MCSUM, 2, 2);
 
-    hM_gg_BDT_good_TDATA -> Draw("E");
-    hM_gg_BDT_good_TISR3PI_SIG_TMP -> Draw("HistSame");
-    hM_gg_BDT_good_T3PIGAM -> Draw("HistSame");
-    hM_gg_BDT_good_TEEG -> Draw("HistSame");
-    hM_gg_BDT_good_TOMEGAPI -> Draw("HistSame");
-    hM_gg_BDT_good_TKPM -> Draw("HistSame");
-    hM_gg_BDT_good_TKSL -> Draw("HistSame");
-    hM_gg_BDT_good_TRHOPI -> Draw("HistSame");
-    hM_gg_BDT_good_TETAGAM -> Draw("HistSame");
+    TCanvas* cv_tmp =  new TCanvas("cv_tmp", "", 0, 0, 700, 700);
+
+    hM_gg_TDATA -> Draw("E");
+    hM_gg_BDT_TDATA -> Draw("ESame");
+    //hM_gg_BDT_good_TDATA -> Draw("ESame");
+    //hM_gg_BDT_bad_TDATA -> Draw("ESame");
+    
+    //hM_gg_BDT_good_TISR3PI_SIG_TMP -> Draw("HistSame");
+    //hM_gg_BDT_good_T3PIGAM -> Draw("HistSame");
+    //hM_gg_BDT_good_TEEG -> Draw("HistSame");
+    //hM_gg_BDT_good_TOMEGAPI -> Draw("HistSame");
+    //hM_gg_BDT_good_TKPM -> Draw("HistSame");
+    //hM_gg_BDT_good_TKSL -> Draw("HistSame");
+    //hM_gg_BDT_good_TRHOPI -> Draw("HistSame");
+    //hM_gg_BDT_good_TETAGAM -> Draw("HistSame");
     
     
-    hM_gg_BDT_good_MCSUM -> Draw("HistSame");
+    //hM_gg_BDT_good_MCSUM -> Draw("HistSame");
+
+    TCanvas* cv_M_gg = plot_kine_var(HM_gg, sf_tmp, "hM_gg");
+    cv_M_gg -> SetTitle("Invariant mass of gamma-gamma");
     
+    // Create TPaveText
+    TPaveText* pt = new TPaveText(0.2, 0.8, 0.3, 0.8, "NDC");  // Coordinates in NDC (0-1)
+    pt->SetFillColor(0);           // White background
+    pt->SetTextColor(kBlack);      // Black text
+    pt->SetTextSize(0.03);         // Text size
+    //pt->SetBorderSize(1);          // Border size (0 = no border)
+    pt->SetTextAlign(12);          // Left aligned, vertically centered
+    
+    // Add text lines
+    //pt->AddText("Information:");
+    pt->AddText(Form("M^{BDT}_{3#pi}#in[%0.0f, %0.0f] MeV/c^{2}", 650., 900.));
+    //pt->AddText(Form("Mean: %.2f", h->GetMean()));
+    //pt->AddText(Form("RMS: %.2f", h->GetRMS()));
+    
+    // Draw the TPaveText on the canvas
+    pt->Draw("same");
+
+    // CV attribute
+    hM_gg_TDATA -> GetYaxis() -> SetTitle(TString::Format("Events/[%0.2f", getbinwidth(hM_gg_TDATA)) + " MeV/c^{2}]");
+    hM_gg_TDATA -> GetYaxis() -> CenterTitle();
+    hM_gg_TDATA -> GetYaxis() -> SetTitleSize(0.04);
+    hM_gg_TDATA -> GetYaxis() -> SetNdivisions(505);
+    hM_gg_TDATA -> GetYaxis() -> SetRangeUser(0.1, hM_gg_TDATA -> GetBinContent(hM_gg_TDATA -> GetMaximumBin()) * 1.5);
+    hM_gg_TDATA -> GetXaxis() -> SetTitle("M_{#gamma#gamma} [MeV/c^{2}]");
+    hM_gg_TDATA -> GetXaxis() -> CenterTitle();
+    hM_gg_TDATA -> GetXaxis() -> SetTitleSize(0.04);
+    hM_gg_TDATA -> GetXaxis() -> SetRangeUser(50., 300.); 
+  
+    // Create Legend
+    TLegend *legd_cv = new TLegend(0.6, 0.5, 0.9, 0.9);
+  
+    legd_cv -> SetTextFont(132);
+    legd_cv -> SetFillStyle(0);
+    legd_cv -> SetBorderSize(0);
+    legd_cv -> SetNColumns(1);
+    
+    legd_cv -> AddEntry(hM_gg_TDATA, "#chi^{2}_{m_{#gamma#gamma}} Selection", "lep");
+    legd_cv -> AddEntry(hM_gg_BDT_TDATA, "BDT Selection", "lep");
+    legd_cv -> AddEntry(hM_gg_BDT_good_TDATA, "BDT #pi^{0}(#gamma#gamma)", "lep");
+    legd_cv -> AddEntry(hM_gg_BDT_bad_TDATA, "BDT Discarded", "lep");
+    
+    legd_cv -> Draw("Same");
+    
+    legtextsize(legd_cv, 0.04);
+    
+    // Update the canvas to show changes
+    cv_M_gg -> Update();
+    cv_M_gg -> Modified();  // Mark as modified
+  
+
+    // Plot M3pi
+    TCanvas* cv_M3pi = plot_kine_var(HM3pi, sf_tmp, "hM3pi");
+    cv_M3pi -> SetTitle("Invariant mass of gamma-gamma");
+    
+    pt->Draw("same");
+    //legd_cv -> Draw("Same");
+    line11 -> Draw("Same");
+    line22 -> Draw("Same");
+
+    
+    
+  
+  
     // Preparing MC normalization
     // define and initialize variable variables
     double nb_data = 0.;
@@ -783,7 +930,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     //hM3pi_TDATA -> Draw("E");
     //hM3pi_bad_TDATA -> Draw("Same");
     
-    TCanvas *cv_m3pi_data = cv_plot("TDATA", hM3pi_TDATA, hM3pi_good_TDATA, hM3pi_bad_TDATA, hM3pi_BDT_TDATA, hM3pi_BDT_good_TDATA, hM3pi_BDT_bad_TDATA, "Events", "M_{3#pi} [MeV/c^{2}]", "Data", "Invariant mass of 3pi (Data)");
+    //TCanvas *cv_m3pi_data = cv_plot("TDATA", hM3pi_TDATA, hM3pi_good_TDATA, hM3pi_bad_TDATA, hM3pi_BDT_TDATA, hM3pi_BDT_good_TDATA, hM3pi_BDT_bad_TDATA, "Events", "M_{3#pi} [MeV/c^{2}]", "Data", "Invariant mass of 3pi (Data)");
     
     //TCanvas *cv_m3pi_isr3pi = cv_plot("TISR3PI_SIG", hM3pi_TISR3PI_SIG, hM3pi_good_TISR3PI_SIG, hM3pi_bad_TISR3PI_SIG, hM3pi_BDT_TISR3PI_SIG, hM3pi_BDT_good_TISR3PI_SIG, hM3pi_BDT_bad_TISR3PI_SIG, "Events", "M_{3#pi} [MeV/c^{2}]", "MC", "Invariant mass of 3pi (Signal)");
 
