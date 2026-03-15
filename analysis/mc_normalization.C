@@ -23,6 +23,50 @@ line22 -> SetLineWidth(2);
 
 TList *HSFW1D = new TList();
 
+void set_cv(TH1D* h1d, const TString x_title, const TString unit, const double xmin, const double xmax, const double binwidth) {
+
+  const double ymax = h1d -> GetBinContent(h1d -> GetMaximumBin()) * 1.5;
+
+  h1d -> GetYaxis() -> SetTitle(TString::Format("Events/%0.2f " + unit, binwidth));
+  h1d -> GetYaxis() -> CenterTitle();
+  h1d -> GetYaxis() -> SetTitleSize(0.04);
+  h1d -> GetYaxis() -> SetNdivisions(505);
+  h1d -> GetYaxis() -> SetRangeUser(0.1, ymax);
+  h1d -> GetXaxis() -> SetTitle(x_title + " " + unit);
+  h1d -> GetXaxis() -> CenterTitle();
+  h1d -> GetXaxis() -> SetTitleSize(0.04);
+  h1d -> GetXaxis() -> SetRangeUser(xmin, xmax); 
+  
+
+}
+
+TLegend* set_legend(const double x1, const double x2, const double y1, const double y2){
+
+  TLegend *legd_cv = new TLegend(x1, x2, y1, y2);
+
+  legd_cv -> SetTextFont(132);
+  legd_cv -> SetFillStyle(0);
+  legd_cv -> SetBorderSize(0);
+  legd_cv -> SetNColumns(1);
+
+  return legd_cv;
+}
+
+  
+    
+TPaveText* set_pt(const double x1, const double x2, const double y1, const double y2) {
+
+  // Create TPaveText
+  TPaveText* pt = new TPaveText(x1, x2, y1, y2, "NDC");  // Coordinates in NDC (0-1)
+  pt->SetFillColor(0);           // White background
+  pt->SetTextColor(kBlack);      // Black text
+  pt->SetTextSize(0.03);         // Text size
+  //pt->SetBorderSize(1);          // Border size (0 = no border)
+  pt->SetTextAlign(12);          // Left aligned, vertically centered
+  
+  return pt;
+}
+
 double getbinwidth(TH1D* h) {
   Int_t binsize=0;
   double width=0.;
@@ -81,7 +125,7 @@ TCanvas*plot_kine_compr(TObjArray* HList, const double sf_tmp, const TString var
   return cv;
 }
 
-TCanvas* plot_kine_var(TObjArray* HList, const double sf_tmp, const TString var_type){
+TCanvas* plot_kine_var(TObjArray* HList, const double sf_tmp, const TString var_type, const TString cv_title){
 
   /*
   TH1D* hM_gg_TDATA = (TH1D*)file -> Get("hM_gg_TDATA");
@@ -117,7 +161,7 @@ TCanvas* plot_kine_var(TObjArray* HList, const double sf_tmp, const TString var_
   TH1D *h1d_bdt_good_data = (TH1D *) HList -> FindObject(var_type + "_BDT_good_TDATA");
   TH1D *h1d_bdt_bad_data = (TH1D *) HList -> FindObject(var_type + "_BDT_bad_TDATA");
 
-  TCanvas* cv =  new TCanvas("cv_" + var_type, "", 0, 0, 1200, 800);
+  TCanvas* cv =  new TCanvas("cv_" + var_type, cv_title, 0, 0, 1200, 800);
 
   cv -> SetBottomMargin(0.15);//0.007
   cv -> SetLeftMargin(0.15);
@@ -589,78 +633,54 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     
     //hM_gg_BDT_good_MCSUM -> Draw("HistSame");
 
-    TCanvas* cv_M_gg = plot_kine_var(HM_gg, sf_tmp, "hM_gg");
-    cv_M_gg -> SetTitle("Invariant mass of gamma-gamma");
+    //==================================== Plotting M_gg=================================
+    TCanvas* cv_M_gg = plot_kine_var(HM_gg, sf_tmp, "hM_gg", "Invariant mass of gamma-gamma");
+    //cv_M_gg -> SetTitle("Invariant mass of gamma-gamma");
     
-    // Create TPaveText
-    TPaveText* pt = new TPaveText(0.2, 0.8, 0.3, 0.8, "NDC");  // Coordinates in NDC (0-1)
-    pt->SetFillColor(0);           // White background
-    pt->SetTextColor(kBlack);      // Black text
-    pt->SetTextSize(0.03);         // Text size
-    //pt->SetBorderSize(1);          // Border size (0 = no border)
-    pt->SetTextAlign(12);          // Left aligned, vertically centered
-    
-    // Add text lines
-    //pt->AddText("Information:");
+    // Create TPaveText, add text lines, and draw
+    TPaveText* pt = set_pt(0.2, 0.8, 0.3, 0.8);
     pt->AddText(Form("M^{BDT}_{3#pi}#in[%0.0f, %0.0f] MeV/c^{2}", 650., 900.));
-    //pt->AddText(Form("Mean: %.2f", h->GetMean()));
-    //pt->AddText(Form("RMS: %.2f", h->GetRMS()));
-    
-    // Draw the TPaveText on the canvas
     pt->Draw("same");
 
     // CV attribute
-    hM_gg_TDATA -> GetYaxis() -> SetTitle(TString::Format("Events/[%0.2f", getbinwidth(hM_gg_TDATA)) + " MeV/c^{2}]");
-    hM_gg_TDATA -> GetYaxis() -> CenterTitle();
-    hM_gg_TDATA -> GetYaxis() -> SetTitleSize(0.04);
-    hM_gg_TDATA -> GetYaxis() -> SetNdivisions(505);
-    hM_gg_TDATA -> GetYaxis() -> SetRangeUser(0.1, hM_gg_TDATA -> GetBinContent(hM_gg_TDATA -> GetMaximumBin()) * 1.5);
-    hM_gg_TDATA -> GetXaxis() -> SetTitle("M_{#gamma#gamma} [MeV/c^{2}]");
-    hM_gg_TDATA -> GetXaxis() -> CenterTitle();
-    hM_gg_TDATA -> GetXaxis() -> SetTitleSize(0.04);
-    hM_gg_TDATA -> GetXaxis() -> SetRangeUser(50., 300.); 
-  
+    const double binwidth_mgg = getbinwidth(hM_gg_TDATA);
+    set_cv(hM_gg_TDATA, "M_{#gamma#gamma}", "[MeV/c^{2}]", 50., 300., binwidth_mgg);
+
     // Create Legend
-    TLegend *legd_cv = new TLegend(0.6, 0.5, 0.9, 0.9);
-  
-    legd_cv -> SetTextFont(132);
-    legd_cv -> SetFillStyle(0);
-    legd_cv -> SetBorderSize(0);
-    legd_cv -> SetNColumns(1);
-    
+    TLegend *legd_cv = set_legend(0.6, 0.5, 0.9, 0.9);
     legd_cv -> AddEntry(hM_gg_TDATA, "#chi^{2}_{m_{#gamma#gamma}} Selection", "lep");
     legd_cv -> AddEntry(hM_gg_BDT_TDATA, "BDT Selection", "lep");
     legd_cv -> AddEntry(hM_gg_BDT_good_TDATA, "BDT #pi^{0}(#gamma#gamma)", "lep");
     legd_cv -> AddEntry(hM_gg_BDT_bad_TDATA, "BDT Discarded", "lep");
-    
     legd_cv -> Draw("Same");
-    
     legtextsize(legd_cv, 0.04);
     
     // Update the canvas to show changes
     cv_M_gg -> Update();
-    cv_M_gg -> Modified();  // Mark as modified
-  
+    cv_M_gg -> Modified();
+    cv_M_gg -> SaveAs("cv_Mgg.pdf");
+    cv_M_gg -> Close();
+    
+    //==================================== Plotting M3pi=================================
+    TCanvas* cv_M3pi = plot_kine_var(HM3pi, sf_tmp, "hM3pi", "Invariant mass of M3pi");
 
-    // Plot M3pi
-    TCanvas* cv_M3pi = plot_kine_var(HM3pi, sf_tmp, "hM3pi");
-    cv_M3pi -> SetTitle("Invariant mass of M3pi");
+    const double binwidth_m3pi = getbinwidth(hM3pi_TDATA);
+    set_cv(hM3pi_TDATA, "M_{3#pi}", "[MeV/c^{2}]", 0., 1000., binwidth_m3pi);
 
-    hM3pi_TDATA -> GetYaxis() -> SetTitle(TString::Format("Events/[%0.2f", getbinwidth(hM3pi_TDATA)) + " MeV/c^{2}]");
-    hM3pi_TDATA -> GetYaxis() -> CenterTitle();
-    hM3pi_TDATA -> GetYaxis() -> SetTitleSize(0.04);
-    hM3pi_TDATA -> GetYaxis() -> SetNdivisions(505);
-    hM3pi_TDATA -> GetYaxis() -> SetRangeUser(0.1, hM3pi_TDATA -> GetBinContent(hM3pi_TDATA -> GetMaximumBin()) * 1.5);
-    hM3pi_TDATA -> GetXaxis() -> SetTitle("M_{3#pi} [MeV/c^{2}]");
-    hM3pi_TDATA -> GetXaxis() -> CenterTitle();
-    hM3pi_TDATA -> GetXaxis() -> SetTitleSize(0.04);
-    //hM3pi_TDATA -> GetXaxis() -> SetRangeUser(50., 300.); 
-  
     pt->Draw("same");
-    //legd_cv -> Draw("Same");
+
+    legd_cv -> Draw("Same");
     line11 -> Draw("Same");
     line22 -> Draw("Same");
 
+    cv_M3pi -> Update();
+    cv_M3pi -> Modified();
+    cv_M3pi -> SaveAs("cv_M3pi.pdf");
+    cv_M3pi -> Close();
+    
+    //==================================== Plotting M3pi MC-Data comparison=================================
+
+    /*
     // Plot M3pi MC-Data comparsion
     TCanvas* cv_M3pi_compr = plot_kine_compr(HM3pi, sf_tmp, "hM3pi");
     cv_M3pi_compr -> SetTitle("Invariant mass of M3pi MC-Data comparsion");
@@ -676,20 +696,21 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     hM3pi_BDT_TDATA -> GetXaxis() -> SetRangeUser(650., 900.); 
 
     // Create Legend
-    legd_cv = new TLegend(0.2, 0.7, 0.9, 0.9);
+    TLegend *legd_cv1 = new TLegend(0.2, 0.7, 0.9, 0.9);
   
-    legd_cv -> SetTextFont(132);
-    legd_cv -> SetFillStyle(0);
-    legd_cv -> SetBorderSize(0);
-    legd_cv -> SetNColumns(4);
+    legd_cv1 -> SetTextFont(132);
+    legd_cv1 -> SetFillStyle(0);
+    legd_cv1 -> SetBorderSize(0);
+    legd_cv1 -> SetNColumns(4);
     
-    legd_cv -> AddEntry(hM3pi_BDT_TDATA, "BDT Selection", "lep");
-    legd_cv -> AddEntry(hM3pi_BDT_good_TISR3PI_SIG_TMP, "Signal (BDT best #pi^{0}(#gamma#gamma))", "lep");
-    legd_cv -> AddEntry(hM3pi_BDT_bad_TISR3PI_SIG_TMP, "Signal (BDT discared)", "f");
+    legd_cv1 -> AddEntry(hM3pi_BDT_TDATA, "BDT Selection", "lep");
+    legd_cv1 -> AddEntry(hM3pi_BDT_good_TISR3PI_SIG_TMP, "BDT best #pi^{0}(#gamma#gamma) (Signal)", "lep");
+    legd_cv1 -> AddEntry(hM3pi_BDT_bad_TISR3PI_SIG_TMP, "BDT discarded (Signal)", "f");
     
-    legd_cv -> Draw("Same");
+    legd_cv1 -> Draw("Same");
     
-    legtextsize(legd_cv, 0.03);
+    legtextsize(legd_cv1, 0.03);
+    */
     
     // Preparing MC normalization
     // define and initialize variable variables
