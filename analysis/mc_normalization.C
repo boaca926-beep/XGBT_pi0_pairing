@@ -509,7 +509,6 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 
     TH1D* hM3pi_BDT_bad_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_BDT_bad_TISR3PI_SIG");
     formatfill_h(hM3pi_BDT_bad_TISR3PI_SIG, 4, 3001);
-
     
     TH1D* hM3pi_BDT_good_TISR3PI_SIG_TMP = (TH1D*)hM3pi_BDT_good_TISR3PI_SIG -> Clone("hM3pi_BDT_good_TISR3PI_SIG_TMP"); 
     HM3pi -> Add(hM3pi_BDT_good_TISR3PI_SIG_TMP);
@@ -517,8 +516,6 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     TH1D* hM3pi_BDT_bad_TISR3PI_SIG_TMP = (TH1D*)hM3pi_BDT_bad_TISR3PI_SIG -> Clone("hM3pi_BDT_bad_TISR3PI_SIG_TMP");
     HM3pi -> Add(hM3pi_BDT_bad_TISR3PI_SIG_TMP);
     
-    
-
     format_h(hM3pi_TISR3PI_SIG, 1, 2);
     format_h(hM3pi_good_TISR3PI_SIG, 4, 2);
     formatfill_h(hM3pi_bad_TISR3PI_SIG, 4, 3001);
@@ -614,10 +611,10 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     
     format_h(hM_gg_BDT_good_MCSUM, 2, 2);
 
-    TCanvas* cv_tmp =  new TCanvas("cv_tmp", "", 0, 0, 700, 700);
+    //TCanvas* cv_tmp =  new TCanvas("cv_tmp", "", 0, 0, 700, 700);
 
-    hM_gg_TDATA -> Draw("E");
-    hM_gg_BDT_TDATA -> Draw("ESame");
+    //hM_gg_TDATA -> Draw("E");
+    //hM_gg_BDT_TDATA -> Draw("ESame");
     //hM_gg_BDT_good_TDATA -> Draw("ESame");
     //hM_gg_BDT_bad_TDATA -> Draw("ESame");
     
