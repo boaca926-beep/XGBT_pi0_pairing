@@ -79,7 +79,7 @@ double getbinwidth(TH1D* h) {
   return width;
 }
 
-TCanvas*plot_kine_compr(TObjArray* HList, const double sf_tmp, const TString var_type, const TString cv_title){
+TCanvas* plot_kine_compr(TObjArray* HList, const double sf_tmp, const TString var_type, const TString cv_title){
 
   TH1D *h1d_bdt_data = (TH1D *) HList -> FindObject(var_type + "_BDT_TDATA");
 
@@ -95,22 +95,15 @@ TCanvas*plot_kine_compr(TObjArray* HList, const double sf_tmp, const TString var
   
   TH1D* h1d_bdt_omegapi = (TH1D*)HList -> FindObject(var_type + "_BDT_TOMEGAPI");
   
-  //TH1D* hM_gg_BDT_good_TKPM = (TH1D*)file -> Get("hM_gg_BDT_good_TKPM");
+  TH1D* h1d_bdt_kpm = (TH1D*)HList -> FindObject(var_type + "_BDT_TKPM");
   
-  //TH1D* hM_gg_BDT_good_TKSL = (TH1D*)file -> Get("hM_gg_BDT_good_TKSL");
+  TH1D* h1d_bdt_ksl = (TH1D*)HList -> FindObject(var_type + "_BDT_TKSL");
   
-  //TH1D* hM_gg_BDT_good_TRHOPI = (TH1D*)file -> Get("hM_gg_BDT_good_TRHOPI");
+  TH1D* h1d_bdt_rhopi = (TH1D*)HList -> FindObject(var_type + "_BDT_TRHOPI");
   
-  //TH1D* hM_gg_BDT_good_TETAGAM = (TH1D*)file -> Get("hM_gg_BDT_good_TETAGAM");
-  
-  //TH1D* hM_gg_BDT_good_TMCREST = (TH1D*)file -> Get("hM_gg_BDT_good_TBKGREST");
+  TH1D* h1d_bdt_etagam = (TH1D*)HList -> FindObject(var_type + "_BDT_TETAGAM");
     
-  //TH1D *hist_bkgrest = (TH1D *) Hlist.FindObject("hist_bkgrest");
-  
-  TH1D* h1d_bdt_mcsum = (TH1D*) h1d_bdt_good_sig -> Clone("h1d_bdt_mcsum");
-  h1d_bdt_mcsum -> Add(h1d_bdt_bad_sig, 1.);
-  h1d_bdt_mcsum -> Add(h1d_bdt_eeg, 1.);
-  h1d_bdt_mcsum -> Add(h1d_bdt_omegapi, 1.);
+  TH1D *h1d_bdt_bkgrest = (TH1D*)HList -> FindObject(var_type + "_BDT_TBKGREST");
   
   //hM_gg_BDT_good_MCSUM -> Add(hM_gg_BDT_good_TEEG, 1.);
   //hM_gg_BDT_good_MCSUM -> Add(hM_gg_BDT_good_TOMEGAPI, 1.);
@@ -119,22 +112,24 @@ TCanvas*plot_kine_compr(TObjArray* HList, const double sf_tmp, const TString var
   //hM_gg_BDT_good_MCSUM -> Add(hM_gg_BDT_good_TRHOPI, 1.);
   //hM_gg_BDT_good_MCSUM -> Add(hM_gg_BDT_good_TETAGAM, 1.);
   //hM_gg_BDT_good_MCSUM -> Add(hM_gg_BDT_good_TMCREST, 1.);
-    
-    
-  format_h(h1d_bdt_mcsum, 2, 2);
-
+  
   TCanvas* cv =  new TCanvas("cv_" + var_type, cv_title, 0, 0, 1200, 800);
 
   cv -> SetBottomMargin(0.15);//0.007
   cv -> SetLeftMargin(0.15);
   cv -> SetRightMargin(0.15);
 
-  h1d_bdt_data -> Draw("E");
+  //h1d_bdt_data -> Draw("E");
   //h1d_bdt_good_sig -> Draw("HistSame");
   //h1d_bdt_bad_sig -> Draw("HistSame");
   //h1d_bdt_eeg -> Draw("HistSame");
-  h1d_bdt_omegapi -> Draw("HistSame");
-  h1d_bdt_mcsum -> Draw("HistSame");
+  //h1d_bdt_omegapi -> Draw("HistSame");
+  //h1d_bdt_kpm -> Draw("HistSame");
+  //h1d_bdt_ksl -> Draw("HistSame");
+  //h1d_bdt_rhopi -> Draw("HistSame");
+  //h1d_bdt_etagam -> Draw("HistSame");
+  h1d_bdt_bkgrest -> Draw();
+  
   
   return cv;
 }
@@ -510,35 +505,38 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     TObjArray* HM3pi = new TObjArray(100); // Hist. Array
     
     TH1D* hM3pi_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_TISR3PI_SIG");
+    format_h(hM3pi_TISR3PI_SIG, 1, 2);
+    
     TH1D* hM3pi_good_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_good_TISR3PI_SIG");
+    format_h(hM3pi_good_TISR3PI_SIG, 4, 2);
+    
     TH1D* hM3pi_bad_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_bad_TISR3PI_SIG");
+    formatfill_h(hM3pi_bad_TISR3PI_SIG, 4, 3001);
 
     TH1D* hM3pi_BDT_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_BDT_TISR3PI_SIG");
+    format_h(hM3pi_BDT_TISR3PI_SIG, 2, 2);
+    
     TH1D* hM3pi_BDT_good_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_BDT_good_TISR3PI_SIG");
     HM3pi -> Add(hM3pi_BDT_good_TISR3PI_SIG);
     format_h(hM3pi_BDT_good_TISR3PI_SIG, 4, 2);
-
     
-    TH1D* hM3pi_BDT_good_T3PIGAM = (TH1D*)file -> Get("hM3pi_BDT_good_T3PIGAM");
-    HM3pi -> Add(hM3pi_BDT_good_T3PIGAM);
-
+    
     TH1D* hM3pi_BDT_bad_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_BDT_bad_TISR3PI_SIG");
-    formatfill_h(hM3pi_BDT_bad_TISR3PI_SIG, 4, 3001);
-    
+    formatfill_h(hM3pi_BDT_bad_TISR3PI_SIG, 2, 3001);
+
     TH1D* hM3pi_BDT_good_TISR3PI_SIG_TMP = (TH1D*)hM3pi_BDT_good_TISR3PI_SIG -> Clone("hM3pi_BDT_good_TISR3PI_SIG_TMP"); 
     HM3pi -> Add(hM3pi_BDT_good_TISR3PI_SIG_TMP);
     
     TH1D* hM3pi_BDT_bad_TISR3PI_SIG_TMP = (TH1D*)hM3pi_BDT_bad_TISR3PI_SIG -> Clone("hM3pi_BDT_bad_TISR3PI_SIG_TMP");
     HM3pi -> Add(hM3pi_BDT_bad_TISR3PI_SIG_TMP);
+
+    //
+    TH1D* hM3pi_BDT_good_T3PIGAM = (TH1D*)file -> Get("hM3pi_BDT_good_T3PIGAM");
+    HM3pi -> Add(hM3pi_BDT_good_T3PIGAM);
+
     
-    format_h(hM3pi_TISR3PI_SIG, 1, 2);
-    format_h(hM3pi_good_TISR3PI_SIG, 4, 2);
-    formatfill_h(hM3pi_bad_TISR3PI_SIG, 4, 3001);
-
-    format_h(hM3pi_BDT_TISR3PI_SIG, 2, 2);
-    format_h(hM3pi_BDT_good_TISR3PI_SIG, 3, 2);
-    formatfill_h(hM3pi_BDT_bad_TISR3PI_SIG, 2, 3001);
-
+    
+    
     //  
     TH1D* hM3pi_TDATA = (TH1D*)file -> Get("hM3pi_TDATA");
     format_h(hM3pi_TDATA, 1, 2);
@@ -561,6 +559,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     format_h(hM3pi_BDT_bad_TDATA, 2, 2);
     HM3pi -> Add(hM3pi_BDT_bad_TDATA);
 
+    //
     TH1D* hM3pi_BDT_TEEG = (TH1D*)file -> Get("hM3pi_BDT_TEEG");
     format_h(hM3pi_BDT_TEEG, 5, 2);
     HM3pi -> Add(hM3pi_BDT_TEEG);
@@ -568,6 +567,42 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     TH1D* hM3pi_BDT_TOMEGAPI = (TH1D*)file -> Get("hM3pi_BDT_TOMEGAPI");
     format_h(hM3pi_BDT_TOMEGAPI, 6, 2);
     HM3pi -> Add(hM3pi_BDT_TOMEGAPI);
+
+    TH1D* hM3pi_BDT_TKPM = (TH1D*)file -> Get("hM3pi_BDT_TKPM");
+    format_h(hM3pi_BDT_TKPM, 7, 2);
+    HM3pi -> Add(hM3pi_BDT_TKPM);
+
+    TH1D* hM3pi_BDT_TKSL = (TH1D*)file -> Get("hM3pi_BDT_TKSL");
+    format_h(hM3pi_BDT_TKSL, 7, 2);
+    HM3pi -> Add(hM3pi_BDT_TKSL);
+
+    TH1D* hM3pi_BDT_TRHOPI = (TH1D*)file -> Get("hM3pi_BDT_TRHOPI");
+    format_h(hM3pi_BDT_TRHOPI, 8, 2);
+    HM3pi -> Add(hM3pi_BDT_TRHOPI);
+
+    TH1D* hM3pi_BDT_TETAGAM = (TH1D*)file -> Get("hM3pi_BDT_TETAGAM");
+    format_h(hM3pi_BDT_TETAGAM, 9, 2);
+    HM3pi -> Add(hM3pi_BDT_TETAGAM);
+
+    TH1D* hM3pi_BDT_TBKGREST = (TH1D*)file -> Get("hM3pi_BDT_TBKGREST");
+    format_h(hM3pi_BDT_TBKGREST, 10, 2);
+    HM3pi -> Add(hM3pi_BDT_TBKGREST);
+    hM3pi_BDT_TBKGREST -> Draw();
+
+    cout << hM3pi_BDT_TBKGREST -> GetEntries() << endl;
+
+    // Check the current axis ranges
+    cout << "X-axis range: " << hM3pi_BDT_TBKGREST->GetXaxis()->GetXmin() 
+	 << " to " << hM3pi_BDT_TBKGREST->GetXaxis()->GetXmax() << endl;
+    
+    // Check where the entries actually are
+    cout << "Mean: " << hM3pi_BDT_TBKGREST->GetMean() << endl;
+    cout << "RMS: " << hM3pi_BDT_TBKGREST->GetRMS() << endl;
+    cout << "Min bin content: " << hM3pi_BDT_TBKGREST->GetMinimum() << endl;
+    cout << "Max bin content: " << hM3pi_BDT_TBKGREST->GetMaximum() << endl;
+
+    //TH1D* hM_gg_BDT_good_TMCREST = (TH1D*)file -> Get("hM_gg_BDT_good_TBKGREST");
+    //format_h(hM_gg_BDT_good_TMCREST, 11, 2);
     
     // M_gg
     TObjArray* HM_gg = new TObjArray(100); // Hist. Array
@@ -701,10 +736,22 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 
     // Plot M3pi MC-Data comparsion
     TCanvas* cv_M3pi_compr = plot_kine_compr(HM3pi, sf_tmp, "hM3pi", "M3pi MC-Data comparsion");
-    //cv_M3pi_compr -> SetTitle("Invariant mass of M3pi MC-Data comparsion");
-
+    
     set_cv(hM3pi_BDT_TDATA, "M_{3#pi}", "[MeV/c^{2}]", 650., 900., binwidth_m3pi);
 
+    TH1D* h1d_bdt_mcsum = (TH1D*) hM3pi_BDT_good_TISR3PI_SIG_TMP -> Clone("h1d_bdt_mcsum");
+    h1d_bdt_mcsum -> Add(hM3pi_BDT_bad_TISR3PI_SIG_TMP, 1.);
+    h1d_bdt_mcsum -> Add(hM3pi_BDT_TEEG, 1.);
+    h1d_bdt_mcsum -> Add(hM3pi_BDT_TOMEGAPI, 1.);
+    h1d_bdt_mcsum -> Add(hM3pi_BDT_TKPM, 1.);
+    h1d_bdt_mcsum -> Add(hM3pi_BDT_TKSL, 1.);
+    h1d_bdt_mcsum -> Add(hM3pi_BDT_TRHOPI, 1.);
+    h1d_bdt_mcsum -> Add(hM3pi_BDT_TETAGAM, 1.);
+    
+    format_h(h1d_bdt_mcsum, 2, 2);
+
+    h1d_bdt_mcsum -> Draw("HistSame");
+  
     TPaveText* pt_m3pi_compr = set_pt(0.6, 0.8, 0.7, 0.8);
     pt_m3pi_compr -> AddText("BDT Selection");
     pt_m3pi_compr -> Draw("same");
@@ -716,8 +763,12 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     legd_cv1 -> AddEntry(hM3pi_BDT_bad_TISR3PI_SIG_TMP, "BDT discarded (Signal)", "f");
     legd_cv1 -> AddEntry(hM3pi_BDT_TEEG, "Bhabha", "lep");
     legd_cv1 -> AddEntry(hM3pi_BDT_TOMEGAPI, "#omega#pi", "lep");
+    legd_cv1 -> AddEntry(hM3pi_BDT_TKPM, "K#bar{K}", "lep");
+    legd_cv1 -> AddEntry(hM3pi_BDT_TKSL, "K_{S}K_{L}", "lep");
+    legd_cv1 -> AddEntry(hM3pi_BDT_TRHOPI, "#rho#pi", "lep");
+    legd_cv1 -> AddEntry(hM3pi_BDT_TETAGAM, "#eta#gamma", "lep");
     
-   
+    
     legd_cv1 -> Draw("Same");
     
     legtextsize(legd_cv1, 0.03);
