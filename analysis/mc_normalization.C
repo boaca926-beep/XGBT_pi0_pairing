@@ -783,6 +783,8 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 
     cv_M3pi_compr -> SaveAs("cv_M3pi_compr.pdf");
     cv_M3pi_compr -> Close();
+
+    
     
     //==================================== MC normalization =================================
 
@@ -1164,7 +1166,8 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 
     hM3pi_BDT_good_TISR3PI_SIG_SCALED -> Write();
     hM3pi_BDT_good_TDATA -> Write();
-    
+
+    HM3pi -> Write();
     TSFW2D -> Write();
     f_output -> Close();
   
