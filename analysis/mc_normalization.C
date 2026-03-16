@@ -718,6 +718,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     cv_M_gg -> Modified();
     cv_M_gg -> SaveAs("cv_Mgg.pdf");
     cv_M_gg -> Close();
+    //cv_M_gg -> SetLogy(1);  // Turn off log scale
     
     //==================================== Plotting M3pi=================================
     TCanvas* cv_M3pi = plot_kine_var(HM3pi, sf_tmp, "hM3pi", "Invariant mass of M3pi");
@@ -734,9 +735,11 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 
     cv_M3pi -> Update();
     cv_M3pi -> Modified();
-    cv_M3pi -> SaveAs("cv_M3pi.pdf");
-    cv_M3pi -> Close();
+    //cv_M3pi -> SaveAs("cv_M3pi.pdf");
+    //cv_M3pi -> Close();
+    cv_M3pi -> SetLogy(1);  // Turn off log scale
     
+    /*
     //==================================== Plotting M3pi MC-Data comparison=================================
 
     // Plot M3pi MC-Data comparsion
@@ -781,8 +784,9 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     
     legtextsize(legd_cv1, 0.04);
 
-    cv_M3pi_compr -> SaveAs("cv_M3pi_compr.pdf");
+    //cv_M3pi_compr -> SaveAs("cv_M3pi_compr.pdf");
     cv_M3pi_compr -> Close();
+    */
     
     //==================================== MC normalization =================================
 

@@ -476,7 +476,7 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 
 	h2d_kloe_BDT_corr -> Fill(m3pi, m3pi_bdt);
 	
-	if (m3pi_bdt > 900. || m3pi_bdt < 650.) continue;
+	//if (m3pi_bdt > 900. || m3pi_bdt < 650.) continue;
 	//if (m3pi > 900. || m3pi < 650.) continue;
 
 	// KLOE selection
