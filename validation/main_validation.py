@@ -69,9 +69,9 @@ if __name__ == '__main__':
     print(phys_map)
 
     ## Load dataset
-    phys_ch = ['TCOMB', 'combined']
+    #phys_ch = ['TCOMB', 'combined']
     #phys_ch = ['TISR3PI_SIG', 'signal']
-    #phys_ch = ['TETAGAM', 'signal']
+    phys_ch = ['TETAGAM', 'signal']
     #data_type = 'TISR3PI_SIG' #'TETAGAM', 'TISR3PI_SIG', 'TKSL'd
     #input_data_dir = os.path.join(project_root, f'output_data_{input_str}')
     #input_data_dir = '../analysis/dataset'

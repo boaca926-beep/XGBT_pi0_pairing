@@ -18,6 +18,7 @@ void PteAttr(TPaveText *pt) {
 
 void format_h(TH1D* h, Int_t linecolor, Int_t width) {
   h->SetLineColor(linecolor);
+  h->SetMarkerColor(linecolor);
   //cout << "histo format" << endl;
   h->SetLineWidth(width);
 }

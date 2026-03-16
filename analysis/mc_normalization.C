@@ -4,21 +4,21 @@
 const double pt1_x0 = 0.2;
 const double pt1_x1 = 0.3;
 
-TLine *line1 = new TLine(400., 900., 1000., 900.); // horiz upper
+TLine *line1 = new TLine(400., 900., 1000., 900.); // horizontal upper
 line1 -> SetLineColor(kRed);
 line1 -> SetLineWidth(2);
 
-TLine *line2 = new TLine(400., 650., 1000., 650.); // horiz lower
+TLine *line2 = new TLine(400., 650., 1000., 650.); // horizontal lower
 line2 -> SetLineColor(kRed);
 line2 -> SetLineWidth(2);
 
-TLine *line11 = new TLine(650., 0., 650., 1500.); // horiz left
-line11 -> SetLineColor(kRed);
-line11 -> SetLineWidth(2);
+TLine *line11 = new TLine(650., 0., 650., 1500.); // vertical left
+line11 -> SetLineColor(42);
+line11 -> SetLineWidth(4);
 
-TLine *line22 = new TLine(900., 0., 900., 1500.); // horiz right
-line22 -> SetLineColor(kRed);
-line22 -> SetLineWidth(2);
+TLine *line22 = new TLine(900., 0., 900., 1500.); // vertical right
+line22 -> SetLineColor(42);
+line22 -> SetLineWidth(4);
 
 
 TList *HSFW1D = new TList();
@@ -690,12 +690,13 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     //cv_M_gg -> SetTitle("Invariant mass of gamma-gamma");
     
     // Create TPaveText, add text lines, and draw
-    TPaveText* pt_cut = set_pt(0.2, 0.8, 0.3, 0.8);
-    pt_cut -> SetTextColor(2);
+    //TPaveText* pt_cut = set_pt(0.2, 0.8, 0.3, 0.8);
+    TPaveText* pt_cut = set_pt(0.1, 0.92, 0.9, 0.98);
+    pt_cut -> SetTextColor(42);
     pt_cut -> AddText(Form("M^{BDT}_{3#pi}#in[%0.0f, %0.0f] MeV/c^{2}", 650., 900.));
     pt_cut -> Draw("same");
 
-    TPaveText* pt_mgg1 = set_pt(0.2, 0.65, 0.3, 0.7);
+    TPaveText* pt_mgg1 = set_pt(0.2, 0.8, 0.3, 0.85);
     pt_mgg1 -> AddText("Data");
     pt_mgg1 -> Draw("same");
     
@@ -705,7 +706,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     set_cv(hM_gg_TDATA, "M_{#gamma#gamma}", "[MeV/c^{2}]", 50., 300., binwidth_mgg);
 
     // Create Legend
-    TLegend *legd_cv = set_legend(0.6, 0.5, 0.9, 0.9);
+    TLegend *legd_cv = set_legend(0.6, 0.7, 0.9, 0.9);
     legd_cv -> AddEntry(hM_gg_TDATA, "#chi^{2}_{m_{#gamma#gamma}} Selection", "lep");
     legd_cv -> AddEntry(hM_gg_BDT_TDATA, "BDT Selection", "lep");
     legd_cv -> AddEntry(hM_gg_BDT_good_TDATA, "BDT best #pi^{0}(#gamma#gamma)", "lep");
@@ -733,11 +734,12 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     line11 -> Draw("Same");
     line22 -> Draw("Same");
 
+    cv_M3pi -> SetLogy(1);  // Turn off log scale
+    
     cv_M3pi -> Update();
     cv_M3pi -> Modified();
-    //cv_M3pi -> SaveAs("cv_M3pi.pdf");
+    cv_M3pi -> SaveAs("cv_M3pi.pdf");
     //cv_M3pi -> Close();
-    cv_M3pi -> SetLogy(1);  // Turn off log scale
     
     /*
     //==================================== Plotting M3pi MC-Data comparison=================================
@@ -787,7 +789,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     //cv_M3pi_compr -> SaveAs("cv_M3pi_compr.pdf");
     cv_M3pi_compr -> Close();
     */
-
+    
     //==================================== MC normalization =================================
 
     // define and initialize variable variables
@@ -1168,8 +1170,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 
     hM3pi_BDT_good_TISR3PI_SIG_SCALED -> Write();
     hM3pi_BDT_good_TDATA -> Write();
-
-    HM3pi -> Write();
+    
     TSFW2D -> Write();
     f_output -> Close();
   
