@@ -137,7 +137,8 @@ if __name__ == '__main__':
     # LOAD INPUT ROOT FILES
     #============================================================
     #f_nm = "../data/kloe_small_sample.root"
-    f_nm = "../data/kloe_sample_chain.root"
+    #f_nm = "../data/kloe_sample_chain.root"
+    f_nm = "../data/kloe_sample_full.root"
 
 
     # Create ooutput directory
