@@ -12,7 +12,6 @@ from analysis.plots import plot_var_score, plot_roc, plot_nm
 from validation.metrics import event_performance
 
 
-
 def load_data_model():
     """
     Load test data from folder: test_data
@@ -21,14 +20,68 @@ def load_data_model():
 
     # Load all_df, X_test, y_test
     all_df = joblib.load(os.path.join(input_data_dir, f'all_df_{data_type}.pkl'))
+    all_df_test = joblib.load(os.path.join(input_data_dir, f'all_df_test_{data_type}.pkl'))
+
     X_test = joblib.load(os.path.join(input_data_dir, f'X_test_{data_type}.pkl'))
     y_test = joblib.load(os.path.join(input_data_dir, f'y_test_{data_type}.pkl'))
 
     # Load model
     model = joblib.load(os.path.join(input_model_dir, f'pi0_classifier_model_{data_type}.pkl'))
     
-    return all_df, model, X_test, y_test
+    return all_df, all_df_test, model, X_test, y_test
     
+def event_wise_prediction(all_df_test, X_test, y_test_pair, model, threshold=0.5):
+    '''
+    Convert pair-wise predictions to event-wise decisions
+
+    Parameters:
+    - all_df_test: Dataframe with event information (contains 'event' columns)
+    - X_test: Feature matrix for pairs
+    - y_test_pair: True labels for pairs (1 for pi0, 0 for not pi0)
+    - threshold: Probability threshold for pair classification
+
+    Returns:
+    - event_results: DataFrame with event-wise predictions and truths
+    '''
+
+    # Get pair preditions from model
+    y_pred_proba = model.predic_proba(X_test)[:, 1] # Probability of being pi0
+    y_pred_pair = (y_pred_proba >= threshold).astype(int) 
+
+    # Create a DataFrame with pair information
+    pair_df = pd.DataFrame({
+        'event': all_df_test['event'].values, # Event ID
+        'pair_index': range(len(y_test_pair)), # Pair index within event
+        'true_pair': y_test_pair.values, # True label for this pair
+        'pred_pair': y_pred_pair, # Predicted label for this pair
+        'pred_proba': y_pred_proba # Prediction probability
+    })
+
+    # Group by event to make event-wise decisions
+    event_results = []
+
+    for event_id, group in pair_df.groupby('event'):
+        # Get true signal status for this event from all_df_test
+        # Assuming 'is_signal' column exists in all_df_test (1 for signal events, 0 for background)
+        event_true = all_df_test[all_df_test['event'] == event_id]['is_signal'].iloc[0]
+
+        # Event-wise prediction logic:
+        # Option 1: Event is signal if at least one pair is predicted as pi0
+        #event_pred_any = int(group['pred_pair'].sum() > 0)
+
+        # Option 2: Event is signal if at least N pairs are pedicted as pi0
+        #event_pred_min = int(group['pred_pair'].sum() >= 2)
+
+        # Option 3: Event is signal is max prediction probability > threshold
+        event_pred_max = int(group['pred_proba'].max() >= threshold)
+
+        # Option 4: Event is signal if average prediction > threshold
+        #event_pred_mean = int(group['pred_proba'].mean() >= threshold)
+
+        event_results.append({
+            'event_id': event_id,
+        })
+
 if __name__ == '__main__':
 
     print(f"Application on test dataset...")
@@ -55,13 +108,31 @@ if __name__ == '__main__':
         if (data_type == category_type):
 
             # Load test dataset and all_df
-            all_df, model, X_test, y_test = load_data_model()
+            all_df, all_df_test, model, X_test, y_test = load_data_model()
 
             # Selection cut (chi2, E_dela, opening angle, beta)
 
             # Check kine
 
-            ## Plot confusion matrix
+            ## Plot confusion matrix (event-basis)
+
+            '''
+            all_df_test contains the event column that links pairs to events
+            The is_signal column in all_df_test tells you which events are truly signal
+            We need an aggreation strategy to convert multiple pair predictions into one event dicision:
+                "Any" strategy: Event is signal if at least one pair is predicted as pi0
+                "Min count" stragegy: Require at least N pairs predicted as pi0
+                "Max probability" strategy: Use the maximum prediction probality
+                "Mean probability" strategy: Average all pair probabilty
+            The confusion matrix will show:
+                True Positives: Signal events correctly identified
+                True Negatives: Background events correctly identifed
+                False Positives: Background events misidentified as signal
+                False Negatives: Signal events misidentified as background
+            '''
+
+            r'''
+            ## Plot confusion matrix (photon features)
             fig_cm = plot_nm(X_test, y_test, model, br_title)
             fig_cm.savefig(f'./{plot_dir}/cm_{data_type}.png', dpi=300, bbox_inches='tight')
             plt.close(fig_cm)
@@ -79,6 +150,7 @@ if __name__ == '__main__':
             plt.close(fig_roc)
 
             ## Plot kine. var after the pi0 identification
+            '''
 
         else:
             print("No true labels")

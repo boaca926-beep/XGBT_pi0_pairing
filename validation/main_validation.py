@@ -92,7 +92,6 @@ if __name__ == '__main__':
     features = X_val.columns
     #print(model.get_params())
 
-    
     ## Evaluate validation set
     eval_performance(model, X_val, y_val)
 
@@ -111,6 +110,6 @@ if __name__ == '__main__':
     ## ROC plot
     fig_roc = plot_roc(score_list, rf'ROC Curve - $\pi^{0}$ Classifier (validation, {br_title})')
     fig_roc.savefig(f'./{plot_dir}/roc_curv_{br_nm}.png', dpi=300, bbox_inches='tight')
-
+    
     
     
