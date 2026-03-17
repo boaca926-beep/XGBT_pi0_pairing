@@ -434,7 +434,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 
       //if (classnm_tree == "TH2D") { // list all TH2D
       if (classnm_tree == "TH1D") { // list all TH1D
-	cout << "classnm = " << classnm_tree << ", objnm = " << objnm_tree << endl;
+	//cout << "classnm = " << classnm_tree << ", objnm = " << objnm_tree << endl;
       }
       
       TTree *tree_tmp = (TTree*)file -> Get(objnm_tree);
@@ -500,6 +500,8 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     h2d_sfw_BDT_good_MCSUM_NOETA -> SetName("h2d_sfw_BDT_good_MCSUM_NOETA");
 
 
+    
+
     // TH1D
     // M3pi
     TObjArray* HM3pi = new TObjArray(100); // Hist. Array
@@ -534,9 +536,39 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     TH1D* hM3pi_BDT_good_T3PIGAM = (TH1D*)file -> Get("hM3pi_BDT_good_T3PIGAM");
     HM3pi -> Add(hM3pi_BDT_good_T3PIGAM);
 
+    // Create a list to add all histos
+    TObjArray* HistArray_m3pi = new TObjArray(100); // Hist. Array
     
-    
-    
+    const TString kine_type = "hM3pi";
+    const char* names[] = {"TDATA",
+			   "good_TDATA",
+			   "bad_TDATA",
+			   "BDT_TDATA",
+			   "BDT_good_TDATA",
+			   "BDT_bad_TDATA",
+			   "BDT_TEEG",
+			   "BDT_TOMEGAPI",
+			   "BDT_TKPM",
+			   "BDT_TKSL",
+			   "BDT_TRHOPI",
+			   "BDT_TETAGAM",
+			   "BDT_TBKGREST",
+			   "BDT_T3PIGAM",
+			   "BDT_good_T3PIGAM",
+			   "BDT_bad_T3PIGAM",
+			   "BDT_TISR3PI_SIG",
+			   "BDT_good_TISR3PI_SIG",
+			   "BDT_bad_TISR3PI_SIG"
+			   
+    };
+
+
+    for (int i = 0; i < 19; i ++) {
+      TH1D* hm3pi = (TH1D*)file -> Get(kine_type + "_" + names[i]);
+      cout << hm3pi -> GetName() << endl;
+      HistArray_m3pi -> Add(hm3pi);
+    }
+
     //  
     TH1D* hM3pi_TDATA = (TH1D*)file -> Get("hM3pi_TDATA");
     format_h(hM3pi_TDATA, 1, 2);
@@ -546,7 +578,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     TH1D* hM3pi_bad_TDATA = (TH1D*)file -> Get("hM3pi_bad_TDATA");
     formatfill_h(hM3pi_bad_TDATA, 4, 3001);
     format_h(hM3pi_good_TDATA, 4, 2);
-    
+
     TH1D* hM3pi_BDT_TDATA = (TH1D*)file -> Get("hM3pi_BDT_TDATA");
     format_h(hM3pi_BDT_TDATA, 4, 2);
     HM3pi -> Add(hM3pi_BDT_TDATA);
@@ -573,15 +605,15 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     HM3pi -> Add(hM3pi_BDT_TKPM);
 
     TH1D* hM3pi_BDT_TKSL = (TH1D*)file -> Get("hM3pi_BDT_TKSL");
-    format_h(hM3pi_BDT_TKSL, 7, 2);
+    format_h(hM3pi_BDT_TKSL, 8, 2);
     HM3pi -> Add(hM3pi_BDT_TKSL);
 
     TH1D* hM3pi_BDT_TRHOPI = (TH1D*)file -> Get("hM3pi_BDT_TRHOPI");
-    format_h(hM3pi_BDT_TRHOPI, 8, 2);
+    format_h(hM3pi_BDT_TRHOPI, 9, 2);
     HM3pi -> Add(hM3pi_BDT_TRHOPI);
 
     TH1D* hM3pi_BDT_TETAGAM = (TH1D*)file -> Get("hM3pi_BDT_TETAGAM");
-    format_h(hM3pi_BDT_TETAGAM, 9, 2);
+    format_h(hM3pi_BDT_TETAGAM, 11, 2);
     HM3pi -> Add(hM3pi_BDT_TETAGAM);
 
     TH1D* hM3pi_BDT_TBKGREST = (TH1D*)file -> Get("hM3pi_BDT_TBKGREST");
@@ -625,6 +657,8 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     TH1D* hM_gg_BDT_good_TISR3PI_SIG = (TH1D*)file -> Get("hM_gg_BDT_good_TISR3PI_SIG");
     formatfill_h(hM_gg_BDT_good_T3PIGAM, 4, 3001);
 
+    TH1D* hM_gg_BDT_bad_TISR3PI_SIG = (TH1D*)file -> Get("hM_gg_BDT_bad_TISR3PI_SIG");
+    
     TH1D* hM_gg_BDT_good_TEEG = (TH1D*)file -> Get("hM_gg_BDT_good_TEEG");
     format_h(hM_gg_BDT_good_TEEG, 5, 2);
 
@@ -654,6 +688,9 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     hM_gg_BDT_good_TISR3PI_SIG_TMP -> Scale(sf_tmp);
     format_h(hM_gg_BDT_good_TISR3PI_SIG_TMP, 4, 2);
 
+    TH1D* hM_gg_BDT_bad_TISR3PI_SIG_TMP = (TH1D*)hM_gg_BDT_bad_TISR3PI_SIG -> Clone("hM_gg_BDT_bad_TISR3PI_SIG_TMP");
+    
+    
     TH1D* hM_gg_BDT_good_MCSUM = (TH1D*) hM_gg_BDT_good_TISR3PI_SIG_TMP -> Clone("hM_gg_BDT_good_MCSUM");
     hM_gg_BDT_good_MCSUM -> Add(hM_gg_BDT_good_TEEG, 1.);
     hM_gg_BDT_good_MCSUM -> Add(hM_gg_BDT_good_TOMEGAPI, 1.);
@@ -741,9 +778,21 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     cv_M3pi -> SaveAs("cv_M3pi.pdf");
     //cv_M3pi -> Close();
     
-    /*
+    
     //==================================== Plotting M3pi MC-Data comparison=================================
-
+    /*
+    hM3pi_BDT_TDATA -> Write();
+    hM3pi_BDT_good_TISR3PI_SIG_TMP -> Write();
+    hM3pi_BDT_bad_TISR3PI_SIG_TMP -> Write();
+    hM3pi_BDT_TEEG -> Write();
+    hM3pi_BDT_TOMEGAPI -> Write();
+    hM3pi_BDT_TKPM -> Write();
+    hM3pi_BDT_TKSL -> Write();
+    hM3pi_BDT_TRHOPI -> Write();
+    hM3pi_BDT_TETAGAM -> Write();
+    hM3pi_BDT_TBKGREST -> Write();
+    */
+    
     // Plot M3pi MC-Data comparsion
     TCanvas* cv_M3pi_compr = plot_kine_compr(HM3pi, sf_tmp, "hM3pi", "M3pi MC-Data comparsion");
     
@@ -788,7 +837,6 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 
     //cv_M3pi_compr -> SaveAs("cv_M3pi_compr.pdf");
     cv_M3pi_compr -> Close();
-    */
     
     //==================================== MC normalization =================================
 
@@ -1168,18 +1216,20 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     cv_data -> SaveAs("cv_sfw2d_TDATA.pdf");
     */
 
-    hM3pi_BDT_good_TISR3PI_SIG_SCALED -> Write();
-    hM3pi_BDT_good_TDATA -> Write();
-    hM3pi_BDT_TDATA -> Write();
-    hM3pi_BDT_good_TISR3PI_SIG_TMP -> Write();
-    hM3pi_BDT_bad_TISR3PI_SIG_TMP -> Write();
-    hM3pi_BDT_TEEG -> Write();
-    hM3pi_BDT_TOMEGAPI -> Write();
-    hM3pi_BDT_TKPM -> Write();
-    hM3pi_BDT_TKSL -> Write();
-    hM3pi_BDT_TRHOPI -> Write();
-    hM3pi_BDT_TETAGAM -> Write();
-    hM3pi_BDT_TBKGREST -> Write();
+    //hM3pi_BDT_good_TISR3PI_SIG_SCALED -> Write();
+    //hM3pi_BDT_good_TDATA -> Write();
+    //hM3pi_BDT_TDATA -> Write();
+    //hM3pi_BDT_good_TISR3PI_SIG_TMP -> Write();
+    //hM3pi_BDT_bad_TISR3PI_SIG_TMP -> Write();
+    //hM3pi_BDT_TEEG -> Write();
+    //hM3pi_BDT_TOMEGAPI -> Write();
+    //hM3pi_BDT_TKPM -> Write();
+    //hM3pi_BDT_TKSL -> Write();
+    //hM3pi_BDT_TRHOPI -> Write();
+    //hM3pi_BDT_TETAGAM -> Write();
+    //hM3pi_BDT_TBKGREST -> Write();
+
+    HistArray_m3pi -> Write();
 
     
     TSFW2D -> Write();
