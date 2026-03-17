@@ -1170,6 +1170,17 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 
     hM3pi_BDT_good_TISR3PI_SIG_SCALED -> Write();
     hM3pi_BDT_good_TDATA -> Write();
+    hM3pi_BDT_TDATA -> Write();
+    hM3pi_BDT_good_TISR3PI_SIG_TMP -> Write();
+    hM3pi_BDT_bad_TISR3PI_SIG_TMP -> Write();
+    hM3pi_BDT_TEEG -> Write();
+    hM3pi_BDT_TOMEGAPI -> Write();
+    hM3pi_BDT_TKPM -> Write();
+    hM3pi_BDT_TKSL -> Write();
+    hM3pi_BDT_TRHOPI -> Write();
+    hM3pi_BDT_TETAGAM -> Write();
+    hM3pi_BDT_TBKGREST -> Write();
+
     
     TSFW2D -> Write();
     f_output -> Close();
