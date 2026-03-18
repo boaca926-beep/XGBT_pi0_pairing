@@ -1,6 +1,6 @@
 #include "helper.h"
-//#include "helper_m3pi.h"
-#include "helper_mgg.h"
+#include "helper_m3pi.h"
+//#include "helper_mgg.h"
 
 TLegend* set_legend(const double x1, const double x2, const double y1, const double y2){
 
@@ -56,7 +56,7 @@ TCanvas* plot_kine_var(TObjArray* HList, const TString var_type, const TString m
   
   // calculate scaling factor
   
-  TCanvas* cv =  new TCanvas("cv_" + var_type, cv_title, 0, 0, 800, 800);
+  TCanvas* cv =  new TCanvas("cv_" + var_type, cv_title, 0, 0, 1200, 800);
 
   const double binwidth = getbinwidth(h1d_bdt_good);
 
@@ -148,7 +148,7 @@ void check_trees(TFile* file) {
 
 }
 
-int fill_histos(const char* input_filename = "./output_main_bdt.root") {
+int fill_histos(const char* input_filename = "./output_with_bdt.root") {
 
   gErrorIgnoreLevel = kError;
   TGaxis::SetMaxDigits(4);
@@ -184,19 +184,19 @@ int fill_histos(const char* input_filename = "./output_main_bdt.root") {
 
     for (int i = 0; i < 10; i ++) {
       // chi-2 selection
-      TH1D* hm3pi = (TH1D*)file -> Get(TString("hM3pi_") + mc_names[i]);
+      TH1D* hm3pi = (TH1D*)file -> Get(hist_type + TString("_") + mc_names[i]);
       //cout << hm3pi -> GetName() << endl;
 
       // bdt selection
-      TH1D* hm3pi_bdt = (TH1D*)file -> Get(TString("hM3pi_BDT_") + mc_names[i]);
+      TH1D* hm3pi_bdt = (TH1D*)file -> Get(hist_type + TString("_BDT_") + mc_names[i]);
       //cout << hm3pi_bdt -> GetName() << endl;
 
       // bdt best
-      TH1D* hm3pi_bdt_good = (TH1D*)file -> Get(TString("hM3pi_BDT_good_") + mc_names[i]);
+      TH1D* hm3pi_bdt_good = (TH1D*)file -> Get(hist_type + TString("_BDT_good_") + mc_names[i]);
       //cout << hm3pi_bdt_good -> GetName() << endl;
 
       // bdt discarded
-      TH1D* hm3pi_bdt_bad = (TH1D*)file -> Get(TString("hM3pi_BDT_bad_") + mc_names[i]);
+      TH1D* hm3pi_bdt_bad = (TH1D*)file -> Get(hist_type + TString("_BDT_bad_") + mc_names[i]);
       //cout << hm3pi_bdt_bad -> GetName() << endl;
 
       // Inser to an array
@@ -219,13 +219,12 @@ int fill_histos(const char* input_filename = "./output_main_bdt.root") {
   line22 -> SetLineColor(42);
   line22 -> SetLineWidth(4);
 
-  const int list_size = 1;
-  const TString ch_type[list_size] = {"TDATA"};
+  const int list_size = 3;
   
-  //const TString ch_type[list_size] = {"TDATA",
-  //			     "TETAGAM",
-  //			     "TISR3PI_SIG"
-  //};
+  const TString ch_type[list_size] = {"TDATA",
+				      "TETAGAM",
+				      "TISR3PI_SIG"
+  };
 
   for (int i = 0; i < list_size; i++) {
     TCanvas* cv_M3pi = plot_kine_var(HistArray_m3pi, hist_type, ch_type[i], cv_title, x_title, unit, xmin, xmax);
@@ -233,7 +232,7 @@ int fill_histos(const char* input_filename = "./output_main_bdt.root") {
     TPaveText* pt_cut = set_pt(0.1, 0.92, 0.9, 0.98);
     pt_cut -> SetTextColor(42);
     pt_cut -> AddText(Form(pt_cut_text, omega_mass[0], omega_mass[1]));
-    pt_cut -> Draw("same");
+    //pt_cut -> Draw("same");
     
     TPaveText* pt_tmp = set_pt(0.2, 0.8, 0.3, 0.85);
     pt_tmp -> AddText(ch_type[i]);
@@ -246,7 +245,7 @@ int fill_histos(const char* input_filename = "./output_main_bdt.root") {
     
     cv_M3pi -> Update();
     cv_M3pi -> Modified();
-    cv_M3pi -> SaveAs(hist_type + "_" + ch_type[i] + "_omega_mass_range.pdf");
+    cv_M3pi -> SaveAs(hist_type + "_" + ch_type[i] + "_full_mass_range.pdf");
     
   }
     

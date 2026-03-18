@@ -60,6 +60,16 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	cout << "Error: Cannot open file " << data_filename << endl;
 	return;
       }
+
+    // ========== ADD OUTPUT FILE HERE ==========
+    // Create output file for results
+    TFile* outfile = TFile::Open("output_with_bdt.root", "RECREATE");
+    if (!outfile || outfile->IsZombie()) {
+        cout << "Error: Cannot create output file!" << endl;
+        file->Close();
+        return;
+    }
+    cout << "✓ Output file created: output_with_bdt.root" << endl;
     
     // Loop over keys
     TIter next_tree(file -> GetListOfKeys());
@@ -460,7 +470,7 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 
 	//if (m3pi_bdt > 800. || m3pi_bdt < 760.) continue;
 	
-	if (m3pi_bdt > 900. || m3pi_bdt < 650.) continue;
+	//if (m3pi_bdt > 900. || m3pi_bdt < 650.) continue;
 	//if (m3pi > 900. || m3pi < 650.) continue;
 
 	// KLOE selection
