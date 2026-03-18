@@ -388,35 +388,11 @@ TCanvas *cv_plot(const TString hist_type, TH1D* h_kloe, TH1D* h_good_kloe, TH1D*
 
 }
 
-void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
+//
+void check_trees(TFile* file) {
 
-  gErrorIgnoreLevel = kError;
-  TGaxis::SetMaxDigits(4);
-  gStyle->SetOptStat(0);
-  gStyle->SetOptTitle(0);
-  gStyle->SetFitFormat("6.4g");
-
-  cout << "Plotting BDT results ... " << endl;
-
-  // Load input root file: output_with_bdt.root
-  std::cout << "Loading input " << input_filename << std::endl;  // Added std::
-
-  const int xbins = 200;
-  const double xmin = 400.;
-  const double xmax = 1000.;
-
-    
-  // If data file exists, process it with RDataFame
-  if(!gSystem -> AccessPathName(input_filename)){
-
-    cout << "\nProcessing data file: " << input_filename << endl;
-    
-    // Open the root file
-    //TFile* file = TFile::Open(input_filename);
-    TFile* file = new TFile(input_filename);
-    
-    if (!file || file -> IsZombie()){
-      cout << "Error: Cannot open file " << input_filename << endl;
+  if (!file || file -> IsZombie()){
+    cout << "Error: Cannot open file " << file -> GetName() << endl;
       return;
     }// end open root file
 
@@ -444,6 +420,34 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     // Get histos
     file -> cd(); // Make sure we're in the output file
 
+}
+
+void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
+
+  gErrorIgnoreLevel = kError;
+  TGaxis::SetMaxDigits(4);
+  gStyle->SetOptStat(0);
+  gStyle->SetOptTitle(0);
+  gStyle->SetFitFormat("6.4g");
+
+  cout << "Plotting BDT results ... " << endl;
+
+  // Load input root file: output_with_bdt.root
+  std::cout << "Loading input " << input_filename << std::endl;  // Added std::
+
+  const int xbins = 200;
+  const double xmin = 400.;
+  const double xmax = 1000.;
+    
+  // If data file exists, process it with RDataFame
+  if(!gSystem -> AccessPathName(input_filename)){
+
+    cout << "\nProcessing data file: " << input_filename << endl;
+    
+    // Check input root file and list all trees
+    TFile* file = new TFile(input_filename);
+    check_trees(file);
+    
     // TH2D
     TH2D* h2d_kloe_BDT_corr_TDATA = (TH2D *) file -> Get("h2d_kloe_BDT_corr_TDATA");
     TH2D* h2d_kloe_BDT_corr_TISR3PI_SIG = (TH2D *) file -> Get("h2d_kloe_BDT_corr_TISR3PI_SIG");
@@ -499,9 +503,6 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     h2d_sfw_BDT_good_MCSUM_NOETA -> Add(h2d_sfw_BDT_good_MCREST, 1.);
     h2d_sfw_BDT_good_MCSUM_NOETA -> SetName("h2d_sfw_BDT_good_MCSUM_NOETA");
 
-
-    
-
     // TH1D
     // M3pi
     TObjArray* HM3pi = new TObjArray(100); // Hist. Array
@@ -521,7 +522,6 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     TH1D* hM3pi_BDT_good_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_BDT_good_TISR3PI_SIG");
     HM3pi -> Add(hM3pi_BDT_good_TISR3PI_SIG);
     //format_h(hM3pi_BDT_good_TISR3PI_SIG, 4, 2);
-    
     
     TH1D* hM3pi_BDT_bad_TISR3PI_SIG = (TH1D*)file -> Get("hM3pi_BDT_bad_TISR3PI_SIG");
     //formatfill_h(hM3pi_BDT_bad_TISR3PI_SIG, 4, 3001);
@@ -559,7 +559,6 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 			   "BDT_TISR3PI_SIG",
 			   "BDT_good_TISR3PI_SIG",
 			   "BDT_bad_TISR3PI_SIG"
-			   
     };
 
 
@@ -690,7 +689,6 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
 
     TH1D* hM_gg_BDT_bad_TISR3PI_SIG_TMP = (TH1D*)hM_gg_BDT_bad_TISR3PI_SIG -> Clone("hM_gg_BDT_bad_TISR3PI_SIG_TMP");
     
-    
     TH1D* hM_gg_BDT_good_MCSUM = (TH1D*) hM_gg_BDT_good_TISR3PI_SIG_TMP -> Clone("hM_gg_BDT_good_MCSUM");
     hM_gg_BDT_good_MCSUM -> Add(hM_gg_BDT_good_TEEG, 1.);
     hM_gg_BDT_good_MCSUM -> Add(hM_gg_BDT_good_TOMEGAPI, 1.);
@@ -699,7 +697,6 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     hM_gg_BDT_good_MCSUM -> Add(hM_gg_BDT_good_TRHOPI, 1.);
     hM_gg_BDT_good_MCSUM -> Add(hM_gg_BDT_good_TETAGAM, 1.);
     hM_gg_BDT_good_MCSUM -> Add(hM_gg_BDT_good_TMCREST, 1.);
-    
     
     format_h(hM_gg_BDT_good_MCSUM, 2, 2);
 

@@ -44,30 +44,15 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
     
   cout << "BDT full anlysis on KLOE dataset ..." << endl;
 
-  // 1. Check if model file exists
-  if (gSystem->AccessPathName(model_filename)) {
-    std::cout << "" << model_filename << " does not exists!" << std::endl;  // Added std::
-    return;
-  }
-
-  // 2. Load the BDT model
-  std::cout << "Loading model from " << model_filename << std::endl;  // Added std::
-  TMVA::Experimental::RBDT bdt("BDT_pi0", model_filename);  // ← Declaration is HERE
-  
-  std::cout << "✓ Model loaded successfully!" << std::endl;  // Added this line
-  
-  //std::cout << "Number of input features: " << bdt.GetNInputDim() << std::endl;
-  
-  // 3. Create output file
-  TFile* outfile = TFile::Open("output_main_bdt.root", "RECREATE");
-
-  
-  
-  // 4.If data file exists, process it with RDataFame
-  if(!gSystem -> AccessPathName(data_filename)){ // check input root file
+  // If data file exists, process it with RDataFame
+  if(!gSystem -> AccessPathName(data_filename) && !gSystem->AccessPathName(model_filename)){ // check input root file
+    //If it is NOT true that the file cannot be accessed, meaning the file CAN be accessed."
     
-    cout << "\nProcessing data file: " << data_filename << endl;
+    cout << "\ndata file: " << data_filename << "\n"
+	 << "✓ Model loaded successfully!" << endl;
 
+    TMVA::Experimental::RBDT bdt("BDT_pi0", model_filename);  // ← Declaration is HERE
+  
     // Open the root file
     TFile* file = TFile::Open(data_filename);
     if (!file || file -> IsZombie())
@@ -91,8 +76,6 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       classnm_tree = key -> GetClassName();
       key -> GetSeekKey();
       
-      cout << "classnm = " << classnm_tree << ", objnm = " << objnm_tree << endl;
-
       outfile -> cd(); // Make sure we're in the output file
       TTree* outtree = new TTree(Form("%s", objnm_tree.Data()),  "Tree with BDT response");
 
@@ -130,7 +113,7 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       }
       
       int nentries = tree -> GetEntries();
-      cout << "Tree has " << nentries << " entries" << endl;
+      cout << ch_nb + 1 << ": classnm = " << classnm_tree << ", objnm = " << objnm_tree << ", entries = " << nentries << endl;
       
       // Set branch addres for input features
       double lagvalue_min_7C = 0., deltaE = 0., betapi0 = 0.,  angle_pi0gam12 = 0.;
@@ -270,7 +253,6 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       // Copy original branches if needed
       //outtree -> Branch("E1", &E1);
 
-      cout << "===============Starting Pi0 Selection=============" << endl;
       // Loop over entries
       for (int i = 0; i < nentries; i++) { // loop entries
 	tree -> GetEntry(i);
@@ -653,7 +635,11 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
     delete outfile;
     file -> Close();
     
-  } // check input root file end
+  } 
+  else {
+    std::cout  << model_filename << " or data file does not exists!" << std::endl;  // Added std::
+    return;
+  }// check input root file end
   
 } // main program end
   
