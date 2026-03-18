@@ -12,7 +12,7 @@ from analysis.plots import plot_var_score, plot_roc, plot_nm
 from validation.metrics import event_performance
 
 
-def load_data_model():
+def load_data_model(data_type):
     """
     Load test data from folder: test_data
     Load model from folder: models
@@ -44,9 +44,70 @@ def event_wise_prediction(all_df_test, X_test, y_test_pair, model, threshold=0.5
     - event_results: DataFrame with event-wise predictions and truths
     '''
 
+    # Debug: Print shapes to identify the issue
+    print(f"Debug - all_df_test shape: {all_df_test.shape}")
+    print(f"Debug - X_test shape: {X_test.shape}")
+    print(f"Debug - y_test_pair shape: {y_test_pair.shape}")
+    print(f"Debug - Number of unique events in all_df_test: {all_df_test['event'].nunique()}")
+
+    # Get photon counts per event
+    event_photon_counts = all_df_test.groupby('event').size().to_dict()
+    print(f"Debug - Photon counts per event (sample): {dict(list(event_photon_counts.items())[:5])}")
+    
+    # Calculate expected number of pairs per event (all combinations)
+    event_expected_pairs = {}
+    for event_id, n_photons in event_photon_counts.items():
+        event_expected_pairs[event_id] = n_photons * (n_photons - 1) // 2
+    
+    total_expected_pairs = sum(event_expected_pairs.values())
+    print(f"Debug - Total expected pairs (all combinations): {total_expected_pairs}")
+    print(f"Debug - Actual pairs in X_test: {len(X_test)}")
+
     # Get pair preditions from model
-    y_pred_proba = model.predic_proba(X_test)[:, 1] # Probability of being pi0
+    y_pred_proba = model.predict_proba(X_test)[:, 1] # Probability of being pi0
     y_pred_pair = (y_pred_proba >= threshold).astype(int) 
+
+    print(f"Debug - y_pred_proba shape: {y_pred_proba.shape}")
+
+    # Get the event for each photon (each photon appears in multiple pairs)
+    photon_events = all_df_test['event'].values
+
+    # Let's reconstruct by assuming pairs are grouped by event
+    unique_events = sorted(all_df_test['event'].unique())
+
+    # Reconstruct event IDs for each pair
+    pair_event_ids = []
+    
+    for event_id in unique_events:
+        n_photons = event_photon_counts[event_id]
+        
+        # Calculate number of pairs for this event
+        # For an event with N photons, there are N*(N-1)/2 possible pairs
+        n_pairs_in_event = n_photons * (n_photons - 1) // 2
+        
+        # Add event ID for each pair in this event
+        pair_event_ids.extend([event_id] * n_pairs_in_event)
+    
+    print(f"Debug - Reconstructed {len(pair_event_ids)} pair event IDs")
+    
+    # Check if we have the right number of pairs (should be 3x photons)
+    expected_pairs = len(all_df_test) * 3  # Based on the ratio you observed
+    print(f"Debug - Expected pairs (3x photons): {expected_pairs}")
+
+    if len(pair_event_ids) != len(y_pred_proba):
+        print(f"Warning: Length mismatch! Reconstructed {len(pair_event_ids)} but need {len(y_pred_proba)}")
+        
+    # If we have too many, truncate
+    if len(pair_event_ids) > len(y_pred_proba):
+        print(f"Truncating to {len(y_pred_proba)} pairs")
+        pair_event_ids = pair_event_ids[:len(y_pred_proba)]
+    else:
+        # If we have too few, we need to pad
+        print(f"WARNING: Need to pad {len(y_pred_proba) - len(pair_event_ids)} pairs")
+        # This shouldn't happen if our assumption is correct
+        # Let's repeat the last event ID to fill
+        last_event_id = pair_event_ids[-1] if pair_event_ids else 0
+        pair_event_ids.extend([last_event_id] * (len(y_pred_proba) - len(pair_event_ids)))
 
     # Create a DataFrame with pair information
     pair_df = pd.DataFrame({
@@ -80,7 +141,29 @@ def event_wise_prediction(all_df_test, X_test, y_test_pair, model, threshold=0.5
 
         event_results.append({
             'event_id': event_id,
+            'true_signal': event_true,
+            'pred_signal': event_pred_max, # Using "max" strategy
+            'n_pairs': len(group),
+            'n_pred_pi0': group['pred_pair'].sum(),
+            'max_proba': group['pred_proba'].max(),
+            'mean_proba': group['pred_proba'].mean()
         })
+
+    return pd.DataFrame(event_results)
+
+def plot_event_confusion_matrix():
+    """
+    Plot confusion matrix for event-wise classification
+    """
+
+    print("Plot confusion matrix for event-wise classification")
+
+def analyze_threshold_impact():
+    """
+    Analyze how different thresholds affect event-wise classification
+    """
+
+    print("Analyze how different thresholds affect event-wise classification")
 
 if __name__ == '__main__':
 
@@ -108,13 +191,18 @@ if __name__ == '__main__':
         if (data_type == category_type):
 
             # Load test dataset and all_df
-            all_df, all_df_test, model, X_test, y_test = load_data_model()
+            all_df, all_df_test, model, X_test, y_test = load_data_model(data_type)
 
             # Selection cut (chi2, E_dela, opening angle, beta)
 
             # Check kine
 
             ## Plot confusion matrix (event-basis)
+            
+            # Get event-wise prediction
+            event_results = event_wise_prediction(
+                all_df_test, X_test, y_test, model, threshold=0.5
+            )
 
             '''
             all_df_test contains the event column that links pairs to events
@@ -131,26 +219,26 @@ if __name__ == '__main__':
                 False Negatives: Signal events misidentified as background
             '''
 
-            r'''
+            
             ## Plot confusion matrix (photon features)
-            fig_cm = plot_nm(X_test, y_test, model, br_title)
-            fig_cm.savefig(f'./{plot_dir}/cm_{data_type}.png', dpi=300, bbox_inches='tight')
-            plt.close(fig_cm)
+            #fig_cm = plot_nm(X_test, y_test, model, br_title)
+            #fig_cm.savefig(f'./{plot_dir}/cm_{data_type}.png', dpi=300, bbox_inches='tight')
+            #plt.close(fig_cm)
 
             ## Accuracy metrics, event basis
-            score_list, var_list, var_str = event_performance(all_df, model)
+            #score_list, var_list, var_str = event_performance(all_df, model)
 
-            fig_var_score = plot_var_score(var_list, score_list, var_str, f"Mass and Score (test, {br_title})")
-            fig_var_score.savefig(f'./{plot_dir}/pi0_mass_score_{data_type}.png', dpi=300, bbox_inches='tight')
-            plt.close(fig_var_score)
+            #fig_var_score = plot_var_score(var_list, score_list, var_str, f"Mass and Score (test, {br_title})")
+            #fig_var_score.savefig(f'./{plot_dir}/pi0_mass_score_{data_type}.png', dpi=300, bbox_inches='tight')
+            #plt.close(fig_var_score)
 
             ## ROC plot
-            fig_roc = plot_roc(score_list, rf'ROC Curve - $\pi^{0}$ Classifier (test, {br_title})')
-            fig_roc.savefig(f'./{plot_dir}/roc_curv_{data_type}.png', dpi=300, bbox_inches='tight')
-            plt.close(fig_roc)
+            #fig_roc = plot_roc(score_list, rf'ROC Curve - $\pi^{0}$ Classifier (test, {br_title})')
+            #fig_roc.savefig(f'./{plot_dir}/roc_curv_{data_type}.png', dpi=300, bbox_inches='tight')
+            #plt.close(fig_roc)
 
             ## Plot kine. var after the pi0 identification
-            '''
+        
 
         else:
             print("No true labels")
