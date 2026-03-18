@@ -136,7 +136,7 @@ if __name__ == '__main__':
     #============================================================
     # LOAD INPUT ROOT FILES
     #============================================================
-    #f_nm = "../data/kloe_small_sample.root"
+    #f_nm = "../data/kloe_sample.root"
     #f_nm = "../data/kloe_sample_chain.root"
     f_nm = "../data/kloe_sample_full.root"
 
@@ -273,60 +273,124 @@ if __name__ == '__main__':
 
     ch_indx = 0
     for data_type, info in phys_map.items():
+        try:
+            data_nm = data_type.split(';')[0]
+            #if (data_nm == "TETAGAM"):
+            #if (data_type == "TISR3PI_SIG"):
+            #if (data_type == "TKSL"):
+            #if (data_type == "TOMEGAPI"):
 
-        ##
-        data_nm = data_type.split(';')[0]
-        #if (data_nm == "TETAGAM"):
-        #if (data_type == "TISR3PI_SIG"):
-        #if (data_type == "TKSL"):
-        #if (data_type == "TOMEGAPI"):
-
-        ch_indx += 1
-        print("="*25 + f"Channel {ch_indx}: {data_type}" + "="*25)
-        # Create data frame
-        tree = root_file[data_type] 
-        df = tree.arrays(fields_to_use, library="pd") 
-        #print(df.describe())
-
-        # Check for any missing values
-        #print(f"Missing values per column:")
-        #print(df.isnull().sum())
-
-        # Create pho4mom_all_df for signal and bkg separately
-        all_df, pi0_all_df = create_dataset(df, info['category'])
+            ch_indx += 1
+            print("="*25 + f"Channel {ch_indx}: {data_type}" + "="*25)
             
-        # Check for anomalies
-        #print(all_df.columns)
-        betapi0_values = all_df['Br_betapi0']
-        #print(betapi0_values.describe())
+            # Get tree for this channel
+            tree = root_file[data_type] 
 
-        # Data splitting
-        if len(all_df) < 10:
-            print("WARNING: Very few background events!")  
+            # Debug info for this channel
+            print(f"Processing {data_type}...")
+            print(f"Number of entries: {tree.num_entries}")
+
+            # Check for any missing values
+            #print(f"Missing values per column:")
+            #print(df.isnull().sum())
+
+            # Read as akward array (more flexible) to determine fields, only first 100 to save memory
+            # Exclude arra fields which confuse the pd expancding
+            ak_array = tree.arrays(library="ak", entry_stop=100)
+
+            # Check for required branches
+            if "Br_mpi0" not in ak_array.fields:
+                print("Br_mpi0 is missing !!! Need to add this branch into the root file !!!")
+            
+            #print(f"\nAwkward array fields: {ak_array.fields}")
+            #print(f"Number of fields: {len(ak_array.fields)}")
+
+            # Gemerate fields_to_use for THIS channel
+            exclude_fields = ['Br_pull_E1', 'Br_pull_x1', 'Br_pull_y1', 'Br_pull_z1', 'Br_pull_t1']
+            fields_to_use = []
+
+            for field in ak_array.fields:
+                # Skip fields that match exclude_fields
+                if any(pattern in field for pattern in exclude_fields):
+                    #print(f"Excluding array field: {field}")
+                    continue
+
+                # Only include 1D fields
+                if ak_array[field].ndim == 1:
+                    fields_to_use.append(field)
+                else:
+                    print(f"Excluding multi-dim field: {field} (ndim={ak_array[field].ndim})")
+
+            # Check if we have the required branches for create_dataset
+            required_br = ['Br_E1', 'Br_px1', 'Br_py1', 'Br_pz1', 
+                        'Br_E2', 'Br_px2', 'Br_py2', 'Br_pz2', 
+                        'Br_E3', 'Br_px3', 'Br_py3', 'Br_pz3',
+                        'Br_m3pi', 'Br_lagvalue_min_7C', 'Br_deltaE',
+                        'Br_angle_pi0gam12', 'Br_ppIM', 'Br_betapi0',
+                        'Br_recon_indx', 'Br_bkg_indx']
+            
+            missing_br = [br for br in required_br if br not in fields_to_use]
+            if missing_br:
+                print(f"WARNING: Missing branches in {data_type}: {missing_br}")
+                if info['category'] == 'signal' and len(missing_br) > 5:
+                    print(f"Too many missing branches for signal channel {data_type}, skipping...")
+                    continue
+            
+            # Check a few events before full processing
+            if len(fields_to_use) > 0:
+                sample_fields = fields_to_use[:min(5, len(fields_to_use))]
+                sample_df = tree.arrays(sample_fields, library="pd", entry_stop=100)
+                print(f"Sample data shape: {sample_df.shape}")
+                print(f"Sample columns: {sample_df.columns.tolist()}")
+            
+            print(f"Fields being used: {fields_to_use}")
+
+            # Create full data frame
+            print(f"Loading full dataset for {data_type}...")
+            df = tree.arrays(fields_to_use, library="pd") 
+            print(f"Full dataset shape: {df.shape}")
+
+            # Create pho4mom_all_df for signal and bkg separately
+            all_df, pi0_all_df = create_dataset(df, info['category'])
+                
+            # Check for anomalies
+            #print(all_df.columns)
+            betapi0_values = all_df['Br_betapi0']
+            #print(betapi0_values.describe())
+
+            # Data splitting
+            if len(all_df) < 10:
+                print("WARNING: Very few background events!")  
+                continue
+
+            all_df_train, all_df_val, all_df_test, X_train, y_train, X_val, y_val, X_test, y_test = data_splitting(all_df)
+
+            joblib.dump(all_df, f'{data_dir}/all_df_{data_nm}.pkl')
+            joblib.dump(pi0_all_df, f'{data_dir}/pi0_all_df_{data_nm}.pkl')
+
+            joblib.dump(all_df_train, f'{data_dir}/all_df_train_{data_nm}.pkl')
+            joblib.dump(all_df_val, f'{data_dir}/all_df_val_{data_nm}.pkl')
+            joblib.dump(all_df_test, f'{data_dir}/all_df_test_{data_nm}.pkl')
+
+            joblib.dump(X_train, f'{data_dir}/X_train_{data_nm}.pkl')
+            joblib.dump(X_val, f'{data_dir}/X_val_{data_nm}.pkl')
+            joblib.dump(X_test, f'{data_dir}/X_test_{data_nm}.pkl')
+
+            joblib.dump(y_train, f'{data_dir}/y_train_{data_nm}.pkl')
+            joblib.dump(y_val, f'{data_dir}/y_val_{data_nm}.pkl')
+            joblib.dump(y_test, f'{data_dir}/y_test_{data_nm}.pkl')
+
+            # Combining dataset
+            df_list.append(all_df) # Add each channel's dataframe
+            
+            #else:
+            #    continue
+        except Exception as e:
+            print(f"ERROR processing {data_type}: {str(e)}")
+            import traceback
+            traceback.print_exc()  # This will show you exactly what went wrong
+            print(f"Skipping {data_type} and continuing with next channel...")
             continue
-
-        all_df_train, all_df_val, all_df_test, X_train, y_train, X_val, y_val, X_test, y_test = data_splitting(all_df)
-
-        joblib.dump(all_df, f'{data_dir}/all_df_{data_nm}.pkl')
-        joblib.dump(pi0_all_df, f'{data_dir}/pi0_all_df_{data_nm}.pkl')
-
-        joblib.dump(all_df_train, f'{data_dir}/all_df_train_{data_nm}.pkl')
-        joblib.dump(all_df_val, f'{data_dir}/all_df_val_{data_nm}.pkl')
-        joblib.dump(all_df_test, f'{data_dir}/all_df_test_{data_nm}.pkl')
-
-        joblib.dump(X_train, f'{data_dir}/X_train_{data_nm}.pkl')
-        joblib.dump(X_val, f'{data_dir}/X_val_{data_nm}.pkl')
-        joblib.dump(X_test, f'{data_dir}/X_test_{data_nm}.pkl')
-
-        joblib.dump(y_train, f'{data_dir}/y_train_{data_nm}.pkl')
-        joblib.dump(y_val, f'{data_dir}/y_val_{data_nm}.pkl')
-        joblib.dump(y_test, f'{data_dir}/y_test_{data_nm}.pkl')
-
-        # Combining dataset
-        df_list.append(all_df) # Add each channel's dataframe
-        
-        #else:
-        #    continue
 
         
 
