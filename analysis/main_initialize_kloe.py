@@ -120,16 +120,6 @@ def data_splitting(all_df):
             n_pairs = len(pair_df)
             print(f"✅ {name}: {n_pairs} pairs from {n_events} events ({n_pairs/n_events:.2f} pairs/event)")
 
-    # Verify event column preservation
-    for name, pair_df in [('Train', pair_train), ('Val', pair_val), ('Test', pair_test)]:
-        if 'event' not in pair_df.columns:
-            print(f"❌ CRITICAL: 'event' column missing in {name} pairs!")
-            print(f"   Columns: {pair_df.columns.tolist()}")
-        else:
-            n_events = pair_df['event'].nunique()
-            n_pairs = len(pair_df)
-            print(f"✅ {name}: {n_pairs} pairs from {n_events} events ({n_pairs/n_events:.2f} pairs/event)")
-
     #print(f"Training pairs:   {len(pair_train)}")
     #print(f"Validation pairs: {len(pair_val)}")
     #print(f"Test pairs:       {len(pair_test)}")
@@ -149,7 +139,6 @@ def data_splitting(all_df):
     print(f"  X_test shape:  {X_test.shape}, y_test shape:  {y_test.shape}")
 
     return all_df_train, all_df_val, all_df_test, X_train, y_train, X_val, y_val, X_test, y_test, pair_train, pair_val, pair_test
-    return all_df_train, all_df_val, all_df_test, X_train, y_train, X_val, y_val, X_test, y_test, pair_train, pair_val, pair_test
 
    
 
@@ -157,9 +146,9 @@ if __name__ == '__main__':
     #============================================================
     # LOAD INPUT ROOT FILES
     #============================================================
-    #f_nm = "../data/kloe_sample.root"
+    f_nm = "../data/kloe_small_sample.root"
     #f_nm = "../data/kloe_sample_chain.root"
-    f_nm = "../data/kloe_sample_full.root"
+    #f_nm = "../data/kloe_sample_full.root"
 
 
     # Create ooutput directory
@@ -293,8 +282,6 @@ if __name__ == '__main__':
     df_list = [] # List for storing all dataset for combining
     #fields_to_use = None
     #all_fields_collected = False
-    #fields_to_use = None
-    #all_fields_collected = False
 
     ch_indx = 0
     for data_type, info in phys_map.items():
@@ -388,7 +375,7 @@ if __name__ == '__main__':
                 print("WARNING: Very few background events!")  
                 continue
 
-            all_df_train, all_df_val, all_df_test, X_train, y_train, X_val, y_val, X_test, y_test = data_splitting(all_df)
+            all_df_train, all_df_val, all_df_test, X_train, y_train, X_val, y_val, X_test, y_test, pair_train, pair_val, pair_test = data_splitting(all_df)
 
             joblib.dump(all_df, f'{data_dir}/all_df_{data_nm}.pkl')
             joblib.dump(pi0_all_df, f'{data_dir}/pi0_all_df_{data_nm}.pkl')
@@ -396,6 +383,10 @@ if __name__ == '__main__':
             joblib.dump(all_df_train, f'{data_dir}/all_df_train_{data_nm}.pkl')
             joblib.dump(all_df_val, f'{data_dir}/all_df_val_{data_nm}.pkl')
             joblib.dump(all_df_test, f'{data_dir}/all_df_test_{data_nm}.pkl')
+
+            joblib.dump(pair_train, f'{data_dir}/pair_train_{data_nm}.pkl')
+            joblib.dump(pair_val, f'{data_dir}/pair_val_{data_nm}.pkl')
+            joblib.dump(pair_test, f'{data_dir}/pair_test_{data_nm}.pkl')
 
             joblib.dump(X_train, f'{data_dir}/X_train_{data_nm}.pkl')
             joblib.dump(X_val, f'{data_dir}/X_val_{data_nm}.pkl')
@@ -435,8 +426,6 @@ if __name__ == '__main__':
 
         # Split
         all_df_train_comb, all_df_val_comb, all_df_test_comb, X_train_comb, y_train_comb, X_val_comb, y_val_comb, X_test_comb, y_test_comb, pair_train_comb, pair_val_comb, pair_test_comb = data_splitting(all_df_comb)
-        all_df_train_comb, all_df_val_comb, all_df_test_comb, X_train_comb, y_train_comb, X_val_comb, y_val_comb, X_test_comb, y_test_comb, pair_train_comb, pair_val_comb, pair_test_comb = data_splitting(all_df_comb)
-
         # Save with clear names
         #save_dict = {
         #    'all_df_comb': all_df_comb,
@@ -445,13 +434,7 @@ if __name__ == '__main__':
         #    'val': (all_df_val_comb, X_val_comb, y_val_comb),
         #    'test': (all_df_test_comb, X_test_comb, y_test_comb)
         #}
-        #save_dict = {
-        #    'all_df_comb': all_df_comb,
-        #    'pi0_all_df_comb': pi0_all_df_comb,
-        #    'train': (all_df_train_comb, X_train_comb, y_train_comb),
-        #    'val': (all_df_val_comb, X_val_comb, y_val_comb),
-        #    'test': (all_df_test_comb, X_test_comb, y_test_comb)
-        #}
+
 
         # Save individual files
         joblib.dump(all_df_comb, f'{data_dir}/all_df_TCOMB.pkl')
@@ -460,11 +443,6 @@ if __name__ == '__main__':
         joblib.dump(all_df_train_comb, f'{data_dir}/all_df_train_TCOMB.pkl')
         joblib.dump(all_df_val_comb, f'{data_dir}/all_df_val_TCOMB.pkl')
         joblib.dump(all_df_test_comb, f'{data_dir}/all_df_test_TCOMB.pkl')
-
-        # Save the pair DataFrames - THESE CONTAIN THE EVENT INFO!
-        joblib.dump(pair_train_comb, f'{data_dir}/pair_train_TCOMB.pkl')
-        joblib.dump(pair_val_comb, f'{data_dir}/pair_val_TCOMB.pkl')
-        joblib.dump(pair_test_comb, f'{data_dir}/pair_test_TCOMB.pkl')
 
         # Save the pair DataFrames - THESE CONTAIN THE EVENT INFO!
         joblib.dump(pair_train_comb, f'{data_dir}/pair_train_TCOMB.pkl')
