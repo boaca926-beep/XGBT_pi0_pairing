@@ -28,7 +28,8 @@ def create_dataset(df, category): # For photon 4-momentum
     phys_region = (df['Br_betapi0'] < 1) & (df['Br_betapi0'] > 0) # Physical region
 
     #df = df[(df['Br_lagvalue_min_7C'] < 100) & (df['Br_betapi0'] < 1) & (df['Br_betapi0'] > 0)][br_nm]
-    df = df[cut_region & phys_region][br_nm]
+    df = df.copy() 
+    df = df[cut_region & phys_region][br_nm].copy()
 
     # Create all_df, pos_df, neg_df for signal and background events
     if len(br_nm): # Check para length and br_nm length are consistent
@@ -93,6 +94,7 @@ def data_splitting(all_df):
     # First split: separate test set 20%
     all_df_trainval, all_df_test = train_test_split(
         all_df, test_size=0.2, random_state=42
+        
     )
 
     # Second split: separte validation from training (20% of total)
