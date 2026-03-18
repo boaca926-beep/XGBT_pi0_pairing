@@ -305,7 +305,7 @@ if __name__ == '__main__':
             #print(f"\nAwkward array fields: {ak_array.fields}")
             #print(f"Number of fields: {len(ak_array.fields)}")
 
-            # Gemerate fields_to_use for THIS channel
+            # Generate fields_to_use for THIS channel
             exclude_fields = ['Br_pull_E1', 'Br_pull_x1', 'Br_pull_y1', 'Br_pull_z1', 'Br_pull_t1']
             fields_to_use = []
 
@@ -382,9 +382,7 @@ if __name__ == '__main__':
 
             # Combining dataset
             df_list.append(all_df) # Add each channel's dataframe
-            
-            #else:
-            #    continue
+  
         except Exception as e:
             print(f"ERROR processing {data_type}: {str(e)}")
             import traceback
@@ -451,26 +449,3 @@ if __name__ == '__main__':
 
     # Save phys_map
     joblib.dump(phys_map, f'{data_dir}/phys_map.pkl')
-
-    r'''
-    # Combining dataset 
-    # (later, after signal and background are separated)
-    if df_list:
-        joblib.dump(X_train_comb, f'{data_dir}/X_train_TCOMB.pkl')
-        df_combined = pd.concat(df_list, ignore_index=True)
-
-        # Shuffle together using the same index
-        shuffled_idx = np.random.permutation(len(df_combined))
-        df_combined = df_combined.iloc[shuffled_idx].reset_index(drop=True)
-            
-        print(f"\nCombined DataFrame shape: {df_combined.shape}")
-        print(f"Total entries: {len(df_combined)}")
-        print(f"Columns: {df_combined.columns.tolist()}")
-
-        # Check for any missing values
-        print(f"\nMissing values per column:")
-        #print(df_combined.isnull().sum())
-    else:
-        print("No dataframes were created successfully")
-    '''
-    #print(df_list[0].describe())
