@@ -1,4 +1,6 @@
 #include "helper.h"
+//#include "helper_m3pi.h"
+#include "helper_mgg.h"
 
 TLegend* set_legend(const double x1, const double x2, const double y1, const double y2){
 
@@ -18,7 +20,7 @@ TPaveText* set_pt(const double x1, const double x2, const double y1, const doubl
   TPaveText* pt = new TPaveText(x1, x2, y1, y2, "NDC");  // Coordinates in NDC (0-1)
   pt->SetFillColor(0);           // White background
   pt->SetTextColor(kBlack);      // Black text
-  pt->SetTextSize(0.05);         // Text size
+  pt->SetTextSize(0.04);         // Text size
   //pt->SetBorderSize(1);        // Border size (0 = no border)
   pt->SetTextAlign(12);          // Left aligned, vertically centered
   
@@ -54,7 +56,7 @@ TCanvas* plot_kine_var(TObjArray* HList, const TString var_type, const TString m
   
   // calculate scaling factor
   
-  TCanvas* cv =  new TCanvas("cv_" + var_type, cv_title, 0, 0, 1200, 800);
+  TCanvas* cv =  new TCanvas("cv_" + var_type, cv_title, 0, 0, 800, 800);
 
   const double binwidth = getbinwidth(h1d_bdt_good);
 
@@ -70,34 +72,41 @@ TCanvas* plot_kine_var(TObjArray* HList, const TString var_type, const TString m
   h1d_bdt -> GetXaxis() -> SetTitleSize(0.04);
   h1d_bdt -> GetXaxis() -> SetRangeUser(xmin, xmax); 
   
-  //set_cv(h1d_bdt_good, "M_{3#pi}", "[MeV/c^{2}]", 0., 1000., binwidth_m3pi);
   
   cv -> SetBottomMargin(0.15);//0.007
   cv -> SetLeftMargin(0.15);
   cv -> SetRightMargin(0.15);
 
+  // Create Legend
+  TLegend *legd_cv = set_legend(0.6, 0.7, 0.9, 0.9);
+  
   if (mc_type == "TDATA") {
     h1d_bdt -> Draw("E");
     h1d_kloe -> Draw("ESame");
     h1d_bdt_good -> Draw("ESame");
     h1d_bdt_bad -> Draw("ESame");
+
+    legd_cv -> AddEntry(h1d_kloe, "#chi^{2}_{m_{#gamma#gamma}} Selection", "lep");
+    legd_cv -> AddEntry(h1d_bdt, "BDT Selection", "lep");
+    legd_cv -> AddEntry(h1d_bdt_good, "BDT Best #pi^{0}(#gamma#gamma)", "lep");
+    legd_cv -> AddEntry(h1d_bdt_bad, "BDT Discarded", "lep");
+  
   }
   else{
    h1d_bdt -> Draw("Hist");
    h1d_kloe -> Draw("HistSame");
    h1d_bdt_good -> Draw("HistSame");
    h1d_bdt_bad -> Draw("HistSame");
+
+   legd_cv -> AddEntry(h1d_kloe, "#chi^{2}_{m_{#gamma#gamma}} Selection", "l");
+   legd_cv -> AddEntry(h1d_bdt, "BDT Selection", "l");
+   legd_cv -> AddEntry(h1d_bdt_good, "BDT best #pi^{0}(#gamma#gamma)", "l");
+   legd_cv -> AddEntry(h1d_bdt_bad, "BDT Discarded", "l");
+   
   }
   
-  // Create Legend
-  TLegend *legd_cv = set_legend(0.6, 0.7, 0.9, 0.9);
-  legd_cv -> AddEntry(h1d_kloe, "#chi^{2}_{m_{#gamma#gamma}} Selection", "lep");
-  legd_cv -> AddEntry(h1d_bdt, "BDT Selection", "lep");
-  legd_cv -> AddEntry(h1d_bdt_good, "BDT best #pi^{0}(#gamma#gamma)", "lep");
-  legd_cv -> AddEntry(h1d_bdt_bad, "BDT Discarded", "lep");
-  legd_cv -> Draw("Same");
   legtextsize(legd_cv, 0.04);
-    
+
   legd_cv -> Draw("Same");
   
 
@@ -200,7 +209,8 @@ int fill_histos(const char* input_filename = "./output_main_bdt.root") {
     
   }// end input checks
 
-  //==================================== Plotting M3pi=================================
+  //==================================== Plotting =================================
+  
   TLine *line11 = new TLine(650., 0., 650., 1500.); // vertical left
   line11 -> SetLineColor(42);
   line11 -> SetLineWidth(4);
@@ -208,26 +218,37 @@ int fill_histos(const char* input_filename = "./output_main_bdt.root") {
   TLine *line22 = new TLine(900., 0., 900., 1500.); // vertical right
   line22 -> SetLineColor(42);
   line22 -> SetLineWidth(4);
-  
-  TCanvas* cv_M3pi = plot_kine_var(HistArray_m3pi, "hM3pi", "TISR3PI_SIG", "Invariant mass of M3pi", "M_{3#pi}", "[MeV/c^{2}]", 0., 1000.);
 
-  TPaveText* pt_cut = set_pt(0.1, 0.92, 0.9, 0.98);
-  pt_cut -> SetTextColor(42);
-  pt_cut -> AddText(Form("M^{BDT}_{3#pi}#in[%0.0f, %0.0f] MeV/c^{2}", 650., 900.));
-  pt_cut -> Draw("same");
-
-  TPaveText* pt_mgg1 = set_pt(0.2, 0.8, 0.3, 0.85);
-  pt_mgg1 -> AddText("Data");
-  pt_mgg1 -> Draw("same");
-
-  line11 -> Draw("Same");
-  line22 -> Draw("Same");
+  const int list_size = 1;
+  const TString ch_type[list_size] = {"TDATA"};
   
-  //cv_M3pi -> SetLogy(1);  // Turn off log scale
-  
-  //cv_M3pi -> Update();
-  //cv_M3pi -> Modified();
-  //cv_M3pi -> SaveAs("cv_M3pi.pdf");
+  //const TString ch_type[list_size] = {"TDATA",
+  //			     "TETAGAM",
+  //			     "TISR3PI_SIG"
+  //};
+
+  for (int i = 0; i < list_size; i++) {
+    TCanvas* cv_M3pi = plot_kine_var(HistArray_m3pi, hist_type, ch_type[i], cv_title, x_title, unit, xmin, xmax);
+
+    TPaveText* pt_cut = set_pt(0.1, 0.92, 0.9, 0.98);
+    pt_cut -> SetTextColor(42);
+    pt_cut -> AddText(Form(pt_cut_text, omega_mass[0], omega_mass[1]));
+    pt_cut -> Draw("same");
+    
+    TPaveText* pt_tmp = set_pt(0.2, 0.8, 0.3, 0.85);
+    pt_tmp -> AddText(ch_type[i]);
+    pt_tmp -> Draw("same");
+    
+    line11 -> Draw("Same");
+    line22 -> Draw("Same");
+    
+    cv_M3pi -> SetLogy(1);  // Turn off log scale
+    
+    cv_M3pi -> Update();
+    cv_M3pi -> Modified();
+    cv_M3pi -> SaveAs(hist_type + "_" + ch_type[i] + "_omega_mass_range.pdf");
+    
+  }
     
   return 0;
   
