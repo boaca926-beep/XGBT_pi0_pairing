@@ -3,7 +3,7 @@
 
 TCanvas *plot_corr(TObjArray* HList, const TString var_type, const TString mc_type, const TString select_type, const TString cv_title, const TString x_title, const TString x_unit, const double xmin, const double xmax, const TString y_title, const TString y_unit, const double ymin, const double ymax) {
 
-  TH2D *h2d = (TH2D *) HList -> FindObject(var_type + "_" + mc_type);
+  TH2D *h2d = (TH2D *) HList -> FindObject(var_type + select_type + mc_type);
   
   TH1D *h2d_projx = h2d -> ProjectionX();
   TH1D *h2d_projy = h2d -> ProjectionY();
@@ -21,7 +21,7 @@ TCanvas *plot_corr(TObjArray* HList, const TString var_type, const TString mc_ty
 
   h2d -> GetXaxis() -> SetNdivisions(5);
   h2d -> GetXaxis() -> SetTitle(x_title + " " + TString::Format("Events/%0.2f", binwidth_x) + " " + x_unit); //SetTitle(x_label + " " + x_unit);
-  h2d -> GetXaxis() -> SetTitleOffset(1.2);
+  h2d -> GetXaxis() -> SetTitleOffset(1.);
   h2d -> GetXaxis() -> SetTitleSize(0.06);
   h2d -> GetXaxis() -> CenterTitle();
   h2d -> GetXaxis() -> SetLabelSize(0.06);
@@ -130,7 +130,12 @@ int fill_histos2D(const char* input_filename = "./output_with_bdt.root") {
     line2 -> Draw("Same");
     
     gPad -> SetLogz(1);
-  
+
+    cv2d_corr_data -> Update();
+    cv2d_corr_data -> Modified();
+    cv2d_corr_data -> SaveAs("cv2d_corr_data_" + ch_type[i] + ".pdf");
+    cv2d_corr_data -> Close();
+    
   }
     
   
