@@ -28,8 +28,9 @@ def create_dataset(df, category): # For photon 4-momentum
     phys_region = (df['Br_betapi0'] < 1) & (df['Br_betapi0'] > 0) # Physical region
 
     #df = df[(df['Br_lagvalue_min_7C'] < 100) & (df['Br_betapi0'] < 1) & (df['Br_betapi0'] > 0)][br_nm]
-    df = df.copy() 
-    df = df[cut_region & phys_region][br_nm].copy()
+    # Apply filters and create a proper copy
+    df_filtered = df[cut_region & phys_region][br_nm].copy()
+    df = df_filtered  # Now df is a clean copy
 
     # Create all_df, pos_df, neg_df for signal and background events
     if len(br_nm): # Check para length and br_nm length are consistent
@@ -67,7 +68,7 @@ def create_dataset(df, category): # For photon 4-momentum
         elif category == 'background':
             print(f"Creating pho4mom_all_df for {category} {df.columns} ...")
 
-            all_df = df
+            all_df = df.copy()
 
             nb_all_df = [i for i in range(len(all_df))]  
             all_df.insert(0, 'event', nb_all_df)  # Add event column
@@ -94,7 +95,7 @@ def data_splitting(all_df):
     # First split: separate test set 20%
     all_df_trainval, all_df_test = train_test_split(
         all_df, test_size=0.2, random_state=42
-        
+
     )
 
     # Second split: separte validation from training (20% of total)
@@ -186,6 +187,12 @@ if __name__ == '__main__':
     for i, br_nm in enumerate(branches):
         # Remove ROOT cycle number (;1, ;2, etc.) for comparison
         base_br_nm = br_nm.split(';')[0]
+
+        # Skip if already processed (in case of multiple cycles)
+        if base_br_nm in phys_map:
+            print(f"Skippin duplicate: {br_nm} (already have {base_br_nm})")
+            continue
+
         #print(base_br_nm)
         if base_br_nm == "TISR3PI_SIG":
             br_title = rf"$e^{{+}}e^{{-}}\to\pi^{{+}}\pi^{{-}}\pi^{{0}}\gamma$"
@@ -223,7 +230,8 @@ if __name__ == '__main__':
         phys_map[base_br_nm] = {
             #'br_nm': base_br_nm,
             'br_title': br_title,
-            'category': category
+            'category': category,
+            'original_name': br_nm # Store original for reference
         }
 
 
@@ -373,7 +381,7 @@ if __name__ == '__main__':
             #print(betapi0_values.describe())
 
             # Data splitting
-            if len(all_df) < 10:
+            if len(all_df) < 100:
                 print("WARNING: Very few background events!")  
                 continue
 
@@ -413,6 +421,13 @@ if __name__ == '__main__':
     ## Combining dataset
     if df_list: # combining dataset
         print(f"Combining {len(df_list)} channels ...")
+
+        # Add channel prefix to event IDs to avoid collisions
+        for i, (df, (data_type, info)) in enumerate(zip(df_list, phys_map.items())):
+            if i < len(df_list): # Make sure we don't go out of bounds
+                channel_name = data_type.split(';')[0]
+                df['event'] = f"{channel_name}_" + df['event'].astype(str)
+                print(f"    Updated event IDs for {channel_name}")
 
         df_comb = pd.concat(df_list, ignore_index=True)
         print(f"Raw combined shape: {df_comb.shape}")
