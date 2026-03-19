@@ -1,6 +1,6 @@
 #include "helper.h"
-#include "helper_m3pi.h"
-//#include "helper_mgg.h"
+//#include "helper_m3pi.h"
+#include "helper_mgg.h"
 
 TLegend* set_legend(const double x1, const double x2, const double y1, const double y2){
 
@@ -77,15 +77,9 @@ TCanvas* plot_kine_var(TObjArray* HList, const TString var_type, const TString m
   cv -> SetLeftMargin(0.15);
   cv -> SetRightMargin(0.15);
 
-  // Create Legend
-  TLegend *legd_cv = set_legend(0.5, 0.7, 0.9, 0.9);
-
-  legd_cv -> AddEntry(h1d_kloe, "BDT Best #pi^{0}(#gamma#gamma) " + TString::Format("(%0.0f)", h1d_kloe -> GetEntries()), "lep");
-  legd_cv -> AddEntry(h1d_bdt, "BDT Selection " + TString::Format("(%0.0f)", h1d_bdt -> GetEntries()), "lep");
-  legd_cv -> AddEntry(h1d_bdt_good, "BDT Best #pi^{0}(#gamma#gamma) " + TString::Format("(%0.0f)", h1d_bdt_good -> GetEntries()), "lep");
-  legd_cv -> AddEntry(h1d_bdt_bad, "BDT Discarded " + TString::Format("(%0.0f)", h1d_bdt_bad -> GetEntries()), "lep");
+  TLegend *legd_cv = set_legend(0.5, 0.6, 0.9, 0.9);
   
- 
+  // Create Legend
   if (mc_type == "TDATA") {
     h1d_bdt -> Draw("E");
     h1d_kloe -> Draw("ESame");
@@ -109,8 +103,17 @@ TCanvas* plot_kine_var(TObjArray* HList, const TString var_type, const TString m
     
     h1d_bdt_good -> Draw("HistSame");
     h1d_bdt_bad -> Draw("HistSame");
-    
+
+    legd_cv -> AddEntry(h1d_kloe, "#chi^{2}_{m_{#gamma#gamma}} Selection " + TString::Format("(%0.0f)", h1d_kloe -> GetEntries()), "lep");
+    legd_cv -> AddEntry(h1d_kloe_good, "#chi^{2}_{m_{#gamma#gamma}} Best " + TString::Format("(%0.0f)", h1d_kloe_good -> GetEntries()), "f");
+    legd_cv -> AddEntry(h1d_kloe_bad, "#chi^{2}_{m_{#gamma#gamma}} Discarded " + TString::Format("(%0.0f)", h1d_kloe_bad -> GetEntries()), "f");
+  
   }
+
+  
+  legd_cv -> AddEntry(h1d_bdt, "BDT Selection " + TString::Format("(%0.0f)", h1d_bdt -> GetEntries()), "lep");
+  legd_cv -> AddEntry(h1d_bdt_good, "BDT Best #pi^{0}(#gamma#gamma) " + TString::Format("(%0.0f)", h1d_bdt_good -> GetEntries()), "lep");
+  legd_cv -> AddEntry(h1d_bdt_bad, "BDT Discarded " + TString::Format("(%0.0f)", h1d_bdt_bad -> GetEntries()), "lep");
   
   legtextsize(legd_cv, 0.03);
 
@@ -232,16 +235,14 @@ int fill_histos(const char* input_filename = "./output_with_bdt.root") {
   line22 -> SetLineColor(42);
   line22 -> SetLineWidth(4);
 
-  const int list_size = 1;
+  const int list_size = 3;
 
-  const TString ch_type[list_size] = {"TETAGAM"};
+  //const TString ch_type[list_size] = {"TETAGAM"};
 
-  /*
   const TString ch_type[list_size] = {"TDATA",
 				      "TETAGAM",
 				      "TISR3PI_SIG"
   };
-  */
   
   for (int i = 0; i < list_size; i++) {
     TCanvas* cv_M3pi = plot_kine_var(HistArray_m3pi, hist_type, ch_type[i], cv_title, x_title, unit, xmin, xmax);
