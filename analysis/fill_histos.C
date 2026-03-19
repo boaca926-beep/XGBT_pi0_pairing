@@ -78,34 +78,41 @@ TCanvas* plot_kine_var(TObjArray* HList, const TString var_type, const TString m
   cv -> SetRightMargin(0.15);
 
   // Create Legend
-  TLegend *legd_cv = set_legend(0.6, 0.7, 0.9, 0.9);
+  TLegend *legd_cv = set_legend(0.5, 0.7, 0.9, 0.9);
+
+  legd_cv -> AddEntry(h1d_kloe, "BDT Best #pi^{0}(#gamma#gamma) " + TString::Format("(%0.0f)", h1d_kloe -> GetEntries()), "lep");
+  legd_cv -> AddEntry(h1d_bdt, "BDT Selection " + TString::Format("(%0.0f)", h1d_bdt -> GetEntries()), "lep");
+  legd_cv -> AddEntry(h1d_bdt_good, "BDT Best #pi^{0}(#gamma#gamma) " + TString::Format("(%0.0f)", h1d_bdt_good -> GetEntries()), "lep");
+  legd_cv -> AddEntry(h1d_bdt_bad, "BDT Discarded " + TString::Format("(%0.0f)", h1d_bdt_bad -> GetEntries()), "lep");
   
+ 
   if (mc_type == "TDATA") {
     h1d_bdt -> Draw("E");
     h1d_kloe -> Draw("ESame");
     h1d_bdt_good -> Draw("ESame");
     h1d_bdt_bad -> Draw("ESame");
 
-    legd_cv -> AddEntry(h1d_kloe, "#chi^{2}_{m_{#gamma#gamma}} Selection", "lep");
-    legd_cv -> AddEntry(h1d_bdt, "BDT Selection", "lep");
-    legd_cv -> AddEntry(h1d_bdt_good, "BDT Best #pi^{0}(#gamma#gamma)", "lep");
-    legd_cv -> AddEntry(h1d_bdt_bad, "BDT Discarded", "lep");
-  
-  }
-  else{
-   h1d_bdt -> Draw("Hist");
-   h1d_kloe -> Draw("HistSame");
-   h1d_bdt_good -> Draw("HistSame");
-   h1d_bdt_bad -> Draw("HistSame");
+     }
+  else{// MC
+    TH1D *h1d_kloe_good = (TH1D *) HList -> FindObject(var_type + "_good_" + mc_type);
+    //format_h(h1d_kloe_good, 42, 2);
+    formatfill_h(h1d_kloe_good, 7, 3001);
 
-   legd_cv -> AddEntry(h1d_kloe, "#chi^{2}_{m_{#gamma#gamma}} Selection", "l");
-   legd_cv -> AddEntry(h1d_bdt, "BDT Selection", "l");
-   legd_cv -> AddEntry(h1d_bdt_good, "BDT best #pi^{0}(#gamma#gamma)", "l");
-   legd_cv -> AddEntry(h1d_bdt_bad, "BDT Discarded", "l");
-   
+    TH1D *h1d_kloe_bad = (TH1D *) HList -> FindObject(var_type + "_bad_" + mc_type);
+    //format_h(h1d_bdt_bad, kRed, 2);
+    formatfill_h(h1d_kloe_bad, kBlack, 3001);
+
+    h1d_bdt -> Draw("Hist");
+    h1d_kloe -> Draw("HistSame");
+    h1d_kloe_good -> Draw("HistSame");
+    h1d_kloe_bad -> Draw("HistSame");
+    
+    h1d_bdt_good -> Draw("HistSame");
+    h1d_bdt_bad -> Draw("HistSame");
+    
   }
   
-  legtextsize(legd_cv, 0.04);
+  legtextsize(legd_cv, 0.03);
 
   legd_cv -> Draw("Same");
   
@@ -185,6 +192,9 @@ int fill_histos(const char* input_filename = "./output_with_bdt.root") {
     for (int i = 0; i < 10; i ++) {
       // chi-2 selection
       TH1D* hm3pi = (TH1D*)file -> Get(hist_type + TString("_") + mc_names[i]);
+      TH1D* hm3pi_good = (TH1D*)file -> Get(hist_type + TString("_good_") + mc_names[i]);
+      TH1D* hm3pi_bad = (TH1D*)file -> Get(hist_type + TString("_bad_") + mc_names[i]);
+      
       //cout << hm3pi -> GetName() << endl;
 
       // bdt selection
@@ -201,6 +211,9 @@ int fill_histos(const char* input_filename = "./output_with_bdt.root") {
 
       // Inser to an array
       HistArray_m3pi -> Add(hm3pi);
+      HistArray_m3pi -> Add(hm3pi_good);
+      HistArray_m3pi -> Add(hm3pi_bad);
+      
       HistArray_m3pi -> Add(hm3pi_bdt);
       HistArray_m3pi -> Add(hm3pi_bdt_good);
       HistArray_m3pi -> Add(hm3pi_bdt_bad);
@@ -219,13 +232,17 @@ int fill_histos(const char* input_filename = "./output_with_bdt.root") {
   line22 -> SetLineColor(42);
   line22 -> SetLineWidth(4);
 
-  const int list_size = 3;
-  
+  const int list_size = 1;
+
+  const TString ch_type[list_size] = {"TETAGAM"};
+
+  /*
   const TString ch_type[list_size] = {"TDATA",
 				      "TETAGAM",
 				      "TISR3PI_SIG"
   };
-
+  */
+  
   for (int i = 0; i < list_size; i++) {
     TCanvas* cv_M3pi = plot_kine_var(HistArray_m3pi, hist_type, ch_type[i], cv_title, x_title, unit, xmin, xmax);
 
@@ -238,8 +255,8 @@ int fill_histos(const char* input_filename = "./output_with_bdt.root") {
     pt_tmp -> AddText(ch_type[i]);
     pt_tmp -> Draw("same");
     
-    line11 -> Draw("Same");
-    line22 -> Draw("Same");
+    //line11 -> Draw("Same");
+    //line22 -> Draw("Same");
     
     cv_M3pi -> SetLogy(1);  // Turn off log scale
     
