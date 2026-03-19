@@ -16,6 +16,7 @@ def baye_opti(X_train, y_train):
     search_spaces = {
         'n_estimators': Integer(100, 500),
         'max_depth': Integer(3, 10), 
+        #'nthread':
         'learning_rate': Real(0.01, 0.3, 'log-uniform'),
         'subsample': Real(0.6, 1.0),
         'colsample_bytree': Real(0.6, 1.0),

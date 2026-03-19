@@ -13,6 +13,10 @@ import xgboost as xgb # xgboost must be imported before ROOT to prevent a crash 
 import ROOT # This order is important!
 import json
 
+import multiprocessing
+import psutil
+import time
+
 # Define the patch function
 def patched_get_basescore(model):
     config_str = model.get_booster().save_config()
@@ -68,9 +72,28 @@ if __name__ == '__main__':
             print(f"Number of features in the training: {len(X_train.columns.tolist())}")
 
             params = baye_opti(X_train, y_train) # Find best model parameters
+            #params['nthread'] = -1 # Use all avaliable threads for faster training
             #params = set_model_params(X_train, y_train) # Initial model parameters
-            params['early_stopping_rounds'] = 50 # Add early stop parameter (avoid early stop for model version saved in ROOT)
-            #print("\nModel parameters:", params)
+            #params['early_stopping_rounds'] = 50 # Add early stop parameter (avoid early stop for model version saved in ROOT)
+            #print("\nModel parameters:", params)    # ✅ BEST: Simple but informative check
+
+            params.update({
+                'nthread': -1,
+                'tree_method': 'hist',        # Histogram-based algorithm (faster, more parallel)
+                'max_depth': 10,               # Adjust based on your data
+                'learning_rate': 0.1,
+                'subsample': 0.8,
+                'colsample_bytree': 0.8,
+                'early_stopping_rounds': 50
+            })
+    
+            print("\n" + "="*50)
+            print("THREAD CONFIGURATION CHECK")
+            print("="*50)
+            print(f"CPU cores available: {multiprocessing.cpu_count()}")
+            print(f"XGBoost nthread setting: {params.get('nthread')}")
+            print(f"XGBoost version: {xgb.__version__}")
+
 
             # CONVERT TO NUMPY ARRAYS (THIS IS THE KEY FIX!)
             # Define training columns (exclude target)
@@ -84,6 +107,12 @@ if __name__ == '__main__':
 
             # Create a model
             model = xgb.XGBClassifier(**params) 
+            print(f"Model will use: {model.get_params().get('nthread', 'default')} threads")
+    
+            # Quick CPU monitor during training (non-intrusive)
+            print("\nTraining started - monitoring CPU for 5 seconds...")
+            cpu_percents = []
+            start_time = time.time()
 
             # Fit with the model
             model.fit(X_train_np, y_train_np,
@@ -91,6 +120,13 @@ if __name__ == '__main__':
                     #verbose=False
                     verbose=50     
             )
+
+            # Add this after training to see CPU usage:
+            cpu_percent = psutil.cpu_percent(interval=1, percpu=True)
+            print(f"\nCPU usage per core during training: {cpu_percent}")
+            print(f"Average CPU usage: {sum(cpu_percent)/len(cpu_percent):.1f}%")
+            print(f"Peak threads used: {psutil.Process().num_threads()}")
+            print("="*50)
 
             # Save the model
             joblib.dump(model, f'{model_dir}/pi0_classifier_model_{br_type}.pkl')
