@@ -1,4 +1,4 @@
-const TString hist_type = "h2dM3pi_kloe_BDT_corr";
+const TString hist_type = "h2dM3pi_kloeBDT_corr";
 const TString cv_title = "M3pi kloe vs. bdt correlation";
 
 const TString x_title = "M_{3#pi} [MeV/c^{2}]";
