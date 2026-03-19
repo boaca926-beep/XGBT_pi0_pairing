@@ -21,7 +21,7 @@ python main_initialize_kloe.py \
   --output-dir ./dataset_large
 
 # Aggressive settings for 32GB+ RAM  
-python main_initialize_kloe.py \
+python main_initialize_kloe_chunk.py \
   --input ../data/kloe_sample_full.root \
   --chunk-size 50000 \
   --output-dir ./dataset_large
@@ -186,7 +186,7 @@ if __name__ == '__main__':
     # MODIFIED: Allow command line argument for input file
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input', type=str, default="../data/kloe_small_sample.root", 
+    parser.add_argument('--input', type=str, default="../data/kloe_sample_full.root", 
                        help='Input ROOT file path')
     parser.add_argument('--chunk-size', type=int, default=50000, 
                        help='Number of entries to process at once')
