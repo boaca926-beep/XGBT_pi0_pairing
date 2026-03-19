@@ -1,6 +1,79 @@
 #include "helper.h"
-//#include "helper_m3pi.h"
-#include "helper_mgg.h"
+#include "helper_m3pi.h"
+//#include "helper_mgg.h"
+
+double getbinwidth(TH1D* h) {
+  Int_t binsize=0;
+  double width=0.;
+  double xmax=0., xmin=0.;
+  xmax = h->GetXaxis()->GetXmax(); //cout<<xmax<<endl;
+  xmin = h->GetXaxis()->GetXmin(); //cout<<xmin<<endl;
+  binsize=h->GetNbinsX(); //cout<<"binsize = " << binsize << endl;
+  width=(xmax-xmin)/binsize; //cout<<width<<endl;
+
+  return width;
+}
+
+
+TCanvas *plot_corr(TH2D* h2d, const TString hist_type, const TString cv_nm, const TString pt_str) {
+
+  TH1D *h2d_projx = h2d -> ProjectionX();
+  TH1D *h2d_projy = h2d -> ProjectionY();
+  
+  double binwidth_x = getbinwidth(h2d_projx);
+  double binwidth_y = getbinwidth(h2d_projy);
+  
+  TCanvas * cv2d =  new TCanvas("cv2d_" + hist_type, cv_nm, 0, 0, 700, 700);
+
+  cv2d -> SetBottomMargin(0.15);//0.007
+  cv2d -> SetLeftMargin(0.15);
+  cv2d -> SetRightMargin(0.15);
+
+  //h2d -> SetMinimum(10);
+
+  h2d -> GetXaxis() -> SetNdivisions(5);
+  h2d -> GetXaxis() -> SetTitle("M^{KLOE}_{3#pi} " + TString::Format("Events/[%0.2f", binwidth_x) + " MeV/c^{2}]"); //SetTitle(x_label + " " + x_unit);
+  h2d -> GetXaxis() -> SetTitleOffset(1.2);
+  h2d -> GetXaxis() -> SetTitleSize(0.06);
+  h2d -> GetXaxis() -> CenterTitle();
+  h2d -> GetXaxis() -> SetLabelSize(0.06);
+  h2d -> GetXaxis() -> SetLabelOffset(0.01);
+  //h2d -> GetXaxis() -> SetRangeUser(0.2, 0.6);
+  
+  h2d -> GetYaxis() -> SetTitle("M^{BDT}_{3#gamma} " + TString::Format("Events/[%0.2f", binwidth_y) + " MeV/c^{2}]"); //SetTitle(x_label + " " + x_unit);
+  h2d -> GetYaxis() -> SetLabelOffset(0.01);
+  h2d -> GetYaxis() -> SetTitleOffset(1.2);
+  h2d -> GetYaxis() -> SetLabelSize(0.05);
+  h2d -> GetYaxis() -> SetTitleSize(0.06);
+  h2d -> GetYaxis() -> CenterTitle();
+
+  h2d -> Draw("COLZ");
+  //h2d -> Draw("TEXT0COLZ");
+
+  gPad->SetLogz(1);
+
+  //char display[50];
+
+  //sprintf(display, "#frac{N_{sig}}{N_{data}-N_{bkg}}");
+  
+  //TPaveText *pt = new TPaveText(pt1_x0, 0.8, pt1_x1, 0.85, "NDC");
+
+  //pt -> SetTextSize(0.08);
+  //pt -> SetFillColor(0);
+  //pt -> SetTextAlign(12);
+  
+  //pt -> AddText("Relative Error [%]");
+  //pt -> AddText(pt_str);
+  
+  //pt -> Draw("Same");
+  //line1 -> Draw("Same");
+  //line2 -> Draw("Same");
+
+  //h2d -> GetZaxis() -> SetLabelSize(0.045);
+  
+  return cv2d;
+  
+}
 
 TLegend* set_legend(const double x1, const double x2, const double y1, const double y2){
 
@@ -27,17 +100,6 @@ TPaveText* set_pt(const double x1, const double x2, const double y1, const doubl
   return pt;
 }
 
-double getbinwidth(TH1D* h) {
-  Int_t binsize=0;
-  double width=0.;
-  double xmax=0., xmin=0.;
-  xmax = h->GetXaxis()->GetXmax(); //cout<<xmax<<endl;
-  xmin = h->GetXaxis()->GetXmin(); //cout<<xmin<<endl;
-  binsize=h->GetNbinsX(); //cout<<"binsize = " << binsize << endl;
-  width=(xmax-xmin)/binsize; //cout<<width<<endl;
-
-  return width;
-}
 
 
 TCanvas* plot_kine_var(TObjArray* HList, const TString var_type, const TString mc_type, const TString cv_title, const TString x_title, const TString unit, const double xmin, const double xmax){
@@ -144,8 +206,8 @@ void check_trees(TFile* file) {
       classnm_tree = key -> GetClassName();
       key -> GetSeekKey();
 
-      //if (classnm_tree == "TH2D") { // list all TH2D
-      if (classnm_tree == "TH1D") { // list all TH1D
+      if (classnm_tree == "TH2D") { // list all TH2D
+      //if (classnm_tree == "TH1D") { // list all TH1D
 	cout << "classnm = " << classnm_tree << ", objnm = " << objnm_tree << endl;
       }
       
@@ -212,7 +274,7 @@ int fill_histos(const char* input_filename = "./output_with_bdt.root") {
       TH1D* hm3pi_bdt_bad = (TH1D*)file -> Get(hist_type + TString("_BDT_bad_") + mc_names[i]);
       //cout << hm3pi_bdt_bad -> GetName() << endl;
 
-      // Inser to an array
+      // Fill HistArray_m3pi
       HistArray_m3pi -> Add(hm3pi);
       HistArray_m3pi -> Add(hm3pi_good);
       HistArray_m3pi -> Add(hm3pi_bad);
@@ -221,6 +283,8 @@ int fill_histos(const char* input_filename = "./output_with_bdt.root") {
       HistArray_m3pi -> Add(hm3pi_bdt_good);
       HistArray_m3pi -> Add(hm3pi_bdt_bad);
 
+      // Fill
+      
     }
     
   }// end input checks
@@ -245,6 +309,7 @@ int fill_histos(const char* input_filename = "./output_with_bdt.root") {
   };
   
   for (int i = 0; i < list_size; i++) {
+    //
     TCanvas* cv_M3pi = plot_kine_var(HistArray_m3pi, hist_type, ch_type[i], cv_title, x_title, unit, xmin, xmax);
 
     TPaveText* pt_cut = set_pt(0.1, 0.92, 0.9, 0.98);
@@ -264,6 +329,9 @@ int fill_histos(const char* input_filename = "./output_with_bdt.root") {
     cv_M3pi -> Update();
     cv_M3pi -> Modified();
     cv_M3pi -> SaveAs(hist_type + "_" + ch_type[i] + "_full_mass_range.pdf");
+
+    //
+    //TCanvas* cv2d_corr = plot_corr("h2dM3pi_kloeBDT_corr_TDATA", "TDATA", "", "Data");
     
   }
     
