@@ -236,7 +236,8 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       TH1D* hM3pi_BDT_bad = new TH1D(Form("hM3pi_BDT_bad_%s", objnm_tree.Data()), "", 200, 400, 1000);
 
       // kloe & bdt correleation
-      TH2D* h2d_kloe_BDT_corr = new TH2D(Form("h2d_kloe_BDT_corr_%s", objnm_tree.Data()), "", 200, 400, 1000, 200, 400, 1000);
+      // h2dM3pi_kloeBDT_corr
+      TH2D* h2dM3pi_kloeBDT_corr = new TH2D(Form("h2dM3pi_kloeBDT_corr_%s", objnm_tree.Data()), "", 200, 400, 1000, 200, 400, 1000);
 
       // IM3pi rec. vs. true correlation
       TH2D* h2dIM3pi_kloe_BDT_corr = new TH2D(Form("h2dIM3pi_kloe_BDT_corr_%s", objnm_tree.Data()), "", 200, 400, 1000, 200, 400, 1000);
@@ -469,8 +470,8 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	//cout << out_event << endl;
 	outtree -> Fill();
 
-	h2d_kloe_BDT_corr -> Fill(m3pi, m3pi_bdt);
-	//h2d_kloe_BDT_corr -> Fill(m3pi, m3pi_bdt);
+	h2dM3pi_kloeBDT_corr -> Fill(m3pi, m3pi_bdt);
+	//h2dM3pi_kloeBDT_corr -> Fill(m3pi, m3pi_bdt);
 	
 
 	//if (m3pi_bdt > 800. || m3pi_bdt < 760.) continue;
@@ -582,7 +583,7 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       h2d_sfw_BDT_bad -> Write();
       h2d_sfw_good -> Write();
 
-      h2d_kloe_BDT_corr -> Write();
+      h2dM3pi_kloeBDT_corr -> Write();
       
       // Delete hist, canvases to avoid memory leak
       delete he1;
@@ -631,7 +632,7 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       delete h2d_sfw_BDT_bad;
       delete h2d_sfw_good;
 
-      delete h2d_kloe_BDT_corr;
+      delete h2dM3pi_kloeBDT_corr;
       
       ch_nb ++;
       //cout << ch_nb << endl;

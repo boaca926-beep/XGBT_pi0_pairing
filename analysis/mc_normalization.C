@@ -449,9 +449,9 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     check_trees(file);
     
     // TH2D
-    TH2D* h2d_kloe_BDT_corr_TDATA = (TH2D *) file -> Get("h2d_kloe_BDT_corr_TDATA");
-    TH2D* h2d_kloe_BDT_corr_TISR3PI_SIG = (TH2D *) file -> Get("h2d_kloe_BDT_corr_TISR3PI_SIG");
-    TH2D* h2d_kloe_BDT_corr_TETAGAM = (TH2D *) file -> Get("h2d_kloe_BDT_corr_TETAGAM");
+    TH2D* h2dM3pi_kloeBDT_corr_TDATA = (TH2D *) file -> Get("h2dM3pi_kloeBDT_corr_TDATA");
+    TH2D* h2dM3pi_kloeBDT_corr_TISR3PI_SIG = (TH2D *) file -> Get("h2dM3pi_kloeBDT_corr_TISR3PI_SIG");
+    TH2D* h2dM3pi_kloeBDT_corr_TETAGAM = (TH2D *) file -> Get("h2dM3pi_kloeBDT_corr_TETAGAM");
 
     /*
     TH2D *h2d_sfw_BDT_good_TDATA = (TH2D *) file -> Get("h2d_sfw_BDT_good_TDATA");
@@ -618,7 +618,7 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     TH1D* hM3pi_BDT_TBKGREST = (TH1D*)file -> Get("hM3pi_BDT_TBKGREST");
     format_h(hM3pi_BDT_TBKGREST, 42, 2);
     HM3pi -> Add(hM3pi_BDT_TBKGREST);
-    //cout << hM3pi_BDT_TBKGREST -> GetEntries() << endl;
+   //cout << hM3pi_BDT_TBKGREST -> GetEntries() << endl;
 
     // Check the current axis ranges
     cout << "X-axis range: " << hM3pi_BDT_TBKGREST->GetXaxis()->GetXmin() 
@@ -1183,9 +1183,9 @@ void mc_normalization(const char* input_filename = "./output_main_bdt.root") {
     //cout << "Tree has " << nentries << " entries" << endl;
 
     // Plot
-    //TCanvas* cv2d_corr_data = plot_corr(h2d_kloe_BDT_corr_TDATA, "TDATA", "", "Data");
-    //TCanvas* cv2d_corr_sig = plot_corr(h2d_kloe_BDT_corr_TISR3PI_SIG, "TISR3PI_SIG", "", "Signal");
-    //TCanvas* cv2d_corr_etagam = plot_corr(h2d_kloe_BDT_corr_TETAGAM, "TETAGAM", "", "#eta#gamma");
+    //TCanvas* cv2d_corr_data = plot_corr(h2dM3pi_kloeBDT_corr_TDATA, "TDATA", "", "Data");
+    //TCanvas* cv2d_corr_sig = plot_corr(h2dM3pi_kloeBDT_corr_TISR3PI_SIG, "TISR3PI_SIG", "", "Signal");
+    //TCanvas* cv2d_corr_etagam = plot_corr(h2dM3pi_kloeBDT_corr_TETAGAM, "TETAGAM", "", "#eta#gamma");
 
     
     //TCanvas *cv_signal = plot_sfw("TISR3PI_SIG", "Singal", h2d_sfw_BDT_good_TISR3PI_SIG, "Singal");
