@@ -238,6 +238,7 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
       // kloe & bdt correleation
       // h2dM3pi_kloeBDT_corr
       TH2D* h2dM3pi_kloeBDT_corr = new TH2D(Form("h2dM3pi_kloeBDT_corr_%s", objnm_tree.Data()), "", 200, 400, 1000, 200, 400, 1000);
+      TH2D* h2dM3pi_kloeBDT_corr_good = new TH2D(Form("h2dM3pi_kloeBDT_corr_good_%s", objnm_tree.Data()), "", 200, 400, 1000, 200, 400, 1000);
 
       // IM3pi rec. vs. true correlation
       TH2D* h2dIM3pi_kloe_BDT_corr = new TH2D(Form("h2dIM3pi_kloe_BDT_corr_%s", objnm_tree.Data()), "", 200, 400, 1000, 200, 400, 1000);
@@ -517,6 +518,8 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	  hM3pi_BDT_good -> Fill(m3pi_bdt);
 	  h2d_sfw_BDT_good -> Fill(ppIM, e3_bdt);
 	  h2d_sfw_good -> Fill(ppIM, photons[2][0]);
+
+	  //h2dM3pi_kloeBDT_corr_good -> Fill(m3pi, m3pi_bdt);
 	
 	  //cout << m_gg_bdt << endl;
 	  //cout << ppIM << ", " << e3_bdt << endl;

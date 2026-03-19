@@ -219,15 +219,8 @@ int fill_histos(const char* input_filename = "./output_with_bdt.root") {
   line22 -> SetLineColor(42);
   line22 -> SetLineWidth(4);
 
-  const int list_size = 3;
-
   //const TString ch_type[list_size] = {"TETAGAM"};
 
-  const TString ch_type[list_size] = {"TDATA",
-				      "TETAGAM",
-				      "TISR3PI_SIG"
-  };
-  
   for (int i = 0; i < list_size; i++) {
     //
     TCanvas* cv_M3pi = plot_kine_var(HistArray_m3pi, hist_type, ch_type[i], cv_title, x_title, unit, xmin, xmax);
