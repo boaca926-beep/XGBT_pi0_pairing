@@ -15,7 +15,7 @@ import gc  # ADDED: for garbage collection
 
 """
 # Conservative settings for 16GB RAM
-python main_initialize_kloe.py \
+python main_initialize_kloe_chunk.py \
   --input ../data/kloe_sample_full.root \
   --chunk-size 10000 \
   --output-dir ./dataset_large
@@ -186,12 +186,14 @@ if __name__ == '__main__':
     # MODIFIED: Allow command line argument for input file
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input', type=str, default="../data/kloe_sample_full.root", 
+    parser.add_argument('--input', type=str, default="../data/kloe_sample.root", 
                        help='Input ROOT file path')
     parser.add_argument('--chunk-size', type=int, default=50000, 
                        help='Number of entries to process at once')
     parser.add_argument('--max-events', type=int, default=None,
                        help='Maximum number of events to process (for testing)')
+    parser.add_argument('--output-dir', type=str, default='./dataset_large',
+                   help='Output directory for dataset files')
     args = parser.parse_args()
     
     f_nm = args.input
