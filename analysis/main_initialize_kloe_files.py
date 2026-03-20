@@ -406,6 +406,8 @@ if __name__ == '__main__':
                 # Create pi0 pairs after splitting (original behavior)
                 all_df_train, all_df_val, all_df_test, X_train, y_train, X_val, y_val, X_test, y_test, pair_train, pair_val, pair_test = data_splitting(all_df)
                 
+                joblib.dump(all_df, f'{data_dir}/all_df_{data_nm}.pkl', compress=3)
+                
                 # Add to combined list
                 df_list.append(all_df)
    
@@ -498,7 +500,6 @@ if __name__ == '__main__':
         # Combine full datasets
         df_comb = pd.concat(df_list, ignore_index=True)
         print(f"Raw combined shape: {df_comb.shape}")
-
         # Shuffle
         df_comb = df_comb.sample(frac=1, random_state=42).reset_index(drop=True)
         print(f"Shuffled combined shape: {df_comb.shape}")
