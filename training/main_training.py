@@ -48,11 +48,11 @@ if __name__ == '__main__':
     model_dir = "./models" 
     os.makedirs(model_dir, exist_ok=True)
 
-    input_data_dir = os.path.join(project_root, f'analysis/dataset')
+    input_data_dir = os.path.join(project_root, f'analysis/dataset_large')
     phys_map = joblib.load(os.path.join(input_data_dir, f'phys_map.pkl'))
     print(phys_map)
 
-    br_type = 'TCOMB' #'TETAGAM', TISR3PI_SIG', 'TCOMB'
+    br_type = 'TISR3PI_SIG' #'TETAGAM', TISR3PI_SIG', 'TCOMB'
     info = phys_map[br_type]
     info_title = info['br_title']
     info_category = info['category']
