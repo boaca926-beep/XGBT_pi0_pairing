@@ -400,36 +400,36 @@ if __name__ == '__main__':
                 
                 # Data splitting
                 if len(all_df) < 100:
-                    print("WARNING: Very few events!")  
+                    print(f"WARNING: Very few events! Entries {len(all_df)}")  
                     continue
                 
                 # Create pi0 pairs after splitting (original behavior)
                 all_df_train, all_df_val, all_df_test, X_train, y_train, X_val, y_val, X_test, y_test, pair_train, pair_val, pair_test = data_splitting(all_df)
                 
                 joblib.dump(all_df, f'{data_dir}/all_df_{data_nm}.pkl', compress=3)
-                
+
                 # Add to combined list
                 df_list.append(all_df)
    
                 # NEW: Save each split immediately and free memory
                 print(f"\nSaving splits for {data_nm} to disk...")
                 
-                # Save training split
+                # Save all_df split
                 train_file = f'{data_dir}/all_df_train_{data_nm}.pkl'
                 joblib.dump(all_df_train, train_file, compress=3)
                 train_files.append(train_file)
                 
-                # Save validation split
+                # Save all_df validation split
                 val_file = f'{data_dir}/all_df_val_{data_nm}.pkl'
                 joblib.dump(all_df_val, val_file, compress=3)
                 val_files.append(val_file)
                 
-                # Save test split
+                # Save all_df test split
                 test_file = f'{data_dir}/all_df_test_{data_nm}.pkl'
                 joblib.dump(all_df_test, test_file, compress=3)
                 test_files.append(test_file)
                 
-                # Save pairs and features
+                # Save pairs (features): train, validation and test
                 if len(pair_train) > 0:
                     pair_train_file = f'{data_dir}/pair_train_{data_nm}.pkl'
                     joblib.dump(pair_train, pair_train_file, compress=3)
@@ -445,7 +445,7 @@ if __name__ == '__main__':
                     joblib.dump(pair_test, pair_test_file, compress=3)
                     pair_test_files.append(pair_test_file)
                 
-                # Save features and labels
+                # Save features and labels: train, validation and test
                 if len(X_train) > 0:
                     X_train_file = f'{data_dir}/X_train_{data_nm}.pkl'
                     joblib.dump(X_train, X_train_file, compress=3)
