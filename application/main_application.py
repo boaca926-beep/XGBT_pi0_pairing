@@ -29,20 +29,20 @@ def load_data_model(data_type):
     model = joblib.load(os.path.join(input_model_dir, f'pi0_classifier_model_{data_type}.pkl'))
     
     return all_df, all_df_test, model, X_test, y_test
-    
+
+r'''
 def event_wise_prediction(all_df_test, X_test, y_test_pair, model, threshold=0.5):
-    '''
-    Convert pair-wise predictions to event-wise decisions
+    
+    #Convert pair-wise predictions to event-wise decisions
 
-    Parameters:
-    - all_df_test: Dataframe with event information (contains 'event' columns)
-    - X_test: Feature matrix for pairs
-    - y_test_pair: True labels for pairs (1 for pi0, 0 for not pi0)
-    - threshold: Probability threshold for pair classification
+    #Parameters:
+    #- all_df_test: Dataframe with event information (contains 'event' columns)
+    #- X_test: Feature matrix for pairs
+    #- y_test_pair: True labels for pairs (1 for pi0, 0 for not pi0)
+    #- threshold: Probability threshold for pair classification
 
-    Returns:
-    - event_results: DataFrame with event-wise predictions and truths
-    '''
+    #Returns:
+    #- event_results: DataFrame with event-wise predictions and truths
 
     # Debug: Print shapes to identify the issue
     print(f"Debug - all_df_test shape: {all_df_test.shape}")
@@ -150,6 +150,7 @@ def event_wise_prediction(all_df_test, X_test, y_test_pair, model, threshold=0.5
         })
 
     return pd.DataFrame(event_results)
+'''
 
 def plot_event_confusion_matrix():
     """
@@ -172,15 +173,21 @@ if __name__ == '__main__':
     input_data_dir = os.path.join(project_root, f'analysis/dataset')
     input_model_dir = os.path.join(project_root, f'training/models')
 
-    category_type = 'TETAGAM' #'TCOMB' #'TETAGAM', 'TISR3PI_SIG', 'TKSL'
+    category_type = 'TCOMB' #'TCOMB' #'TETAGAM', 'TISR3PI_SIG', 'TKSL'
 
     phys_map = joblib.load(os.path.join(input_data_dir, f'phys_map.pkl'))
     print(phys_map)
     
 
     # Create output folder
-    plot_dir = rf'./plots'
-    os.makedirs(plot_dir , exist_ok=True)
+    plot_dir = os.path.join(project_root, 'application/plots')
+
+    # With this (always fresh) plot_dir
+    import shutil
+    if os.path.exists(plot_dir):
+        shutil.rmtree(plot_dir)
+    os.makedirs(plot_dir, exist_ok=True)
+
     
     for data_type, info in phys_map.items():
         br_title = info['br_title']
@@ -200,9 +207,9 @@ if __name__ == '__main__':
             ## Plot confusion matrix (event-basis)
             
             # Get event-wise prediction
-            event_results = event_wise_prediction(
-                all_df_test, X_test, y_test, model, threshold=0.5
-            )
+            #event_results = event_wise_prediction(
+            #    all_df_test, X_test, y_test, model, threshold=0.5
+            #)
 
             '''
             all_df_test contains the event column that links pairs to events
@@ -221,21 +228,21 @@ if __name__ == '__main__':
 
             
             ## Plot confusion matrix (photon features)
-            #fig_cm = plot_nm(X_test, y_test, model, br_title)
-            #fig_cm.savefig(f'./{plot_dir}/cm_{data_type}.png', dpi=300, bbox_inches='tight')
-            #plt.close(fig_cm)
+            fig_cm = plot_nm(X_test, y_test, model, br_title)
+            fig_cm.savefig(f'{plot_dir}/cm_{data_type}.png', dpi=300, bbox_inches='tight')
+            plt.close(fig_cm)
 
             ## Accuracy metrics, event basis
-            #score_list, var_list, var_str = event_performance(all_df, model)
+            score_list, var_list, var_str = event_performance(all_df, model)
 
-            #fig_var_score = plot_var_score(var_list, score_list, var_str, f"Mass and Score (test, {br_title})")
-            #fig_var_score.savefig(f'./{plot_dir}/pi0_mass_score_{data_type}.png', dpi=300, bbox_inches='tight')
-            #plt.close(fig_var_score)
+            fig_var_score = plot_var_score(var_list, score_list, var_str, f"Mass and Score (test, {br_title})")
+            fig_var_score.savefig(f'{plot_dir}/pi0_mass_score_{data_type}.png', dpi=300, bbox_inches='tight')
+            plt.close(fig_var_score)
 
             ## ROC plot
-            #fig_roc = plot_roc(score_list, rf'ROC Curve - $\pi^{0}$ Classifier (test, {br_title})')
-            #fig_roc.savefig(f'./{plot_dir}/roc_curv_{data_type}.png', dpi=300, bbox_inches='tight')
-            #plt.close(fig_roc)
+            fig_roc = plot_roc(score_list, rf'ROC Curve - $\pi^{0}$ Classifier (test, {br_title})')
+            fig_roc.savefig(f'{plot_dir}/roc_curv_{data_type}.png', dpi=300, bbox_inches='tight')
+            plt.close(fig_roc)
 
             ## Plot kine. var after the pi0 identification
         
