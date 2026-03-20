@@ -15,16 +15,18 @@ import gc  # ADDED: for garbage collection
 
 """
 # Conservative settings for 16GB RAM
-python main_initialize_kloe_chunk.py \
+python main_initialize_kloe_files.py \
   --input ../data/kloe_sample_full.root \
   --chunk-size 10000 \
   --output-dir ./dataset_large
 
 # Aggressive settings for 32GB+ RAM  
-python main_initialize_kloe_chunk.py \
+python main_initialize_kloe_files.py \
   --input ../data/kloe_sample_full.root \
   --chunk-size 50000 \
   --output-dir ./dataset_large
+
+python main_initialize_kloe_files.py --input ../data/kloe_sample_full.root --output-dir ./dataset_large --clear
 """
 
 
@@ -194,6 +196,8 @@ if __name__ == '__main__':
                        help='Maximum number of events to process (for testing)')
     parser.add_argument('--output-dir', type=str, default='./dataset_large',
                    help='Output directory for dataset files')
+    #parser.add_argument('--clear', action='store_true', 
+    #               help='Clear output directory before processing')
     args = parser.parse_args()
     
     f_nm = args.input
@@ -203,11 +207,15 @@ if __name__ == '__main__':
     plot_dir = rf'./plots'
 
     data_dir = args.output_dir
+    # Create fresh directory
     os.makedirs(data_dir, exist_ok=True)
     os.makedirs(plot_dir, exist_ok=True)
-        
-    os.makedirs(data_dir , exist_ok=True)
-    os.makedirs(plot_dir , exist_ok=True)
+
+    # With this (always fresh):
+    import shutil
+    if os.path.exists(data_dir):
+        shutil.rmtree(data_dir)
+    os.makedirs(data_dir, exist_ok=True)
 
     ## Loop over branches and create phys_map dynamically
     try:
@@ -276,7 +284,20 @@ if __name__ == '__main__':
     #============================================================
     # CREATE DATASET - MODIFIED to handle large files with chunking
     #============================================================
-    df_list = [] # List for storing all dataset for combining
+    df_list = []        # List for storing all dataset for combining
+    
+    train_files = []  # Store filenames instead of dataframes
+    val_files = []
+    test_files = []
+    pair_train_files = []
+    pair_val_files = []
+    pair_test_files = []
+    X_train_files = []
+    y_train_files = []
+    X_val_files = []
+    y_val_files = []
+    X_test_files = []
+    y_test_files = []
 
     ch_indx = 0
     for data_type, info in phys_map.items():
@@ -382,44 +403,78 @@ if __name__ == '__main__':
                     print("WARNING: Very few events!")  
                     continue
                 
-                # MODIFIED: Create pi0 pairs after splitting (original behavior)
+                # Create pi0 pairs after splitting (original behavior)
                 all_df_train, all_df_val, all_df_test, X_train, y_train, X_val, y_val, X_test, y_test, pair_train, pair_val, pair_test = data_splitting(all_df)
-                
-                # Save files with compression
-                print(f"\nSaving files for {data_nm}...")
-                
-                joblib.dump(all_df, f'{data_dir}/all_df_{data_nm}.pkl', compress=3)
-                
-                if len(all_df_train) > 0:
-                    joblib.dump(all_df_train, f'{data_dir}/all_df_train_{data_nm}.pkl', compress=3)
-                if len(all_df_val) > 0:
-                    joblib.dump(all_df_val, f'{data_dir}/all_df_val_{data_nm}.pkl', compress=3)
-                if len(all_df_test) > 0:
-                    joblib.dump(all_df_test, f'{data_dir}/all_df_test_{data_nm}.pkl', compress=3)
-                
-                if len(pair_train) > 0:
-                    joblib.dump(pair_train, f'{data_dir}/pair_train_{data_nm}.pkl', compress=3)
-                if len(pair_val) > 0:
-                    joblib.dump(pair_val, f'{data_dir}/pair_val_{data_nm}.pkl', compress=3)
-                if len(pair_test) > 0:
-                    joblib.dump(pair_test, f'{data_dir}/pair_test_{data_nm}.pkl', compress=3)
-                
-                if len(X_train) > 0:
-                    joblib.dump(X_train, f'{data_dir}/X_train_{data_nm}.pkl', compress=3)
-                if len(X_val) > 0:
-                    joblib.dump(X_val, f'{data_dir}/X_val_{data_nm}.pkl', compress=3)
-                if len(X_test) > 0:
-                    joblib.dump(X_test, f'{data_dir}/X_test_{data_nm}.pkl', compress=3)
-                
-                if len(y_train) > 0:
-                    joblib.dump(y_train, f'{data_dir}/y_train_{data_nm}.pkl', compress=3)
-                if len(y_val) > 0:
-                    joblib.dump(y_val, f'{data_dir}/y_val_{data_nm}.pkl', compress=3)
-                if len(y_test) > 0:
-                    joblib.dump(y_test, f'{data_dir}/y_test_{data_nm}.pkl', compress=3)
                 
                 # Add to combined list
                 df_list.append(all_df)
+   
+                # NEW: Save each split immediately and free memory
+                print(f"\nSaving splits for {data_nm} to disk...")
+                
+                # Save training split
+                train_file = f'{data_dir}/all_df_train_{data_nm}.pkl'
+                joblib.dump(all_df_train, train_file, compress=3)
+                train_files.append(train_file)
+                
+                # Save validation split
+                val_file = f'{data_dir}/all_df_val_{data_nm}.pkl'
+                joblib.dump(all_df_val, val_file, compress=3)
+                val_files.append(val_file)
+                
+                # Save test split
+                test_file = f'{data_dir}/all_df_test_{data_nm}.pkl'
+                joblib.dump(all_df_test, test_file, compress=3)
+                test_files.append(test_file)
+                
+                # Save pairs and features
+                if len(pair_train) > 0:
+                    pair_train_file = f'{data_dir}/pair_train_{data_nm}.pkl'
+                    joblib.dump(pair_train, pair_train_file, compress=3)
+                    pair_train_files.append(pair_train_file)
+                
+                if len(pair_val) > 0:
+                    pair_val_file = f'{data_dir}/pair_val_{data_nm}.pkl'
+                    joblib.dump(pair_val, pair_val_file, compress=3)
+                    pair_val_files.append(pair_val_file)
+                
+                if len(pair_test) > 0:
+                    pair_test_file = f'{data_dir}/pair_test_{data_nm}.pkl'
+                    joblib.dump(pair_test, pair_test_file, compress=3)
+                    pair_test_files.append(pair_test_file)
+                
+                # Save features and labels
+                if len(X_train) > 0:
+                    X_train_file = f'{data_dir}/X_train_{data_nm}.pkl'
+                    joblib.dump(X_train, X_train_file, compress=3)
+                    X_train_files.append(X_train_file)
+                    y_train_file = f'{data_dir}/y_train_{data_nm}.pkl'
+                    joblib.dump(y_train, y_train_file, compress=3)
+                    y_train_files.append(y_train_file)
+                
+                if len(X_val) > 0:
+                    X_val_file = f'{data_dir}/X_val_{data_nm}.pkl'
+                    joblib.dump(X_val, X_val_file, compress=3)
+                    X_val_files.append(X_val_file)
+                    y_val_file = f'{data_dir}/y_val_{data_nm}.pkl'
+                    joblib.dump(y_val, y_val_file, compress=3)
+                    y_val_files.append(y_val_file)
+                
+                if len(X_test) > 0:
+                    X_test_file = f'{data_dir}/X_test_{data_nm}.pkl'
+                    joblib.dump(X_test, X_test_file, compress=3)
+                    X_test_files.append(X_test_file)
+                    y_test_file = f'{data_dir}/y_test_{data_nm}.pkl'
+                    joblib.dump(y_test, y_test_file, compress=3)
+                    y_test_files.append(y_test_file)
+                
+                
+                # Clear memory immediately
+                del all_df_train, all_df_val, all_df_test
+                del X_train, y_train, X_val, y_val, X_test, y_test
+                del pair_train, pair_val, pair_test
+                gc.collect()
+                
             else:
                 print(f"No valid events for {data_type}")
   
@@ -440,6 +495,7 @@ if __name__ == '__main__':
             df['event'] = f"{channel_name}_" + df['event'].astype(str)
             print(f"    Updated event IDs for {channel_name}")
 
+        # Combine full datasets
         df_comb = pd.concat(df_list, ignore_index=True)
         print(f"Raw combined shape: {df_comb.shape}")
 
@@ -447,49 +503,122 @@ if __name__ == '__main__':
         df_comb = df_comb.sample(frac=1, random_state=42).reset_index(drop=True)
         print(f"Shuffled combined shape: {df_comb.shape}")
 
-        # Create datasets
-        all_df_comb = df_comb
-        print("Creating pairs for combined dataset...")
-        pi0_all_df_comb = prepare_3photon_paris(all_df_comb)
+    
+        # Create combined pairs
+        print("\nCreating pairs for combined dataset...")
+        pi0_all_df_comb = prepare_3photon_paris(df_comb)
 
         # Split
-        all_df_train_comb, all_df_val_comb, all_df_test_comb, X_train_comb, y_train_comb, X_val_comb, y_val_comb, X_test_comb, y_test_comb, pair_train_comb, pair_val_comb, pair_test_comb = data_splitting(all_df_comb)
+        #all_df_train_comb, all_df_val_comb, all_df_test_comb, X_train_comb, y_train_comb, X_val_comb, y_val_comb, X_test_comb, y_test_comb, pair_train_comb, pair_val_comb, pair_test_comb = data_splitting(all_df_comb)
 
-        # Save combined files with compression
+        print(f"\n✅ Data ready for training:")
+    
+        # Save full combined
+        joblib.dump(df_comb, f'{data_dir}/all_df_TCOMB.pkl', compress=3)
+        joblib.dump(pi0_all_df_comb, f'{data_dir}/pi0_all_df_TCOMB.pkl', compress=3)
         print("\nSaving combined files...")
         
-        joblib.dump(all_df_comb, f'{data_dir}/all_df_TCOMB.pkl', compress=3)
-        joblib.dump(pi0_all_df_comb, f'{data_dir}/pi0_all_df_TCOMB.pkl', compress=3)
-
-        if len(all_df_train_comb) > 0:
+        # NEW: Combine splits from disk
+        print(f"\n{'='*60}")
+        print(f"Combining splits from all channels...")
+        print(f"{'='*60}")
+    
+        # Combine training splits
+        if train_files:
+            print(f"\nCombining {len(train_files)} training splits...")
+            all_df_train_comb = []
+            for train_file in train_files:
+                all_df_train_comb.append(joblib.load(train_file))
+            
+            all_df_train_comb = pd.concat(all_df_train_comb, ignore_index=True)
+            all_df_train_comb = all_df_train_comb.sample(frac=1, random_state=42).reset_index(drop=True)
             joblib.dump(all_df_train_comb, f'{data_dir}/all_df_train_TCOMB.pkl', compress=3)
-        if len(all_df_val_comb) > 0:
-            joblib.dump(all_df_val_comb, f'{data_dir}/all_df_val_TCOMB.pkl', compress=3)
-        if len(all_df_test_comb) > 0:
-            joblib.dump(all_df_test_comb, f'{data_dir}/all_df_test_TCOMB.pkl', compress=3)
-
-        if len(pair_train_comb) > 0:
-            joblib.dump(pair_train_comb, f'{data_dir}/pair_train_TCOMB.pkl', compress=3)
-        if len(pair_val_comb) > 0:
-            joblib.dump(pair_val_comb, f'{data_dir}/pair_val_TCOMB.pkl', compress=3)
-        if len(pair_test_comb) > 0:
-            joblib.dump(pair_test_comb, f'{data_dir}/pair_test_TCOMB.pkl', compress=3)
-
-        if len(X_train_comb) > 0:
-            joblib.dump(X_train_comb, f'{data_dir}/X_train_TCOMB.pkl', compress=3)
-        if len(X_val_comb) > 0:
-            joblib.dump(X_val_comb, f'{data_dir}/X_val_TCOMB.pkl', compress=3)
-        if len(X_test_comb) > 0:
-            joblib.dump(X_test_comb, f'{data_dir}/X_test_TCOMB.pkl', compress=3)
-
-        if len(y_train_comb) > 0:
-            joblib.dump(y_train_comb, f'{data_dir}/y_train_TCOMB.pkl', compress=3)
-        if len(y_val_comb) > 0:
-            joblib.dump(y_val_comb, f'{data_dir}/y_val_TCOMB.pkl', compress=3)
-        if len(y_test_comb) > 0:
-            joblib.dump(y_test_comb, f'{data_dir}/y_test_TCOMB.pkl', compress=3)
+            print(f"  Training events: {len(all_df_train_comb)}")
+            del all_df_train_comb
+            gc.collect()
         
-        print(f"Combined data contains: {[k for k in phys_map.keys()]}")
+        # Combine validation splits
+        if val_files:
+            print(f"\nCombining {len(val_files)} validation splits...")
+            all_df_val_comb = []
+            for val_file in val_files:
+                all_df_val_comb.append(joblib.load(val_file))
+            
+            all_df_val_comb = pd.concat(all_df_val_comb, ignore_index=True)
+            all_df_val_comb = all_df_val_comb.sample(frac=1, random_state=42).reset_index(drop=True)
+            joblib.dump(all_df_val_comb, f'{data_dir}/all_df_val_TCOMB.pkl', compress=3)
+            print(f"  Validation events: {len(all_df_val_comb)}")
+            del all_df_val_comb
+            gc.collect()
+        
+        # Combine test splits
+        if test_files:
+            print(f"\nCombining {len(test_files)} test splits...")
+            all_df_test_comb = []
+            for test_file in test_files:
+                all_df_test_comb.append(joblib.load(test_file))
+            
+            all_df_test_comb = pd.concat(all_df_test_comb, ignore_index=True)
+            all_df_test_comb = all_df_test_comb.sample(frac=1, random_state=42).reset_index(drop=True)
+            joblib.dump(all_df_test_comb, f'{data_dir}/all_df_test_TCOMB.pkl', compress=3)
+            print(f"  Test events: {len(all_df_test_comb)}")
+            del all_df_test_comb
+            gc.collect()
+        
+        # Combine pairs
+        print("\nCombining pairs...")
+        if pair_train_files:
+            pair_train_comb = pd.concat([joblib.load(f) for f in pair_train_files], ignore_index=True)
+            joblib.dump(pair_train_comb, f'{data_dir}/pair_train_TCOMB.pkl', compress=3)
+            print(f"  Training pairs: {len(pair_train_comb)}")
+            del pair_train_comb
+            gc.collect()
+        
+        if pair_val_files:
+            pair_val_comb = pd.concat([joblib.load(f) for f in pair_val_files], ignore_index=True)
+            joblib.dump(pair_val_comb, f'{data_dir}/pair_val_TCOMB.pkl', compress=3)
+            print(f"  Validation pairs: {len(pair_val_comb)}")
+            del pair_val_comb
+            gc.collect()
+        
+        if pair_test_files:
+            pair_test_comb = pd.concat([joblib.load(f) for f in pair_test_files], ignore_index=True)
+            joblib.dump(pair_test_comb, f'{data_dir}/pair_test_TCOMB.pkl', compress=3)
+            print(f"  Test pairs: {len(pair_test_comb)}")
+            del pair_test_comb
+            gc.collect()
+
+        # Combine features and labels
+        print("\nCombining features and labels...")
+        if X_train_files and y_train_files:
+            X_train_comb = pd.concat([joblib.load(f) for f in X_train_files], ignore_index=True)
+            y_train_comb = pd.concat([joblib.load(f) for f in y_train_files], ignore_index=True)
+            joblib.dump(X_train_comb, f'{data_dir}/X_train_TCOMB.pkl', compress=3)
+            joblib.dump(y_train_comb, f'{data_dir}/y_train_TCOMB.pkl', compress=3)
+            print(f"  X_train shape: {X_train_comb.shape}")
+            del X_train_comb, y_train_comb
+            gc.collect()
+        
+        if X_val_files and y_val_files:
+            X_val_comb = pd.concat([joblib.load(f) for f in X_val_files], ignore_index=True)
+            y_val_comb = pd.concat([joblib.load(f) for f in y_val_files], ignore_index=True)
+            joblib.dump(X_val_comb, f'{data_dir}/X_val_TCOMB.pkl', compress=3)
+            joblib.dump(y_val_comb, f'{data_dir}/y_val_TCOMB.pkl', compress=3)
+            print(f"  X_val shape: {X_val_comb.shape}")
+            del X_val_comb, y_val_comb
+            gc.collect()
+        
+        if X_test_files and y_test_files:
+            X_test_comb = pd.concat([joblib.load(f) for f in X_test_files], ignore_index=True)
+            y_test_comb = pd.concat([joblib.load(f) for f in y_test_files], ignore_index=True)
+            joblib.dump(X_test_comb, f'{data_dir}/X_test_TCOMB.pkl', compress=3)
+            joblib.dump(y_test_comb, f'{data_dir}/y_test_TCOMB.pkl', compress=3)
+            print(f"  X_test shape: {X_test_comb.shape}")
+            del X_test_comb, y_test_comb
+            gc.collect()
+
+        print(f"\nCombined data contains: {[k for k in phys_map.keys()]}")
+        
         
         # Add TCOMB to phys_map
         phys_map['TCOMB'] = {
