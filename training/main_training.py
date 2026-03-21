@@ -16,6 +16,7 @@ import json
 import multiprocessing
 import psutil
 import time
+import gc
 
 # Define the patch function
 def patched_get_basescore(model):
@@ -46,6 +47,12 @@ if __name__ == '__main__':
     print(f"Train individual signal physical channels ...")
     # Create ooutput directory
     model_dir = "./models" 
+
+    # With this (always fresh):
+    import shutil
+    if os.path.exists(model_dir):
+        shutil.rmtree(model_dir)
+
     os.makedirs(model_dir, exist_ok=True)
 
     input_data_dir = os.path.join(project_root, f'analysis/dataset_large')
@@ -71,21 +78,29 @@ if __name__ == '__main__':
             print(f"X_train columns: {X_train.columns}")
             print(f"Number of features in the training: {len(X_train.columns.tolist())}")
 
-            params = baye_opti(X_train, y_train) # Find best model parameters
+            optimized_params = baye_opti(X_train, y_train) # Find best model parameters
             #params['nthread'] = -1 # Use all avaliable threads for faster training
             #params = set_model_params(X_train, y_train) # Initial model parameters
             #params['early_stopping_rounds'] = 50 # Add early stop parameter (avoid early stop for model version saved in ROOT)
             #print("\nModel parameters:", params)    # ✅ BEST: Simple but informative check
 
-            params.update({
-                'nthread': -1,
-                'tree_method': 'hist',        # Histogram-based algorithm (faster, more parallel)
-                'max_depth': 10,               # Adjust based on your data
-                'learning_rate': 0.1,
-                'subsample': 0.8,
-                'colsample_bytree': 0.8,
-                'early_stopping_rounds': 50
-            })
+            #Set fixed parameters that shouldn't be optimized or need specific values
+            params = {
+                'nthread': -1,                      # Use all available threads
+                'tree_method': 'hist',              # Histogram-based algorithm
+                'early_stopping_rounds': 50,        # Early stopping
+                'eval_metric': 'auc',               # Evaluation metric
+                'verbosity': 1,                     # Show progress
+                # Keep the optimized parameters from Bayesian optimization
+                'max_depth': optimized_params.get('max_depth', 10),
+                'learning_rate': optimized_params.get('learning_rate', 0.1),
+                'subsample': optimized_params.get('subsample', 0.8),
+                'colsample_bytree': optimized_params.get('colsample_bytree', 0.8),
+                'min_child_weight': optimized_params.get('min_child_weight', 1),
+                'gamma': optimized_params.get('gamma', 0),
+                'reg_alpha': optimized_params.get('reg_alpha', 0),
+                'reg_lambda': optimized_params.get('reg_lambda', 1)
+            }
     
             print("\n" + "="*50)
             print("THREAD CONFIGURATION CHECK")
@@ -102,8 +117,10 @@ if __name__ == '__main__':
 
             X_train_np = X_train[training_cols].to_numpy()
             X_val_np = X_val[training_cols].to_numpy()
-            y_train_np = y_train.to_numpy().ravel()  # Ensure 1D
-            y_val_np = y_val.to_numpy().ravel()
+            y_train_np = np.asarray(y_train).ravel()  # FIX: Use np.asarray instead of to_numpy().ravel()
+            y_val_np = np.asarray(y_val).ravel()      # FIX: Use np.asarray instead of to_numpy().ravel()
+            #y_train_np = y_train.to_numpy().ravel()  # Ensure 1D
+            #y_val_np = y_val.to_numpy().ravel()
 
             # Create a model
             model = xgb.XGBClassifier(**params) 
@@ -117,6 +134,7 @@ if __name__ == '__main__':
             # Fit with the model
             model.fit(X_train_np, y_train_np,
                     eval_set = [(X_train_np, y_train_np), (X_val_np, y_val_np)],
+                    eval_metric='auc', # Required for proper early stopping
                     #verbose=False
                     verbose=50     
             )
@@ -130,7 +148,25 @@ if __name__ == '__main__':
 
             # Save the model
             joblib.dump(model, f'{model_dir}/pi0_classifier_model_{br_type}.pkl')
+            print(f"Model saved to {model_dir}/pi0_classifier_model_{br_type}.pkl")
             #print(f"Model is saved!")
+
+                        # ADDED: Save metrics
+            from sklearn.metrics import roc_auc_score
+            y_pred = model.predict_proba(X_val_np)[:, 1]
+            auc_score = roc_auc_score(y_val_np, y_pred)
+            
+            metrics = {
+                'auc': auc_score,
+                'best_iteration': model.best_iteration,
+                'best_score': model.best_score,
+                'params': params,
+                'n_features': len(training_cols)
+            }
+            
+            with open(f'{model_dir}/metrics_{br_type}.json', 'w') as f:
+                json.dump(metrics, f, indent=2)
+            print(f"Metrics saved to {model_dir}/metrics_{br_type}.json")
 
             # Get the booster
             booster = model.get_booster()
@@ -140,17 +176,25 @@ if __name__ == '__main__':
             tree_inference.get_basescore = patched_get_basescore
 
             # Try saving with booster instead of model
-            ROOT.TMVA.Experimental.SaveXGBoost(
-                model,  # ← This is XGBClassifier, which has .objective attribute
-                "BDT_pi0", 
-                f"{model_dir}/bdt_pi0_{br_type}.root", 
-                num_inputs=X_train_np.shape[1]
-            )
+            try:
+                ROOT.TMVA.Experimental.SaveXGBoost(
+                    model,  # ← This is XGBClassifier, which has .objective attribute
+                    "BDT_pi0", 
+                    f"{model_dir}/bdt_pi0_{br_type}.root", 
+                    num_inputs=X_train_np.shape[1]
+                )
+                print(f"✓ Model saved to {model_dir}/bdt_pi0_{br_type}.root")
+            except Exception as e:
+                print(f"✗ Failed to save ROOT model: {e}")
+
+            # ADDED: Memory cleanup
+            del X_train_np, X_val_np, y_train_np, y_val_np
+            gc.collect()
+            
+            print(f"\n✓ Training completed for {br_type}")
 
             # Check model root files in terminal:
             # > ls -la bdt_pi0_*.root
             # import ROOT
             # f = ROOT.TFile.Open(f"bdt_pi0_{br_type}.root")
             # f.ls()
-
-            print(f"✓ Model saved to bdt_pi0_{br_type}.root")
