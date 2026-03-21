@@ -2,16 +2,24 @@ import sys
 import os
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root)
+
 import joblib
 import uproot
 import numpy as np
 import pandas as pd
 from plots import plot_compr_hist, plot_var, plot_feature_pairs, plot_feature_target
-from training.config import prepare_3photon_paris
-from sklearn.model_selection import train_test_split
-import random
+#from training.config import prepare_3photon_paris
+#from sklearn.model_selection import train_test_split
+#import random
 import awkward as ak
-import gc  # ADDED: for garbage collection
+import gc  # For garbage collection
+
+from config import (
+    DATA_DIR,
+    REQUIRED_BR,
+    create_dataset, data_splitting,
+    prepare_3photon_paris
+)
 
 """
 # Conservative settings for 16GB RAM
@@ -29,158 +37,6 @@ python main_initialize_kloe_files.py \
 python main_initialize_kloe_files.py --input ../data/kloe_sample_full.root --output-dir ./dataset_large --clear
 """
 
-
-def create_dataset(df, category): # For photon 4-momentum
-    print(f'\n✅ Creating dataset ...')
-    # Define photon 4-momentum
-    br_nm = ['Br_E1', 'Br_px1', 'Br_py1', 'Br_pz1', 
-             'Br_E2', 'Br_px2', 'Br_py2', 'Br_pz2', 
-             'Br_E3', 'Br_px3', 'Br_py3', 'Br_pz3',
-             'Br_m3pi', 'Br_lagvalue_min_7C', 'Br_deltaE',
-             'Br_angle_pi0gam12', 'Br_ppIM', 'Br_betapi0',
-             'Br_recon_indx', 'Br_bkg_indx']
-    
-    # ADDED: Check which columns actually exist
-    available_cols = [col for col in br_nm if col in df.columns]
-    if len(available_cols) < len(br_nm):
-        print(f"  Note: Using {len(available_cols)}/{len(br_nm)} available columns")
-    
-    # Selection cut, ensure physical region
-    cut_region = (df['Br_lagvalue_min_7C'] < 100) if 'Br_lagvalue_min_7C' in df.columns else pd.Series(True, index=df.index)
-    phys_region = ((df['Br_betapi0'] < 1) & (df['Br_betapi0'] > 0)) if 'Br_betapi0' in df.columns else pd.Series(True, index=df.index)
-
-    #df = df[(df['Br_lagvalue_min_7C'] < 100) & (df['Br_betapi0'] < 1) & (df['Br_betapi0'] > 0)][br_nm]
-    # Apply filters and create a proper copy
-    df_filtered = df[cut_region & phys_region][available_cols].copy()
-    df = df_filtered  # Now df is a clean copy
-
-    # Create all_df, pos_df, neg_df for signal and background events
-    if len(available_cols): # Check para length and br_nm length are consistent
-        
-        if category == 'signal':
-            print(f"Creating all_df for {category} {df.columns}...")
-
-            # ADDED: Check if classification columns exist
-            if 'Br_recon_indx' in df.columns and 'Br_bkg_indx' in df.columns:
-                pos_df = df[(df['Br_recon_indx'] == 2) & (df['Br_bkg_indx'] == 1)][available_cols]
-                neg_df = df[~((df['Br_recon_indx'] == 2) & (df['Br_bkg_indx'] == 1))][available_cols]
-            else:
-                print(f"  Warning: Missing classification columns, treating all as background")
-                pos_df = pd.DataFrame(columns=available_cols)
-                neg_df = df[available_cols]
-
-            # True positive
-            nb_pos = [i for i in range(len(pos_df))]  
-            if len(pos_df) > 0:
-                pos_df = pos_df.copy()
-                pos_df.insert(0, 'event', nb_pos)  # Add event column
-                pos_df['is_signal'] = 1 # Add is_signal column
-                pos_df['true_pi0_pair'] = [(0, 1)] * len(nb_pos)  # Add true_pi0_pair column
-            
-            # True negative
-            nb_neg = [i for i in range(len(neg_df))]
-            if len(neg_df) > 0:
-                neg_df = neg_df.copy()
-                neg_df.insert(0, 'event', nb_neg) # Add event column 
-                neg_df['is_signal'] = 0 # Add is_signal column
-                neg_df['true_pi0_pair'] = [(-1, -1)] * len(nb_neg) # Add true_pi0_pair column
-
-            # Combine pos + neg dataset and shuffling
-            dfs_to_concat = []
-            if len(pos_df) > 0:
-                dfs_to_concat.append(pos_df)
-            if len(neg_df) > 0:
-                dfs_to_concat.append(neg_df)
-            
-            if dfs_to_concat:
-                all_df = pd.concat(dfs_to_concat, ignore_index=True)
-                all_df = all_df.sample(frac=1).reset_index(drop=True)
-            else:
-                all_df = pd.DataFrame()
-      
-        elif category == 'background':
-            print(f"Creating pho4mom_all_df for {category} {df.columns} ...")
-
-            all_df = df.copy()
-            nb_all_df = [i for i in range(len(all_df))]  
-            all_df.insert(0, 'event', nb_all_df)  # Add event column
-            all_df['is_signal'] = 0 # Add is_signal column
-            all_df['true_pi0_pair'] = [(-1, -1)] * len(all_df) # Add true_pi0_pair column
-        else: # combined or others
-            raise ValueError("Only sig and bkg allow!")
-    else: 
-        print("No dataset other than signal or bkg or combined is expected!")
-        raise ValueError("Array length mismatch - cannot proceed")
-
-    # pi0 features for ML learning
-    # MODIFIED: Only create pairs if we have data
-    if len(all_df) > 0:
-        pi0_all_df = prepare_3photon_paris(all_df)
-    else:
-        pi0_all_df = pd.DataFrame()
-        
-    return all_df, pi0_all_df
-
-##
-def data_splitting(all_df):
-    print(f'\n✅ Splitting dataset ...')
-
-    # First split: separate test set 20%
-    all_df_trainval, all_df_test = train_test_split(
-        all_df, test_size=0.2, random_state=42
-    )
-
-    # Second split: separte validation from training (20% of total)
-    all_df_train, all_df_val = train_test_split(
-        all_df_trainval, test_size=0.25, random_state=42
-    )
-
-    print(f"Training events:   {len(all_df_train)} ({len(all_df_train)/len(all_df)*100:.1f}%)")
-    print(f"Validation events: {len(all_df_val)} ({len(all_df_val)/len(all_df)*100:.1f}%)")
-    print(f"Test events:       {len(all_df_test)} ({len(all_df_test)/len(all_df)*100:.1f}%)")
-
-    #print("CREATING PAIRS FROM EACH SPLIT")
-
-    pair_train = prepare_3photon_paris(all_df_train)
-    pair_val = prepare_3photon_paris(all_df_val)
-    pair_test = prepare_3photon_paris(all_df_test)
-
-    # Verify event column preservation
-    for name, pair_df in [('Train', pair_train), ('Val', pair_val), ('Test', pair_test)]:
-        if 'event' not in pair_df.columns:
-            print(f"❌ CRITICAL: 'event' column missing in {name} pairs!")
-            print(f"   Columns: {pair_df.columns.tolist()}")
-        else:
-            n_events = pair_df['event'].nunique()
-            n_pairs = len(pair_df)
-            print(f"✅ {name}: {n_pairs} pairs from {n_events} events ({n_pairs/n_events:.2f} pairs/event)")
-
-    #print(f"Training pairs:   {len(pair_train)}")
-    #print(f"Validation pairs: {len(pair_val)}")
-    #print(f"Test pairs:       {len(pair_test)}")
-
-    ## Step 3: Prepare features for training
-    features = ['m_gg', 'opening_angle', 'cos_theta', 'E_asym', 'e_min_x_angle', 'E1', 'E2', 'E3', 'asym_x_angle', 'E_diff']
-    
-    # ADDED: Check which features actually exist
-    available_features = [f for f in features if f in pair_train.columns]
-    if len(available_features) < len(features):
-        print(f"  Warning: Using {len(available_features)}/{len(features)} available features")
-    
-    X_train = pair_train[available_features] if len(pair_train) > 0 else pd.DataFrame()
-    y_train = pair_train['is_pi0'] if 'is_pi0' in pair_train.columns else pd.Series()
-    X_val = pair_val[available_features] if len(pair_val) > 0 else pd.DataFrame()
-    y_val = pair_val['is_pi0'] if 'is_pi0' in pair_val.columns else pd.Series()
-    X_test = pair_test[available_features] if len(pair_test) > 0 else pd.DataFrame()
-    y_test = pair_test['is_pi0'] if 'is_pi0' in pair_test.columns else pd.Series()
-
-    print(f"\n✅ Data ready for training:")
-    print(f"  X_train shape: {X_train.shape}, y_train shape: {y_train.shape}")
-    print(f"  X_val shape:   {X_val.shape}, y_val shape:   {y_val.shape}")
-    print(f"  X_test shape:  {X_test.shape}, y_test shape:  {y_test.shape}")
-
-    return all_df_train, all_df_val, all_df_test, X_train, y_train, X_val, y_val, X_test, y_test, pair_train, pair_val, pair_test
-
 if __name__ == '__main__':
     #============================================================
     # LOAD INPUT ROOT FILES
@@ -194,7 +50,7 @@ if __name__ == '__main__':
                        help='Number of entries to process at once')
     parser.add_argument('--max-events', type=int, default=None,
                        help='Maximum number of events to process (for testing)')
-    parser.add_argument('--output-dir', type=str, default='./dataset_large',
+    parser.add_argument('--output-dir', type=str, default=DATA_DIR,
                    help='Output directory for dataset files')
     #parser.add_argument('--clear', action='store_true', 
     #               help='Clear output directory before processing')
@@ -204,13 +60,9 @@ if __name__ == '__main__':
 
     # Create output directory
     #data_dir = rf'./dataset' 
-    plot_dir = rf'./plots'
 
     data_dir = args.output_dir
     # Create fresh directory
-    os.makedirs(data_dir, exist_ok=True)
-    os.makedirs(plot_dir, exist_ok=True)
-
     # With this (always fresh):
     import shutil
     if os.path.exists(data_dir):
@@ -336,14 +188,8 @@ if __name__ == '__main__':
                     print(f"Excluding multi-dim field: {field} (ndim={ak_array[field].ndim})")
 
             # Check if we have the required branches
-            required_br = ['Br_E1', 'Br_px1', 'Br_py1', 'Br_pz1', 
-                        'Br_E2', 'Br_px2', 'Br_py2', 'Br_pz2', 
-                        'Br_E3', 'Br_px3', 'Br_py3', 'Br_pz3',
-                        'Br_m3pi', 'Br_lagvalue_min_7C', 'Br_deltaE',
-                        'Br_angle_pi0gam12', 'Br_ppIM', 'Br_betapi0',
-                        'Br_recon_indx', 'Br_bkg_indx']
             
-            missing_br = [br for br in required_br if br not in fields_to_use]
+            missing_br = [br for br in REQUIRED_BR if br not in fields_to_use]
             if missing_br:
                 print(f"WARNING: Missing branches in {data_type}: {missing_br}")
                 if info['category'] == 'signal' and len(missing_br) > 5:

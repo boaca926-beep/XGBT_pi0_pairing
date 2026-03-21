@@ -13,38 +13,9 @@ matplotlib.use('TkAgg')  # or 'Qt5Agg' if you have Qt installed
 import matplotlib.pyplot as plt
 plt.show(block=False)
 
-r'''
-def load_data_model():
-    """
-    Load validation data from folder: validation_data
-    Load training data from folder: training_data
-    Load model from folder: models
-    """
-
-    # Data and model folders
-    val_dir = os.path.join(project_root, 'validation_data')
-    train_dir = os.path.join(project_root, 'training_data')
-    model_dir = os.path.join(project_root, 'models')
-
-    # Get validation file
-    X_val = joblib.load(os.path.join(val_dir, 'X_val.pkl'))
-    y_val = joblib.load(os.path.join(val_dir, 'y_val.pkl'))
-
-    # Get training file
-    X_train = joblib.load(os.path.join(train_dir, 'X_train.pkl'))
-    y_train = joblib.load(os.path.join(train_dir, 'y_train.pkl'))
-
-    # Load feature names
-    with open(os.path.join(val_dir, 'feature_name.txt'), 'r') as f:
-        feature_names = [line.strip() for line in f.readlines()]
-        print(feature_names)
-    features = X_val.columns
-    
-    # Load model
-    model = joblib.load(os.path.join(model_dir, 'pi0_classifier_model.pkl'))
-
-    return X_val, y_val, X_train, y_train, features, model
-'''
+from config import (
+    DATA_DIR, DATA_LARGE_DIR, PLOT_DIR_VAL
+)
 
 def load_data():
     """
@@ -63,15 +34,16 @@ def load_data():
 if __name__ == '__main__':
     print(f"Validation ...")
 
-    input_data_dir = os.path.join(project_root, f'analysis/dataset')
+    #input_data_dir = os.path.join(project_root, f'analysis/dataset')
+    input_data_dir = DATA_LARGE_DIR
     phys_map = joblib.load(os.path.join(input_data_dir, f'phys_map.pkl'))
     
     print(phys_map)
 
     ## Load dataset
-    #phys_ch = ['TCOMB', 'combined']
+    phys_ch = ['TCOMB', 'combined']
     #phys_ch = ['TISR3PI_SIG', 'signal']
-    phys_ch = ['TETAGAM', 'signal']
+    #phys_ch = ['TETAGAM', 'signal']
     #data_type = 'TISR3PI_SIG' #'TETAGAM', 'TISR3PI_SIG', 'TKSL'd
     #input_data_dir = os.path.join(project_root, f'output_data_{input_str}')
     #input_data_dir = '../analysis/dataset'
@@ -86,7 +58,10 @@ if __name__ == '__main__':
     X_val, y_val, all_df = load_data()
     model = joblib.load(os.path.join('../training/models', f'pi0_classifier_model_{br_nm}.pkl'))
 
-    plot_dir = f'plots'
+    plot_dir = PLOT_DIR_VAL
+    import shutil
+    if os.path.exists(plot_dir):
+        shutil.rmtree(plot_dir)
     os.makedirs(plot_dir, exist_ok=True)
 
     features = X_val.columns
@@ -102,14 +77,14 @@ if __name__ == '__main__':
 
     ## Learning curves
     fig_learning = plot_learning_curves(model, rf'Learning Curve (validation, {br_title})')
-    fig_learning.savefig(f'./{plot_dir}/learning_curves_{br_nm}.png', dpi=300, bbox_inches='tight')
+    fig_learning.savefig(f'{plot_dir}/learning_curves_{br_nm}.png', dpi=300, bbox_inches='tight')
 
     ## Accuracy metrics, event basis
     score_list, var_list, var_str = event_performance(all_df, model)
 
     ## ROC plot
     fig_roc = plot_roc(score_list, rf'ROC Curve - $\pi^{0}$ Classifier (validation, {br_title})')
-    fig_roc.savefig(f'./{plot_dir}/roc_curv_{br_nm}.png', dpi=300, bbox_inches='tight')
+    fig_roc.savefig(f'{plot_dir}/roc_curv_{br_nm}.png', dpi=300, bbox_inches='tight')
     
     
     

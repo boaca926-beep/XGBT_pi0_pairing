@@ -530,9 +530,10 @@ wheels = [
 [[package]]
 name = "pi0-gamma-pairing"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "awkward" },
+    { name = "joblib" },
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "pandas" },
@@ -547,6 +548,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "awkward", specifier = ">=2.9.0" },
+    { name = "joblib", specifier = ">=1.5.3" },
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "numpy", specifier = ">=2.4.2" },
     { name = "pandas", specifier = ">=3.0.0" },

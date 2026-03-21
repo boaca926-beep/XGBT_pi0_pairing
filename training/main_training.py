@@ -18,6 +18,11 @@ import psutil
 import time
 import gc
 
+from config import (
+    DATA_DIR,
+    patched_get_basescore
+)
+
 '''
 # Check saved files
 ls -la models/
@@ -29,14 +34,7 @@ cat models/metrics_TCOMB.json | jq '.auc'
 root -l models/bdt_pi0_TCOMB.root -e ".ls"
 '''
 
-# Define the patch function
-def patched_get_basescore(model):
-    config_str = model.get_booster().save_config()
-    config = json.loads(config_str)
-    base_score_str = config["learner"]["learner_model_param"]["base_score"]
-    # Remove brackets if present
-    base_score_str = base_score_str.strip('[]')
-    return float(base_score_str)
+
 
 def load_dataset(br_type):
     """
@@ -66,7 +64,8 @@ if __name__ == '__main__':
 
     os.makedirs(model_dir, exist_ok=True)
 
-    input_data_dir = os.path.join(project_root, f'analysis/dataset_large')
+    input_data_dir = DATA_DIR
+    #input_data_dir = os.path.join(project_root, f'{analysis/dataset}')
     phys_map = joblib.load(os.path.join(input_data_dir, f'phys_map.pkl'))
     print(phys_map)
 
@@ -97,7 +96,7 @@ if __name__ == '__main__':
          'nthread': -1,                      # Use all available threads
          'tree_method': 'hist',              # Histogram-based algorithm
          'early_stopping_rounds': 50,        # Early stopping
-         'eval_metric': 'auc',               # Evaluation metric
+         'eval_metric': ['auc', 'error'],               # Evaluation metric
          'verbosity': 1,                     # Show progress
          # Keep the optimized parameters from Bayesian optimization
          'max_depth': optimized_params.get('max_depth', 10),
@@ -146,7 +145,7 @@ if __name__ == '__main__':
     # Fit with the model
     model.fit(X_train_np, y_train_np,
               eval_set = [(X_train_np, y_train_np), (X_val_np, y_val_np)],
-              eval_metric='auc', # Required for proper early stopping
+              #eval_metric='auc', # Required for proper early stopping
               #verbose=False
               verbose=50     
               )

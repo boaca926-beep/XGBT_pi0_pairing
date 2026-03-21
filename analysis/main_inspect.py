@@ -11,7 +11,7 @@ import sys
 
 if __name__ == '__main__':
 
-    DATA_DIR = 'dataset_large' 
+    DATA_DIR = 'dataset' 
     input_data_dir = os.path.join(project_root, f'analysis/{DATA_DIR}')
     phys_map = joblib.load(os.path.join(input_data_dir, f'phys_map.pkl'))
     print(phys_map)
