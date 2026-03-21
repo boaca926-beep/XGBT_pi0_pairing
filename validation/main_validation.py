@@ -12,9 +12,11 @@ import matplotlib
 matplotlib.use('TkAgg')  # or 'Qt5Agg' if you have Qt installed
 import matplotlib.pyplot as plt
 plt.show(block=False)
+import pandas as pd
 
 from config import (
-    DATA_DIR, DATA_LARGE_DIR, PLOT_DIR_VAL
+    DATA_DIR, DATA_LARGE_DIR, PLOT_DIR_VAL,
+    MODEL_DIR
 )
 
 def load_data():
@@ -22,12 +24,52 @@ def load_data():
     Load validation data and models
     """
 
+    # ADDED: Convert to parquet on first run
+    parquet_x = os.path.join(input_data_dir, f'X_val_{br_nm}.parquet')
+    if not os.path.exists(parquet_x):
+        print("Converting to parquet (one-time conversion for faster future loads)...")
+        for f in ['X_val', 'y_val', 'all_df_val']:
+            pkl_file = os.path.join(input_data_dir, f'{f}_{br_nm}.pkl')
+            parquet_file = os.path.join(input_data_dir, f'{f}_{br_nm}.parquet')
+            if os.path.exists(pkl_file) and not os.path.exists(parquet_file):
+                try:
+                    # Use joblib to load (since files were saved with joblib)
+                    print(f"  Reading {f}_{br_nm}.pkl...")
+                    data = joblib.load(pkl_file)
+                        
+                    # Convert to DataFrame if needed
+                    if not isinstance(data, pd.DataFrame):
+                        if isinstance(data, pd.Series):
+                            data = data.to_frame()
+                        else:
+                            data = pd.DataFrame(data)
+                        
+                    # Save as parquet
+                    data.to_parquet(parquet_file, compression='snappy')
+                        
+                    old_size = os.path.getsize(pkl_file) / 1024**2
+                    new_size = os.path.getsize(parquet_file) / 1024**2
+                    print(f"  Converted {f}_{br_nm}.pkl: {old_size:.1f}MB → {new_size:.1f}MB")
+                except Exception as e:
+                    print(f"  Error converting {f}_{br_nm}.pkl: {e}")
+                    print(f"  Will use pickle format for this file")
+
+    # Load parquet if exists, otherwise load pickle
+    if os.path.exists(parquet_x):
+        X_val = pd.read_parquet(os.path.join(input_data_dir, f'X_val_{br_nm}.parquet'))
+        y_val = pd.read_parquet(os.path.join(input_data_dir, f'y_val_{br_nm}.parquet'))
+        all_df = pd.read_parquet(os.path.join(input_data_dir, f'all_df_val_{br_nm}.parquet'))
+        if isinstance(y_val, pd.DataFrame):
+            y_val = y_val.iloc[:, 0]
+    else:
+        X_val = joblib.load(os.path.join(input_data_dir, f'X_val_{br_nm}.pkl'))
+        y_val = joblib.load(os.path.join(input_data_dir, f'y_val_{br_nm}.pkl'))
+        all_df = joblib.load(os.path.join(input_data_dir, f'all_df_val_{br_nm}.pkl'))
+
     # Load validation dataset
-    X_val = joblib.load(os.path.join(input_data_dir, f'X_val_{br_nm}.pkl'))
-    y_val = joblib.load(os.path.join(input_data_dir, f'y_val_{br_nm}.pkl'))
-   
-    # Load all_df
-    all_df = joblib.load(os.path.join(input_data_dir, f'all_df_val_{br_nm}.pkl'))
+    #X_val = joblib.load(os.path.join(input_data_dir, f'X_val_{br_nm}.pkl'))
+    #y_val = joblib.load(os.path.join(input_data_dir, f'y_val_{br_nm}.pkl'))
+    #all_df = joblib.load(os.path.join(input_data_dir, f'all_df_val_{br_nm}.pkl'))
     
     return X_val, y_val, all_df
 
@@ -56,8 +98,9 @@ if __name__ == '__main__':
     br_title = info['br_title']
 
     X_val, y_val, all_df = load_data()
-    model = joblib.load(os.path.join('../training/models', f'pi0_classifier_model_{br_nm}.pkl'))
-
+    model = joblib.load(os.path.join(MODEL_DIR, f'pi0_classifier_model_{br_nm}.pkl'))
+    print(f"Loading model from: {model}")
+    
     plot_dir = PLOT_DIR_VAL
     import shutil
     if os.path.exists(plot_dir):

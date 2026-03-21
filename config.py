@@ -15,7 +15,7 @@ PROJECT_ROOT = Path(__file__).parent.absolute()
 # Data directories
 DATA_DIR = PROJECT_ROOT / 'analysis' / 'dataset'
 DATA_LARGE_DIR = PROJECT_ROOT / 'analysis' / 'dataset_large'
-MODEL_DIR = PROJECT_ROOT / 'models'
+MODEL_DIR = PROJECT_ROOT / 'training' / 'models'
 PLOT_DIR_VAL = PROJECT_ROOT / 'validation' / 'plots'
 
 # Initializing configuration
