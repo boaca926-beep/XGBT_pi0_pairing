@@ -1,24 +1,34 @@
 import joblib
+import sys
 import os
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(project_root)
+print(project_root)
+
 from plots import plot_compr_hist, plot_var, plot_feature_pairs, plot_feature_target
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import sys
+
+
+from config import (
+    DATA_DIR, PLOT_DIR_ANALYSIS
+)
 
 # Inspect features and correlations
 
 if __name__ == '__main__':
 
-    DATA_DIR = 'dataset' 
-    input_data_dir = os.path.join(project_root, f'analysis/{DATA_DIR}')
+    #DATA_DIR = 'dataset' 
+    #input_data_dir = os.path.join(project_root, f'analysis/{DATA_DIR}')
+    input_data_dir = DATA_DIR
     phys_map = joblib.load(os.path.join(input_data_dir, f'phys_map.pkl'))
     print(phys_map)
 
     # Create output folder
-    plot_dir = os.path.join(project_root, 'analysis/plots')
-
+    #plot_dir = os.path.join(project_root, 'analysis/plots')
+    plot_dir = PLOT_DIR_ANALYSIS
+    
     # With this (always fresh) plot_dir
     import shutil
     if os.path.exists(plot_dir):

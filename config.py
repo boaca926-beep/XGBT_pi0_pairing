@@ -17,6 +17,8 @@ DATA_DIR = PROJECT_ROOT / 'analysis' / 'dataset'
 DATA_LARGE_DIR = PROJECT_ROOT / 'analysis' / 'dataset_large'
 MODEL_DIR = PROJECT_ROOT / 'training' / 'models'
 PLOT_DIR_VAL = PROJECT_ROOT / 'validation' / 'plots'
+PLOT_DIR_ANALYSIS = PROJECT_ROOT / 'analysis' / 'plots'
+
 
 # Initializing configuration
 REQUIRED_BR = ['Br_E1', 'Br_px1', 'Br_py1', 'Br_pz1', 
