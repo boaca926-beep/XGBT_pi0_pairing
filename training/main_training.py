@@ -34,7 +34,9 @@ cat models/metrics_TCOMB.json | jq '.auc'
 root -l models/bdt_pi0_TCOMB.root -e ".ls"
 '''
 
-
+'''
+In-memory approach is much faster, but barely works with large dataset 
+'''
 
 def load_dataset(br_type):
     """
@@ -150,11 +152,15 @@ if __name__ == '__main__':
               verbose=50     
               )
 
+    training_time = time.time() - start_time
+    
     # Add this after training to see CPU usage:
     cpu_percent = psutil.cpu_percent(interval=1, percpu=True)
     print(f"\nCPU usage per core during training: {cpu_percent}")
     print(f"Average CPU usage: {sum(cpu_percent)/len(cpu_percent):.1f}%")
     print(f"Peak threads used: {psutil.Process().num_threads()}")
+    print(f"Training time: {training_time/60:.1f} minutes")
+
     print("="*50)
 
     # Save the model
