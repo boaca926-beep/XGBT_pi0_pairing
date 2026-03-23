@@ -4,21 +4,6 @@
 const double pt1_x0 = 0.2;
 const double pt1_x1 = 0.3;
 
-TLine *line1 = new TLine(400., 900., 1000., 900.); // horizontal upper
-line1 -> SetLineColor(kRed);
-line1 -> SetLineWidth(2);
-
-TLine *line2 = new TLine(400., 650., 1000., 650.); // horizontal lower
-line2 -> SetLineColor(kRed);
-line2 -> SetLineWidth(2);
-
-TLine *line11 = new TLine(650., 0., 650., 1500.); // vertical left
-line11 -> SetLineColor(42);
-line11 -> SetLineWidth(4);
-
-TLine *line22 = new TLine(900., 0., 900., 1500.); // vertical right
-line22 -> SetLineColor(42);
-line22 -> SetLineWidth(4);
 
 
 TList *HSFW1D = new TList();

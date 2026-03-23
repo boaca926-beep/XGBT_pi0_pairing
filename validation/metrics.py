@@ -68,7 +68,9 @@ def event_performance(all_df, model):
         # Couters
         if evt.is_signal:
             total_pos_events += 1
-            if best_pair == evt.true_pi0_pair:
+            #if best_pair == evt.true_pi0_pair:
+            if np.array_equal(best_pair, evt.true_pi0_pair):
+
                 correct_predictions += 1
                 score_pos.append(score)
                 status = "✓"
@@ -83,7 +85,8 @@ def event_performance(all_df, model):
         #print(f"Event {evt.event}: Best pair {best_pair}, score={score:.3f}, m={mass:.3f} | {status}")
 
         # mass collection
-        if evt.is_signal and best_pair == evt.true_pi0_pair:
+        if evt.is_signal and np.array_equal(best_pair, evt.true_pi0_pair):
+        #if evt.is_signal and best_pair == evt.true_pi0_pair:
             candidate_masses.append(mass)
             true_matches.append(1)
         elif evt.is_signal:

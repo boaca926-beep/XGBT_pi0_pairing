@@ -25,6 +25,8 @@ python main_initialize_kloe_chunk.py \
   --input ../data/kloe_sample_full.root \
   --chunk-size 50000 \
   --output-dir ./dataset_large
+
+python main_initialize_kloe_opti.py --input ../data/kloe_small_sample.root --chunk-size 50000 --output-dir ./dataset_large/
 """
 
 
@@ -38,7 +40,7 @@ def create_dataset(df, category): # For photon 4-momentum
              'Br_angle_pi0gam12', 'Br_ppIM', 'Br_betapi0',
              'Br_recon_indx', 'Br_bkg_indx']
     
-    # ADDED: Check which columns actually exist
+    # Check which columns actually exist
     available_cols = [col for col in br_nm if col in df.columns]
     if len(available_cols) < len(br_nm):
         print(f"  Note: Using {len(available_cols)}/{len(br_nm)} available columns")
@@ -276,7 +278,21 @@ if __name__ == '__main__':
     #============================================================
     # CREATE DATASET - MODIFIED to handle large files with chunking
     #============================================================
-    df_list = [] # List for storing all dataset for combining
+    df_list = []        # List for storing all dataset for combining
+       
+
+    df_train_list = []  # List for storing training splits
+    df_val_list = []    # List for storing validation splits
+    df_test_list = []   # List for storing test splits 
+    pair_train_list = []
+    pair_val_list = []
+    pair_test_list = []
+    X_train_list = []
+    y_train_list = []
+    X_val_list = []
+    y_val_list = []
+    X_test_list = []
+    y_test_list = []
 
     ch_indx = 0
     for data_type, info in phys_map.items():
@@ -385,6 +401,22 @@ if __name__ == '__main__':
                 # MODIFIED: Create pi0 pairs after splitting (original behavior)
                 all_df_train, all_df_val, all_df_test, X_train, y_train, X_val, y_val, X_test, y_test, pair_train, pair_val, pair_test = data_splitting(all_df)
                 
+                # Add to combined list
+                df_list.append(all_df)
+                df_train_list.append(all_df_train)
+                df_val_list.append(all_df_val)
+                df_test_list.append(all_df_test)
+
+                pair_train_list.append(pair_train)
+                pair_val_list.append(pair_val)
+                pair_test_list.append(pair_test)
+                X_train_list.append(X_train)
+                y_train_list.append(y_train)
+                X_val_list.append(X_val)
+                y_val_list.append(y_val)
+                X_test_list.append(X_test)
+                y_test_list.append(y_test)
+
                 # Save files with compression
                 print(f"\nSaving files for {data_nm}...")
                 
@@ -418,8 +450,7 @@ if __name__ == '__main__':
                 if len(y_test) > 0:
                     joblib.dump(y_test, f'{data_dir}/y_test_{data_nm}.pkl', compress=3)
                 
-                # Add to combined list
-                df_list.append(all_df)
+                
             else:
                 print(f"No valid events for {data_type}")
   
@@ -440,6 +471,7 @@ if __name__ == '__main__':
             df['event'] = f"{channel_name}_" + df['event'].astype(str)
             print(f"    Updated event IDs for {channel_name}")
 
+        # Combine full datasets
         df_comb = pd.concat(df_list, ignore_index=True)
         print(f"Raw combined shape: {df_comb.shape}")
 
@@ -447,13 +479,123 @@ if __name__ == '__main__':
         df_comb = df_comb.sample(frac=1, random_state=42).reset_index(drop=True)
         print(f"Shuffled combined shape: {df_comb.shape}")
 
+        # Initialize combined split variables
+        #all_df_train_comb = pd.DataFrame()
+        #all_df_val_comb = pd.DataFrame()
+        #all_df_test_comb = pd.DataFrame()
+
+        
+
+        # Combine training splits
+        if df_train_list:
+            print(f"\nCombining training splits from {len(df_train_list)} channels...")
+            all_df_train_comb = pd.concat(df_train_list, ignore_index=True)
+            all_df_train_comb = all_df_train_comb.sample(frac=1, random_state=42).reset_index(drop=True)
+            print(f"Combined training events: {len(all_df_train_comb)}")
+
+            # Combine training pairs if they exist
+            if pair_train_list:
+                pair_train_comb = pd.concat(pair_train_list, ignore_index=True)
+                print(f"Combined training pairs: {len(pair_train_comb)}")
+            
+            # Combine training features and labels
+            if X_train_list and y_train_list:
+                X_train_comb = pd.concat(X_train_list, ignore_index=True)
+                y_train_comb = pd.concat(y_train_list, ignore_index=True)
+                print(f"X_train shape: {X_train_comb.shape}, y_train shape: {y_train_comb.shape}")
+            
+            # Save training split
+            joblib.dump(all_df_train_comb, f'{data_dir}/all_df_train_TCOMB.pkl', compress=3)
+            if pair_train_list:
+                joblib.dump(pair_train_comb, f'{data_dir}/pair_train_TCOMB.pkl', compress=3)
+            if X_train_list:
+                joblib.dump(X_train_comb, f'{data_dir}/X_train_TCOMB.pkl', compress=3)
+                joblib.dump(y_train_comb, f'{data_dir}/y_train_TCOMB.pkl', compress=3)
+
+            
+            # summary
+            total_train = sum(len(df) for df in df_train_list)
+            print(f"Training events:   {total_train}")
+            # Print training info here where variables are defined
+            if X_train_list and y_train_list:
+                print(f"  Training pairs: {sum(len(pairs) for pairs in pair_train_list) if pair_train_list else 0}")
+                print(f"  X_train components: {len(X_train_list)}")
+            
+        # Combine validation splits
+        if df_val_list:
+            print(f"\nCombining validation splits from {len(df_val_list)} channels...")
+            all_df_val_comb = pd.concat(df_val_list, ignore_index=True)
+            all_df_val_comb = all_df_val_comb.sample(frac=1, random_state=42).reset_index(drop=True)
+            print(f"Combined validation events: {len(all_df_val_comb)}")
+
+            if pair_val_list:
+                pair_val_comb = pd.concat(pair_val_list, ignore_index=True)
+                print(f"Combined validation pairs: {len(pair_val_comb)}")
+        
+            if X_val_list and y_val_list:
+                X_val_comb = pd.concat(X_val_list, ignore_index=True)
+                y_val_comb = pd.concat(y_val_list, ignore_index=True)
+                print(f"X_val shape: {X_val_comb.shape}, y_val shape: {y_val_comb.shape}")
+
+            joblib.dump(all_df_val_comb, f'{data_dir}/all_df_val_TCOMB.pkl', compress=3)
+
+            if pair_val_list:
+                joblib.dump(pair_val_comb, f'{data_dir}/pair_val_TCOMB.pkl', compress=3)
+
+            if X_val_list:
+                joblib.dump(X_val_comb, f'{data_dir}/X_val_TCOMB.pkl', compress=3)
+                joblib.dump(y_val_comb, f'{data_dir}/y_val_TCOMB.pkl', compress=3)
+            
+            # summmary
+            total_val = sum(len(df) for df in df_val_list)
+            print(f"Validation events: {total_val}")
+            if X_val_list and y_val_list:
+                print(f"  Validation pairs: {sum(len(pairs) for pairs in pair_val_list) if pair_val_list else 0}")
+                print(f"  X_val components: {len(X_val_list)}")
+        
+        # Combine test splits
+        if df_test_list:
+            print(f"\nCombining test splits from {len(df_test_list)} channels...")
+            all_df_test_comb = pd.concat(df_test_list, ignore_index=True)
+            all_df_test_comb = all_df_test_comb.sample(frac=1, random_state=42).reset_index(drop=True)
+            print(f"Combined test events: {len(all_df_test_comb)}")
+
+            if pair_test_list:
+                pair_test_comb = pd.concat(pair_test_list, ignore_index=True)
+                print(f"Combined test pairs: {len(pair_test_comb)}")
+        
+            if X_test_list and y_test_list:
+                X_test_comb = pd.concat(X_test_list, ignore_index=True)
+                y_test_comb = pd.concat(y_test_list, ignore_index=True)
+                print(f"X_test shape: {X_test_comb.shape}, y_test shape: {y_test_comb.shape}")
+
+            joblib.dump(all_df_test_comb, f'{data_dir}/all_df_test_TCOMB.pkl', compress=3)
+
+            if pair_test_list:
+                joblib.dump(pair_test_comb, f'{data_dir}/pair_test_TCOMB.pkl', compress=3)
+        
+            if X_test_list:
+                joblib.dump(X_test_comb, f'{data_dir}/X_test_TCOMB.pkl', compress=3)
+                joblib.dump(y_test_comb, f'{data_dir}/y_test_TCOMB.pkl', compress=3)
+
+            total_test = sum(len(df) for df in df_test_list)
+            print(f"Test events:       {total_test}")
+            if X_test_list and y_test_list:
+                print(f"  Test pairs: {sum(len(pairs) for pairs in pair_test_list) if pair_test_list else 0}")
+                print(f"  X_test components: {len(X_test_list)}")
+
         # Create datasets
         all_df_comb = df_comb
-        print("Creating pairs for combined dataset...")
+        print("\nCreating pairs for combined dataset...")
         pi0_all_df_comb = prepare_3photon_paris(all_df_comb)
 
         # Split
-        all_df_train_comb, all_df_val_comb, all_df_test_comb, X_train_comb, y_train_comb, X_val_comb, y_val_comb, X_test_comb, y_test_comb, pair_train_comb, pair_val_comb, pair_test_comb = data_splitting(all_df_comb)
+        #all_df_train_comb, all_df_val_comb, all_df_test_comb, X_train_comb, y_train_comb, X_val_comb, y_val_comb, X_test_comb, y_test_comb, pair_train_comb, pair_val_comb, pair_test_comb = data_splitting(all_df_comb)
+
+        print(f"\n✅ Data ready for training:")
+    
+    
+    
 
         # Save combined files with compression
         print("\nSaving combined files...")
@@ -461,33 +603,33 @@ if __name__ == '__main__':
         joblib.dump(all_df_comb, f'{data_dir}/all_df_TCOMB.pkl', compress=3)
         joblib.dump(pi0_all_df_comb, f'{data_dir}/pi0_all_df_TCOMB.pkl', compress=3)
 
-        if len(all_df_train_comb) > 0:
-            joblib.dump(all_df_train_comb, f'{data_dir}/all_df_train_TCOMB.pkl', compress=3)
-        if len(all_df_val_comb) > 0:
-            joblib.dump(all_df_val_comb, f'{data_dir}/all_df_val_TCOMB.pkl', compress=3)
-        if len(all_df_test_comb) > 0:
-            joblib.dump(all_df_test_comb, f'{data_dir}/all_df_test_TCOMB.pkl', compress=3)
+        #if len(all_df_train_comb) > 0:
+        #    joblib.dump(all_df_train_comb, f'{data_dir}/all_df_train_TCOMB.pkl', compress=3)
+        #if len(all_df_val_comb) > 0:
+        #    joblib.dump(all_df_val_comb, f'{data_dir}/all_df_val_TCOMB.pkl', compress=3)
+        #if len(all_df_test_comb) > 0:
+            #joblib.dump(all_df_test_comb, f'{data_dir}/all_df_test_TCOMB.pkl', compress=3)
 
-        if len(pair_train_comb) > 0:
-            joblib.dump(pair_train_comb, f'{data_dir}/pair_train_TCOMB.pkl', compress=3)
-        if len(pair_val_comb) > 0:
-            joblib.dump(pair_val_comb, f'{data_dir}/pair_val_TCOMB.pkl', compress=3)
-        if len(pair_test_comb) > 0:
-            joblib.dump(pair_test_comb, f'{data_dir}/pair_test_TCOMB.pkl', compress=3)
+        #if len(pair_train_comb) > 0:
+        #    joblib.dump(pair_train_comb, f'{data_dir}/pair_train_TCOMB.pkl', compress=3)
+        #if len(pair_val_comb) > 0:
+            #joblib.dump(pair_val_comb, f'{data_dir}/pair_val_TCOMB.pkl', compress=3)
+        #if len(pair_test_comb) > 0:
+        #    joblib.dump(pair_test_comb, f'{data_dir}/pair_test_TCOMB.pkl', compress=3)
 
-        if len(X_train_comb) > 0:
-            joblib.dump(X_train_comb, f'{data_dir}/X_train_TCOMB.pkl', compress=3)
-        if len(X_val_comb) > 0:
-            joblib.dump(X_val_comb, f'{data_dir}/X_val_TCOMB.pkl', compress=3)
-        if len(X_test_comb) > 0:
-            joblib.dump(X_test_comb, f'{data_dir}/X_test_TCOMB.pkl', compress=3)
+        #if len(X_train_comb) > 0:
+        #    joblib.dump(X_train_comb, f'{data_dir}/X_train_TCOMB.pkl', compress=3)
+        #if len(X_val_comb) > 0:
+        #    joblib.dump(X_val_comb, f'{data_dir}/X_val_TCOMB.pkl', compress=3)
+        #if len(X_test_comb) > 0:
+        #    joblib.dump(X_test_comb, f'{data_dir}/X_test_TCOMB.pkl', compress=3)
 
-        if len(y_train_comb) > 0:
-            joblib.dump(y_train_comb, f'{data_dir}/y_train_TCOMB.pkl', compress=3)
-        if len(y_val_comb) > 0:
-            joblib.dump(y_val_comb, f'{data_dir}/y_val_TCOMB.pkl', compress=3)
-        if len(y_test_comb) > 0:
-            joblib.dump(y_test_comb, f'{data_dir}/y_test_TCOMB.pkl', compress=3)
+        #if len(y_train_comb) > 0:
+        #    joblib.dump(y_train_comb, f'{data_dir}/y_train_TCOMB.pkl', compress=3)
+        #if len(y_val_comb) > 0:
+        #    joblib.dump(y_val_comb, f'{data_dir}/y_val_TCOMB.pkl', compress=3)
+        #if len(y_test_comb) > 0:
+        #   joblib.dump(y_test_comb, f'{data_dir}/y_test_TCOMB.pkl', compress=3)
         
         print(f"Combined data contains: {[k for k in phys_map.keys()]}")
         

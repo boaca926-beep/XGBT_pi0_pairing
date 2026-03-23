@@ -1,19 +1,6 @@
-#include "helper.h"
 #include "helper_m3pi.h"
 //#include "helper_mgg.h"
-
-double getbinwidth(TH1D* h) {
-  Int_t binsize=0;
-  double width=0.;
-  double xmax=0., xmin=0.;
-  xmax = h->GetXaxis()->GetXmax(); //cout<<xmax<<endl;
-  xmin = h->GetXaxis()->GetXmin(); //cout<<xmin<<endl;
-  binsize=h->GetNbinsX(); //cout<<"binsize = " << binsize << endl;
-  width=(xmax-xmin)/binsize; //cout<<width<<endl;
-
-  return width;
-}
-
+#include "fill_histos.h"
 
 TCanvas *plot_corr(TH2D* h2d, const TString hist_type, const TString cv_nm, const TString pt_str) {
 
@@ -74,33 +61,6 @@ TCanvas *plot_corr(TH2D* h2d, const TString hist_type, const TString cv_nm, cons
   return cv2d;
   
 }
-
-TLegend* set_legend(const double x1, const double x2, const double y1, const double y2){
-
-  TLegend *legd_cv = new TLegend(x1, x2, y1, y2);
-
-  legd_cv -> SetTextFont(132);
-  legd_cv -> SetFillStyle(0);
-  legd_cv -> SetBorderSize(0);
-  legd_cv -> SetNColumns(1);
-
-  return legd_cv;
-}
-
-TPaveText* set_pt(const double x1, const double x2, const double y1, const double y2) {
-
-  // Create TPaveText
-  TPaveText* pt = new TPaveText(x1, x2, y1, y2, "NDC");  // Coordinates in NDC (0-1)
-  pt->SetFillColor(0);           // White background
-  pt->SetTextColor(kBlack);      // Black text
-  pt->SetTextSize(0.04);         // Text size
-  //pt->SetBorderSize(1);        // Border size (0 = no border)
-  pt->SetTextAlign(12);          // Left aligned, vertically centered
-  
-  return pt;
-}
-
-
 
 TCanvas* plot_kine_var(TObjArray* HList, const TString var_type, const TString mc_type, const TString cv_title, const TString x_title, const TString unit, const double xmin, const double xmax){
 
@@ -186,37 +146,56 @@ TCanvas* plot_kine_var(TObjArray* HList, const TString var_type, const TString m
   
 }
   
-//
-void check_trees(TFile* file) {
+TObjArray* Get_HistArray_m3pi(const char* file_nm) {
 
-  if (!file || file -> IsZombie()){
-    cout << "Error: Cannot open file " << file -> GetName() << endl;
-      return;
-    }// end open root file
+  TObjArray* HistArray = new TObjArray(100); // Hist. Array
 
-    TIter next_tree(file -> GetListOfKeys());
+  // If data file exists, process it with RDataFame
+  if(!gSystem -> AccessPathName(file_nm)){
 
-    TString objnm_tree, classnm_tree;
+    cout << "\nProcessing data file: " << file_nm << endl;
     
-    TKey *key;
+    // Check input root file and list all trees
+    TFile* file = new TFile(file_nm);
     
-    while ( (key = (TKey *) next_tree() ) ) {// start tree while loop
-      
-      objnm_tree   =  key -> GetName();
-      classnm_tree = key -> GetClassName();
-      key -> GetSeekKey();
+    check_trees(file);
 
-      if (classnm_tree == "TH2D") { // list all TH2D
-      //if (classnm_tree == "TH1D") { // list all TH1D
-	cout << "classnm = " << classnm_tree << ", objnm = " << objnm_tree << endl;
-      }
+    // Fill histos
+
+    for (int i = 0; i < 10; i ++) {
+      // chi-2 selection
+      TH1D* h1d = (TH1D*)file -> Get(hist_type + TString("_") + mc_names[i]);
+      TH1D* h1d_good = (TH1D*)file -> Get(hist_type + TString("_good_") + mc_names[i]);
+      TH1D* h1d_bad = (TH1D*)file -> Get(hist_type + TString("_bad_") + mc_names[i]);
       
-      TTree *tree_tmp = (TTree*)file -> Get(objnm_tree);
+      //cout << h1d -> GetName() << endl;
+
+      // bdt selection
+      TH1D* h1d_bdt = (TH1D*)file -> Get(hist_type + TString("_BDT_") + mc_names[i]);
+      //cout << h1d_bdt -> GetName() << endl;
+
+      // bdt best
+      TH1D* h1d_bdt_good = (TH1D*)file -> Get(hist_type + TString("_BDT_good_") + mc_names[i]);
+      //cout << h1d_bdt_good -> GetName() << endl;
+
+      // bdt discarded
+      TH1D* h1d_bdt_bad = (TH1D*)file -> Get(hist_type + TString("_BDT_bad_") + mc_names[i]);
+      //cout << h1d_bdt_bad -> GetName() << endl;
+
+      // Fill HistArray_m3pi
+      HistArray -> Add(h1d);
+      HistArray -> Add(h1d_good);
+      HistArray -> Add(h1d_bad);
+      
+      HistArray -> Add(h1d_bdt);
+      HistArray -> Add(h1d_bdt_good);
+      HistArray -> Add(h1d_bdt_bad);
       
     }
     
-    // Get histos
-    file -> cd(); // Make sure we're in the output file
+  }// end input checks
+
+  return HistArray;
 
 }
 
@@ -228,68 +207,9 @@ int fill_histos(const char* input_filename = "./output_with_bdt.root") {
   gStyle->SetOptTitle(0);
   gStyle->SetFitFormat("6.4g");
 
-  TObjArray* HistArray_m3pi = new TObjArray(100); // Hist. Array
-    
-  // If data file exists, process it with RDataFame
-  if(!gSystem -> AccessPathName(input_filename)){
+  TObjArray* HistArray_m3pi = Get_HistArray_m3pi(input_filename); //new TObjArray(100); // Hist. Array
 
-    cout << "\nProcessing data file: " << input_filename << endl;
-    
-    // Check input root file and list all trees
-    TFile* file = new TFile(input_filename);
-    
-    check_trees(file);
-
-    const char* mc_names[] = {"TDATA",
-			      "TEEG",
-			      "TOMEGAPI",
-			      "TKPM",
-			      "TKSL",
-			      "TRHOPI",
-			      "TETAGAM",
-			      "TBKGREST",
-			      "T3PIGAM",
-			      "TISR3PI_SIG"
-    };
-    
-    // Fill histos
-
-    for (int i = 0; i < 10; i ++) {
-      // chi-2 selection
-      TH1D* hm3pi = (TH1D*)file -> Get(hist_type + TString("_") + mc_names[i]);
-      TH1D* hm3pi_good = (TH1D*)file -> Get(hist_type + TString("_good_") + mc_names[i]);
-      TH1D* hm3pi_bad = (TH1D*)file -> Get(hist_type + TString("_bad_") + mc_names[i]);
-      
-      //cout << hm3pi -> GetName() << endl;
-
-      // bdt selection
-      TH1D* hm3pi_bdt = (TH1D*)file -> Get(hist_type + TString("_BDT_") + mc_names[i]);
-      //cout << hm3pi_bdt -> GetName() << endl;
-
-      // bdt best
-      TH1D* hm3pi_bdt_good = (TH1D*)file -> Get(hist_type + TString("_BDT_good_") + mc_names[i]);
-      //cout << hm3pi_bdt_good -> GetName() << endl;
-
-      // bdt discarded
-      TH1D* hm3pi_bdt_bad = (TH1D*)file -> Get(hist_type + TString("_BDT_bad_") + mc_names[i]);
-      //cout << hm3pi_bdt_bad -> GetName() << endl;
-
-      // Fill HistArray_m3pi
-      HistArray_m3pi -> Add(hm3pi);
-      HistArray_m3pi -> Add(hm3pi_good);
-      HistArray_m3pi -> Add(hm3pi_bad);
-      
-      HistArray_m3pi -> Add(hm3pi_bdt);
-      HistArray_m3pi -> Add(hm3pi_bdt_good);
-      HistArray_m3pi -> Add(hm3pi_bdt_bad);
-
-      // Fill
-      
-    }
-    
-  }// end input checks
-
-  //==================================== Plotting =================================
+  //==================================== Plotting H1D =================================
   
   TLine *line11 = new TLine(650., 0., 650., 1500.); // vertical left
   line11 -> SetLineColor(42);
@@ -299,15 +219,8 @@ int fill_histos(const char* input_filename = "./output_with_bdt.root") {
   line22 -> SetLineColor(42);
   line22 -> SetLineWidth(4);
 
-  const int list_size = 3;
-
   //const TString ch_type[list_size] = {"TETAGAM"};
 
-  const TString ch_type[list_size] = {"TDATA",
-				      "TETAGAM",
-				      "TISR3PI_SIG"
-  };
-  
   for (int i = 0; i < list_size; i++) {
     //
     TCanvas* cv_M3pi = plot_kine_var(HistArray_m3pi, hist_type, ch_type[i], cv_title, x_title, unit, xmin, xmax);
@@ -334,7 +247,7 @@ int fill_histos(const char* input_filename = "./output_with_bdt.root") {
     //TCanvas* cv2d_corr = plot_corr("h2dM3pi_kloeBDT_corr_TDATA", "TDATA", "", "Data");
     
   }
-    
+  
   return 0;
   
 }

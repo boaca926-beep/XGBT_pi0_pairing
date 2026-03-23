@@ -1,0 +1,481 @@
+import sys
+import os
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(project_root)
+
+import joblib
+import uproot
+import numpy as np
+import pandas as pd
+from plots import plot_compr_hist, plot_var, plot_feature_pairs, plot_feature_target
+#from training.config import prepare_3photon_paris
+#from sklearn.model_selection import train_test_split
+#import random
+import awkward as ak
+import gc  # For garbage collection
+
+from config import (
+    DATA_DIR,
+    REQUIRED_BR,
+    create_dataset, data_splitting,
+    prepare_3photon_paris
+)
+
+"""
+# Conservative settings for 16GB RAM
+python main_initialize_kloe_files.py \
+  --input ../data/kloe_sample_full.root \
+  --chunk-size 10000 \
+  --output-dir ./dataset_large
+
+# Aggressive settings for 32GB+ RAM  
+python main_initialize_kloe_files.py \
+  --input ../data/kloe_sample_full.root \
+  --chunk-size 50000 \
+  --output-dir ./dataset_large
+
+python main_initialize_kloe_files.py --input ../data/kloe_sample_full.root --output-dir ./dataset_large --clear
+"""
+
+if __name__ == '__main__':
+    #============================================================
+    # LOAD INPUT ROOT FILES
+    #============================================================
+    # MODIFIED: Allow command line argument for input file
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--input', type=str, default="../data/kloe_sample.root", 
+                       help='Input ROOT file path')
+    parser.add_argument('--chunk-size', type=int, default=50000, 
+                       help='Number of entries to process at once')
+    parser.add_argument('--max-events', type=int, default=None,
+                       help='Maximum number of events to process (for testing)')
+    parser.add_argument('--output-dir', type=str, default=DATA_DIR,
+                   help='Output directory for dataset files')
+    #parser.add_argument('--clear', action='store_true', 
+    #               help='Clear output directory before processing')
+    args = parser.parse_args()
+    
+    f_nm = args.input
+
+    # Create output directory
+    #data_dir = rf'./dataset' 
+
+    data_dir = args.output_dir
+    # Create fresh directory
+    # With this (always fresh):
+    import shutil
+    if os.path.exists(data_dir):
+        shutil.rmtree(data_dir)
+    os.makedirs(data_dir, exist_ok=True)
+
+    ## Loop over branches and create phys_map dynamically
+    try:
+        # Open the root file
+        root_file = uproot.open(f_nm)
+        branches = root_file.keys()
+        print('All keys:', branches)
+    
+    except Exception as e:
+        print('Error opening file: ', e)
+        sys.exit(1)
+
+    # Check first few braches and create a phys_map dynamically
+    phys_map = {}
+
+    for i, br_nm in enumerate(branches):
+        # Remove ROOT cycle number (;1, ;2, etc.) for comparison
+        base_br_nm = br_nm.split(';')[0]
+
+        # Skip if already processed (in case of multiple cycles)
+        if base_br_nm in phys_map:
+            print(f"Skippin duplicate: {br_nm} (already have {base_br_nm})")
+            continue
+
+        #print(base_br_nm)
+        if base_br_nm == "TISR3PI_SIG":
+            br_title = rf"$e^{{+}}e^{{-}}\to\pi^{{+}}\pi^{{-}}\pi^{{0}}\gamma$"
+            category = "signal"
+        elif base_br_nm == "TOMEGAPI":
+            br_title = rf"$\omega\pi^{0}$"
+            category = "background"
+        elif base_br_nm == "TKPM":
+            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to K\bar{{K}}$"
+            category = "background"
+        elif base_br_nm == "TKSL":
+            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to K_{{S}}K_{{L}}$"
+            category = "background"
+        elif base_br_nm == "TRHOPI":
+            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to \rho\pi$"
+            category = "background"
+        elif base_br_nm == "TBKGREST":
+            br_title = rf"Others"
+            category = "background"
+        elif base_br_nm == "TEEG":
+            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to e^{{+}}e^{{-}}\gamma$"
+            category = "background"
+        elif base_br_nm == "TETAGAM":
+            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to\eta\gamma$"
+            category = "signal"
+        else:
+            continue
+
+        # Fill phys_map entries
+        phys_map[base_br_nm] = {
+            'br_title': br_title,
+            'category': category,
+            'original_name': br_nm # Store original for reference
+        }
+    
+    # Check phys_map
+    for data_type, info in phys_map.items():
+        info_title = info['br_title']
+        info_category = info['category']
+        print(data_type, info_title, info_category)
+
+    #============================================================
+    # CREATE DATASET - MODIFIED to handle large files with chunking
+    #============================================================
+    df_list = []        # List for storing all dataset for combining
+    
+    train_files = []  # Store filenames instead of dataframes
+    val_files = []
+    test_files = []
+    pair_train_files = []
+    pair_val_files = []
+    pair_test_files = []
+    X_train_files = []
+    y_train_files = []
+    X_val_files = []
+    y_val_files = []
+    X_test_files = []
+    y_test_files = []
+
+    ch_indx = 0
+    for data_type, info in phys_map.items():
+        try:
+            data_nm = data_type.split(';')[0]
+
+            ch_indx += 1
+            print("="*25 + f"Channel {ch_indx}: {data_type}" + "="*25)
+            
+            # Get tree for this channel
+            tree = root_file[data_type] 
+
+            # Debug info for this channel
+            print(f"Processing {data_type}...")
+            total_entries = tree.num_entries
+            if args.max_events:
+                total_entries = min(total_entries, args.max_events)
+            print(f"Number of entries: {total_entries}")
+
+            # Read as awkward array to determine fields (only first 100)
+            ak_array = tree.arrays(library="ak", entry_stop=100)
+
+            # Generate fields_to_use for THIS channel
+            exclude_fields = ['Br_pull_E1', 'Br_pull_x1', 'Br_pull_y1', 'Br_pull_z1', 'Br_pull_t1']
+            fields_to_use = []
+
+            for field in ak_array.fields:
+                # Skip fields that match exclude_fields
+                if any(pattern in field for pattern in exclude_fields):
+                    continue
+
+                # Only include 1D fields
+                if ak_array[field].ndim == 1:
+                    fields_to_use.append(field)
+                else:
+                    print(f"Excluding multi-dim field: {field} (ndim={ak_array[field].ndim})")
+
+            # Check if we have the required branches
+            
+            missing_br = [br for br in REQUIRED_BR if br not in fields_to_use]
+            if missing_br:
+                print(f"WARNING: Missing branches in {data_type}: {missing_br}")
+                if info['category'] == 'signal' and len(missing_br) > 5:
+                    print(f"Too many missing branches for signal channel {data_type}, skipping...")
+                    continue
+            
+            print(f"Fields being used: {len(fields_to_use)} fields")
+
+            # MODIFIED: Process in chunks for large files
+            chunk_size = min(args.chunk_size, total_entries)
+            n_chunks = (total_entries + chunk_size - 1) // chunk_size
+            
+            print(f"Processing {total_entries} entries in {n_chunks} chunks of {chunk_size}")
+            
+            all_chunks = []
+            
+            for chunk_idx in range(n_chunks):
+                start = chunk_idx * chunk_size
+                stop = min((chunk_idx + 1) * chunk_size, total_entries)
+                
+                print(f"\n  Processing chunk {chunk_idx+1}/{n_chunks} (entries {start}-{stop})")
+                
+                # Read chunk
+                chunk_df = tree.arrays(fields_to_use, library="pd", 
+                                      entry_start=start, entry_stop=stop)
+                
+                print(f"  Chunk shape: {chunk_df.shape}")
+                
+                # Process chunk
+                chunk_all_df, chunk_pi0_df = create_dataset(chunk_df, info['category'])
+                
+                if chunk_all_df is not None and len(chunk_all_df) > 0:
+                    # Add chunk identifier to event numbers to avoid duplicates
+                    chunk_all_df['event'] = f"ch{chunk_idx}_" + chunk_all_df['event'].astype(str)
+                    all_chunks.append(chunk_all_df)
+                
+                # Clear memory
+                del chunk_df, chunk_all_df, chunk_pi0_df
+                gc.collect()
+            
+            # Combine chunks
+            if all_chunks:
+                print(f"\nCombining {len(all_chunks)} chunks for {data_type}...")
+                all_df = pd.concat(all_chunks, ignore_index=True)
+                del all_chunks
+                gc.collect()
+                
+                print(f"Total events after filtering: {len(all_df)}")
+                
+                # Check for anomalies
+                if 'Br_betapi0' in all_df.columns:
+                    betapi0_values = all_df['Br_betapi0']
+                    print(f"Betapi0 stats: {betapi0_values.describe()}")
+                
+                # Data splitting
+                if len(all_df) < 100:
+                    print(f"WARNING: Very few events! Entries {len(all_df)}")  
+                    continue
+                
+                # Create pi0 pairs after splitting (original behavior)
+                all_df_train, all_df_val, all_df_test, X_train, y_train, X_val, y_val, X_test, y_test, pair_train, pair_val, pair_test = data_splitting(all_df)
+                
+                joblib.dump(all_df, f'{data_dir}/all_df_{data_nm}.pkl', compress=3)
+
+                # Add to combined list
+                df_list.append(all_df)
+   
+                # NEW: Save each split immediately and free memory
+                print(f"\nSaving splits for {data_nm} to disk...")
+                
+                # Save all_df split
+                train_file = f'{data_dir}/all_df_train_{data_nm}.pkl'
+                joblib.dump(all_df_train, train_file, compress=3)
+                train_files.append(train_file)
+                
+                # Save all_df validation split
+                val_file = f'{data_dir}/all_df_val_{data_nm}.pkl'
+                joblib.dump(all_df_val, val_file, compress=3)
+                val_files.append(val_file)
+                
+                # Save all_df test split
+                test_file = f'{data_dir}/all_df_test_{data_nm}.pkl'
+                joblib.dump(all_df_test, test_file, compress=3)
+                test_files.append(test_file)
+                
+                # Save pairs (features): train, validation and test
+                if len(pair_train) > 0:
+                    pair_train_file = f'{data_dir}/pair_train_{data_nm}.pkl'
+                    joblib.dump(pair_train, pair_train_file, compress=3)
+                    pair_train_files.append(pair_train_file)
+                
+                if len(pair_val) > 0:
+                    pair_val_file = f'{data_dir}/pair_val_{data_nm}.pkl'
+                    joblib.dump(pair_val, pair_val_file, compress=3)
+                    pair_val_files.append(pair_val_file)
+                
+                if len(pair_test) > 0:
+                    pair_test_file = f'{data_dir}/pair_test_{data_nm}.pkl'
+                    joblib.dump(pair_test, pair_test_file, compress=3)
+                    pair_test_files.append(pair_test_file)
+                
+                # Save features and labels: train, validation and test
+                if len(X_train) > 0:
+                    X_train_file = f'{data_dir}/X_train_{data_nm}.pkl'
+                    joblib.dump(X_train, X_train_file, compress=3)
+                    X_train_files.append(X_train_file)
+                    y_train_file = f'{data_dir}/y_train_{data_nm}.pkl'
+                    joblib.dump(y_train, y_train_file, compress=3)
+                    y_train_files.append(y_train_file)
+                
+                if len(X_val) > 0:
+                    X_val_file = f'{data_dir}/X_val_{data_nm}.pkl'
+                    joblib.dump(X_val, X_val_file, compress=3)
+                    X_val_files.append(X_val_file)
+                    y_val_file = f'{data_dir}/y_val_{data_nm}.pkl'
+                    joblib.dump(y_val, y_val_file, compress=3)
+                    y_val_files.append(y_val_file)
+                
+                if len(X_test) > 0:
+                    X_test_file = f'{data_dir}/X_test_{data_nm}.pkl'
+                    joblib.dump(X_test, X_test_file, compress=3)
+                    X_test_files.append(X_test_file)
+                    y_test_file = f'{data_dir}/y_test_{data_nm}.pkl'
+                    joblib.dump(y_test, y_test_file, compress=3)
+                    y_test_files.append(y_test_file)
+                
+                
+                # Clear memory immediately
+                del all_df_train, all_df_val, all_df_test
+                del X_train, y_train, X_val, y_val, X_test, y_test
+                del pair_train, pair_val, pair_test
+                gc.collect()
+                
+            else:
+                print(f"No valid events for {data_type}")
+  
+        except Exception as e:
+            print(f"ERROR processing {data_type}: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            print(f"Skipping {data_type} and continuing with next channel...")
+            continue
+
+    ## Combining dataset
+    if df_list:
+        print(f"\nCombining {len(df_list)} channels ...")
+        
+        # Add channel prefix to event IDs to avoid collisions
+        for i, (df, (data_type, info)) in enumerate(zip(df_list, list(phys_map.items())[:len(df_list)])):
+            channel_name = data_type.split(';')[0]
+            df['event'] = f"{channel_name}_" + df['event'].astype(str)
+            print(f"    Updated event IDs for {channel_name}")
+
+        # Combine full datasets
+        df_comb = pd.concat(df_list, ignore_index=True)
+        print(f"Raw combined shape: {df_comb.shape}")
+        # Shuffle
+        df_comb = df_comb.sample(frac=1, random_state=42).reset_index(drop=True)
+        print(f"Shuffled combined shape: {df_comb.shape}")
+
+    
+        # Create combined pairs
+        print("\nCreating pairs for combined dataset...")
+        pi0_all_df_comb = prepare_3photon_paris(df_comb)
+
+        # Split
+        #all_df_train_comb, all_df_val_comb, all_df_test_comb, X_train_comb, y_train_comb, X_val_comb, y_val_comb, X_test_comb, y_test_comb, pair_train_comb, pair_val_comb, pair_test_comb = data_splitting(all_df_comb)
+
+        print(f"\n✅ Data ready for training:")
+    
+        # Save full combined
+        joblib.dump(df_comb, f'{data_dir}/all_df_TCOMB.pkl', compress=3)
+        joblib.dump(pi0_all_df_comb, f'{data_dir}/pi0_all_df_TCOMB.pkl', compress=3)
+        print("\nSaving combined files...")
+        
+        # NEW: Combine splits from disk
+        print(f"\n{'='*60}")
+        print(f"Combining splits from all channels...")
+        print(f"{'='*60}")
+    
+        # Combine training splits
+        if train_files:
+            print(f"\nCombining {len(train_files)} training splits...")
+            all_df_train_comb = []
+            for train_file in train_files:
+                all_df_train_comb.append(joblib.load(train_file))
+            
+            all_df_train_comb = pd.concat(all_df_train_comb, ignore_index=True)
+            all_df_train_comb = all_df_train_comb.sample(frac=1, random_state=42).reset_index(drop=True)
+            joblib.dump(all_df_train_comb, f'{data_dir}/all_df_train_TCOMB.pkl', compress=3)
+            print(f"  Training events: {len(all_df_train_comb)}")
+            del all_df_train_comb
+            gc.collect()
+        
+        # Combine validation splits
+        if val_files:
+            print(f"\nCombining {len(val_files)} validation splits...")
+            all_df_val_comb = []
+            for val_file in val_files:
+                all_df_val_comb.append(joblib.load(val_file))
+            
+            all_df_val_comb = pd.concat(all_df_val_comb, ignore_index=True)
+            all_df_val_comb = all_df_val_comb.sample(frac=1, random_state=42).reset_index(drop=True)
+            joblib.dump(all_df_val_comb, f'{data_dir}/all_df_val_TCOMB.pkl', compress=3)
+            print(f"  Validation events: {len(all_df_val_comb)}")
+            del all_df_val_comb
+            gc.collect()
+        
+        # Combine test splits
+        if test_files:
+            print(f"\nCombining {len(test_files)} test splits...")
+            all_df_test_comb = []
+            for test_file in test_files:
+                all_df_test_comb.append(joblib.load(test_file))
+            
+            all_df_test_comb = pd.concat(all_df_test_comb, ignore_index=True)
+            all_df_test_comb = all_df_test_comb.sample(frac=1, random_state=42).reset_index(drop=True)
+            joblib.dump(all_df_test_comb, f'{data_dir}/all_df_test_TCOMB.pkl', compress=3)
+            print(f"  Test events: {len(all_df_test_comb)}")
+            del all_df_test_comb
+            gc.collect()
+        
+        # Combine pairs
+        print("\nCombining pairs...")
+        if pair_train_files:
+            pair_train_comb = pd.concat([joblib.load(f) for f in pair_train_files], ignore_index=True)
+            joblib.dump(pair_train_comb, f'{data_dir}/pair_train_TCOMB.pkl', compress=3)
+            print(f"  Training pairs: {len(pair_train_comb)}")
+            del pair_train_comb
+            gc.collect()
+        
+        if pair_val_files:
+            pair_val_comb = pd.concat([joblib.load(f) for f in pair_val_files], ignore_index=True)
+            joblib.dump(pair_val_comb, f'{data_dir}/pair_val_TCOMB.pkl', compress=3)
+            print(f"  Validation pairs: {len(pair_val_comb)}")
+            del pair_val_comb
+            gc.collect()
+        
+        if pair_test_files:
+            pair_test_comb = pd.concat([joblib.load(f) for f in pair_test_files], ignore_index=True)
+            joblib.dump(pair_test_comb, f'{data_dir}/pair_test_TCOMB.pkl', compress=3)
+            print(f"  Test pairs: {len(pair_test_comb)}")
+            del pair_test_comb
+            gc.collect()
+
+        # Combine features and labels
+        print("\nCombining features and labels...")
+        if X_train_files and y_train_files:
+            X_train_comb = pd.concat([joblib.load(f) for f in X_train_files], ignore_index=True)
+            y_train_comb = pd.concat([joblib.load(f) for f in y_train_files], ignore_index=True)
+            joblib.dump(X_train_comb, f'{data_dir}/X_train_TCOMB.pkl', compress=3)
+            joblib.dump(y_train_comb, f'{data_dir}/y_train_TCOMB.pkl', compress=3)
+            print(f"  X_train shape: {X_train_comb.shape}")
+            del X_train_comb, y_train_comb
+            gc.collect()
+        
+        if X_val_files and y_val_files:
+            X_val_comb = pd.concat([joblib.load(f) for f in X_val_files], ignore_index=True)
+            y_val_comb = pd.concat([joblib.load(f) for f in y_val_files], ignore_index=True)
+            joblib.dump(X_val_comb, f'{data_dir}/X_val_TCOMB.pkl', compress=3)
+            joblib.dump(y_val_comb, f'{data_dir}/y_val_TCOMB.pkl', compress=3)
+            print(f"  X_val shape: {X_val_comb.shape}")
+            del X_val_comb, y_val_comb
+            gc.collect()
+        
+        if X_test_files and y_test_files:
+            X_test_comb = pd.concat([joblib.load(f) for f in X_test_files], ignore_index=True)
+            y_test_comb = pd.concat([joblib.load(f) for f in y_test_files], ignore_index=True)
+            joblib.dump(X_test_comb, f'{data_dir}/X_test_TCOMB.pkl', compress=3)
+            joblib.dump(y_test_comb, f'{data_dir}/y_test_TCOMB.pkl', compress=3)
+            print(f"  X_test shape: {X_test_comb.shape}")
+            del X_test_comb, y_test_comb
+            gc.collect()
+
+        print(f"\nCombined data contains: {[k for k in phys_map.keys()]}")
+        
+        
+        # Add TCOMB to phys_map
+        phys_map['TCOMB'] = {
+            'br_title': "MC combined",
+            'category': "combined"
+        }
+    else:
+        print(f"df_list is empty, no channels can be combined!")
+        raise ValueError("No data to combine!")
+
+    # Save phys_map
+    joblib.dump(phys_map, f'{data_dir}/phys_map.pkl', compress=3)
+    print(f"\n✅ All processing complete! Files saved to {data_dir}")

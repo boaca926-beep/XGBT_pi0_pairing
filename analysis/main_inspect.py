@@ -1,19 +1,39 @@
 import joblib
+import sys
 import os
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(project_root)
+print(project_root)
+
 from plots import plot_compr_hist, plot_var, plot_feature_pairs, plot_feature_target
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import sys
+
+
+from config import (
+    DATA_DIR, PLOT_DIR_ANALYSIS
+)
 
 # Inspect features and correlations
 
 if __name__ == '__main__':
 
-    input_data_dir = os.path.join(project_root, f'analysis/dataset')
+    #DATA_DIR = 'dataset' 
+    #input_data_dir = os.path.join(project_root, f'analysis/{DATA_DIR}')
+    input_data_dir = DATA_DIR
     phys_map = joblib.load(os.path.join(input_data_dir, f'phys_map.pkl'))
     print(phys_map)
+
+    # Create output folder
+    #plot_dir = os.path.join(project_root, 'analysis/plots')
+    plot_dir = PLOT_DIR_ANALYSIS
+    
+    # With this (always fresh) plot_dir
+    import shutil
+    if os.path.exists(plot_dir):
+        shutil.rmtree(plot_dir)
+    os.makedirs(plot_dir, exist_ok=True)
 
     ## Check if true pi0 events add up for all channels in phys_map
     nb_evnt_sum = 0
@@ -55,10 +75,6 @@ if __name__ == '__main__':
     #phys_ch = ['TEEG', 'background']
 
     phys_ch = ['TCOMB', 'combined']
-
-    # Create output folder
-    plot_dir = rf'./plots'
-    os.makedirs(plot_dir , exist_ok=True)
     
     for data_type, info in phys_map.items():
         br_nm = data_type.split(';')[0]
@@ -122,7 +138,7 @@ if __name__ == '__main__':
             fig_compr_hist = plot_compr_hist(pi0_df_set, drop_columns,
                                              2, 100, 
                                              rf"$\pi^{0}$ Candidates ({br_title})") # Pi0 comparison plot
-            fig_compr_hist.savefig(f'./{plot_dir}/Pi0_compr_{br_nm}.png', dpi=300, bbox_inches='tight')
+            fig_compr_hist.savefig(f'{plot_dir}/Pi0_compr_{br_nm}.png', dpi=300, bbox_inches='tight')
             plt.close(fig_compr_hist)  
 
             ## * Plot kine. var of selection cuts: chi2, gg-opening-angle, deltaE, ppIM, betapi0
@@ -131,7 +147,7 @@ if __name__ == '__main__':
             fig_compr_hist = plot_compr_hist(kine_df_set, drop_columns,
                                              2, 100, 
                                              rf"Selection Cuts ({br_title})") # Kine. var. comparison plot
-            fig_compr_hist.savefig(f'./{plot_dir}/Kine_compr_{br_nm}.png', dpi=300, bbox_inches='tight')
+            fig_compr_hist.savefig(f'{plot_dir}/Kine_compr_{br_nm}.png', dpi=300, bbox_inches='tight')
             plt.close(fig_compr_hist)
             #print(kine_all_df.head(5)) 
 
@@ -140,7 +156,7 @@ if __name__ == '__main__':
                 print(f"!!!!!!!!!!!!!!!!!!!!!!!!!! {br_nm}, {category}")
                 ## * Plot true pi0 mass
                 fig_var = plot_var(pi0_mass, 'm_gg', br_title)
-                fig_var.savefig(f'./{plot_dir}/pos_pi0_mass_{br_nm}.png', dpi=300, bbox_inches='tight')
+                fig_var.savefig(f'{plot_dir}/pos_pi0_mass_{br_nm}.png', dpi=300, bbox_inches='tight')
                 plt.close(fig_var)
 
                 ## * Plot kine. var of selection cuts correlations
@@ -148,7 +164,7 @@ if __name__ == '__main__':
                 fig_feature_pairs = plot_feature_pairs(kine_all_df, drop_columns,
                                                        rf"Selection Cuts Correlations (Signal=Blue, Background=Red) ({br_title})", 
                                                        "is_signal")
-                fig_feature_pairs.savefig(f'./{plot_dir}/SC_correlation_{br_nm}.png', dpi=300, bbox_inches='tight')
+                fig_feature_pairs.savefig(f'{plot_dir}/SC_correlation_{br_nm}.png', dpi=300, bbox_inches='tight')
                 plt.close(fig_feature_pairs.fig)  
 
                 ## * Plot pi0 feature-feature correlations
@@ -157,7 +173,7 @@ if __name__ == '__main__':
                 fig_feature_pairs = plot_feature_pairs(pi0_all_df, drop_columns,
                                                        rf"$\pi^{0}$ Candidates Feature-feature (Signal=Blue, Background=Red) ({br_title})", 
                                                        "is_pi0")
-                fig_feature_pairs.savefig(f'./{plot_dir}/FF_correlation_{br_nm}.png', dpi=300, bbox_inches='tight')
+                fig_feature_pairs.savefig(f'{plot_dir}/FF_correlation_{br_nm}.png', dpi=300, bbox_inches='tight')
                 plt.close(fig_feature_pairs.fig)
 
                 ## * Plot pi0 feature-target correlations
@@ -166,6 +182,6 @@ if __name__ == '__main__':
                 target_corr = pi0_all_df[features].corr()['is_pi0'].drop('is_pi0') #.sort_values(ascending=False)
                 #sorted_by_abs = target_corr.abs().sort_values(ascending=False)
                 fig_feature_target = plot_feature_target(target_corr, rf'Feature Importance: Correlation with true $\pi^{0}$ ({br_title})')
-                fig_feature_target.savefig(f'./{plot_dir}/feature_target_correlation_{br_nm}.png', dpi=300, bbox_inches='tight')
+                fig_feature_target.savefig(f'{plot_dir}/feature_target_correlation_{br_nm}.png', dpi=300, bbox_inches='tight')
                 plt.close(fig_feature_target)
     
