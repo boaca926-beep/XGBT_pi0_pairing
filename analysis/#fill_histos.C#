@@ -1,0 +1,78 @@
+//
+void check_trees(TFile* file) {
+
+  if (!file || file -> IsZombie()){
+    cout << "Error: Cannot open file " << file -> GetName() << endl;
+      return;
+    }// end open root file
+
+    TIter next_tree(file -> GetListOfKeys());
+
+    TString objnm_tree, classnm_tree;
+    
+    TKey *key;
+    
+    while ( (key = (TKey *) next_tree() ) ) {// start tree while loop
+      
+      objnm_tree   =  key -> GetName();
+      classnm_tree = key -> GetClassName();
+      key -> GetSeekKey();
+
+      //if (classnm_tree == "TH2D") { // list all TH2D
+      if (classnm_tree == "TH1D") { // list all TH1D
+	cout << "classnm = " << classnm_tree << ", objnm = " << objnm_tree << endl;
+      }
+      
+      TTree *tree_tmp = (TTree*)file -> Get(objnm_tree);
+      
+    }
+    
+    // Get histos
+    file -> cd(); // Make sure we're in the output file
+
+}
+
+int fill_histos(const char* input_filename = "./output_main_bdt.root") {
+
+  gErrorIgnoreLevel = kError;
+  TGaxis::SetMaxDigits(4);
+  gStyle->SetOptStat(0);
+  gStyle->SetOptTitle(0);
+  gStyle->SetFitFormat("6.4g");
+
+  // If data file exists, process it with RDataFame
+  if(!gSystem -> AccessPathName(input_filename)){
+
+    cout << "\nProcessing data file: " << input_filename << endl;
+    
+    // Check input root file and list all trees
+    TFile* file = new TFile(input_filename);
+    
+    check_trees(file);
+
+    const char* mc_names[] = {"TDATA",
+			      "TEEG",
+			      "TOMEGAPI",
+			      "TKPM",
+			      "TKSL",
+			      "TRHOPI",
+			      "TETAGAM",
+			      "TBKGREST",
+			      "T3PIGAM",
+			      "TISR3PI_SIG"
+    };
+    
+    // Fill histos
+    for (int i = 0; i < 10; i ++) {
+      TString hm3pi_name = TString("hM3pi_") + mc_names[i];
+      TH1D* hm3pi = (TH1D*)file -> Get(hm3pi_name);
+      cout << h << endl;
+      //HistArray_m3pi -> Add(hm3pi);
+    }
+    
+  }// end input checks
+
+  
+  return 0;
+  
+}
