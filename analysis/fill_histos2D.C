@@ -117,6 +117,7 @@ int fill_histos2D(const char* input_filename = "./output_with_bdt.root") {
     TCanvas* cv2d_corr_data = plot_corr(HistArray_h2d, hist_type, ch_type[i], "_", cv_title, x_title, x_unit, xmin, xmax, y_title, y_unit, ymin, ymax);
 
     TH2D *h2d = (TH2D *) HistArray_h2d -> FindObject(hist_type + "_" + ch_type[i]);
+    cout << ch_type[i] << ", entries: " << h2d -> GetEntries() << endl;
   
     TPaveText *pt = set_pt(0.2, 0.86, 0.3, 0.86); //new TPaveText(0.2, 0.8, 0.3, 0.85, "NDC");
     

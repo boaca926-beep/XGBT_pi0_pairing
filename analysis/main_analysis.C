@@ -472,10 +472,6 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 	//cout << out_event << endl;
 	outtree -> Fill();
 
-	h2dM3pi_kloeBDT_corr -> Fill(m3pi, m3pi_bdt);
-	//h2dM3pi_kloeBDT_corr -> Fill(m3pi, m3pi_bdt);
-	
-
 	//if (m3pi_bdt > 800. || m3pi_bdt < 760.) continue;
 	
 	if (m3pi_bdt > 900. || m3pi_bdt < 650.) continue;
@@ -485,6 +481,10 @@ void main_analysis(const char* model_filename = "../training/models/bdt_pi0_TCOM
 
 	hM_gg -> Fill(m_gg);
 	hM3pi -> Fill(m3pi);
+
+	h2dM3pi_kloeBDT_corr -> Fill(m3pi, m3pi_bdt);
+	//h2dM3pi_kloeBDT_corr -> Fill(m3pi, m3pi_bdt);
+	
 	if (recon_indx == 2 && bkg_indx == 1){//  true pi0 gg
 	  hE1_good -> Fill(photons[0][0]);
 	  hE2_good -> Fill(photons[1][0]);
