@@ -16,6 +16,7 @@ import gc  # For garbage collection
 
 from config import (
     DATA_DIR,
+    DATA_LARGE_DIR,
     REQUIRED_BR,
     create_dataset, data_splitting,
     prepare_3photon_paris
@@ -52,8 +53,8 @@ if __name__ == '__main__':
                        help='Maximum number of events to process (for testing)')
     parser.add_argument('--output-dir', type=str, default=DATA_DIR,
                    help='Output directory for dataset files')
-    #parser.add_argument('--clear', action='store_true', 
-    #               help='Clear output directory before processing')
+    parser.add_argument('--clear', action='store_true', 
+                   help='Clear output directory before processing')
     args = parser.parse_args()
     
     f_nm = args.input
