@@ -396,7 +396,7 @@ if __name__ == '__main__':
     input_data_dir = DATA_DIR #DATA_LARGE_DIR
     input_model_dir = MODEL_DIR
 
-    category_type = 'TETAGAM' #'TCOMB' #'TETAGAM', 'TISR3PI_SIG', 'TKSL'
+    category_type = 'TCOMB' #'TCOMB' #'TETAGAM', 'TISR3PI_SIG', 'TKSL'
 
     phys_map = joblib.load(os.path.join(input_data_dir, f'phys_map.pkl'))
     print(phys_map)
