@@ -393,7 +393,7 @@ if __name__ == '__main__':
     
     #input_data_dir = os.path.join(project_root, f'analysis/dataset')
     #input_model_dir = os.path.join(project_root, f'training/models')
-    input_data_dir = DATA_LARGE_DIR #DATA_LARGE_DIR
+    input_data_dir = DATA_DIR #DATA_LARGE_DIR
     input_model_dir = MODEL_DIR
 
     category_type = 'TETAGAM' #'TCOMB' #'TETAGAM', 'TISR3PI_SIG', 'TKSL'

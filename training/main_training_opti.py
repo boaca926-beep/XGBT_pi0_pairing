@@ -95,11 +95,11 @@ if __name__ == '__main__':
 
     os.makedirs(model_dir, exist_ok=True)
 
-    input_data_dir = DATA_LARGE_DIR
+    input_data_dir = DATA_DIR #DATA_LARGE_DIR
     phys_map = joblib.load(os.path.join(input_data_dir, f'phys_map.pkl'))
     print(phys_map)
 
-    br_type = 'TETAGAM' #'TCOMB'
+    br_type = 'TCOMB' #'TETAGAM' 'TCOMB'
     info = phys_map[br_type]
     info_title = info['br_title']
     info_category = info['category']
