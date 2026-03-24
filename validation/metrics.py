@@ -9,6 +9,11 @@ import numpy as np
 from sklearn.metrics import roc_auc_score, roc_curve, auc, accuracy_score
 from application.prediction import find_best_pi0_candidate
 
+'''
+Your code is perfectly consistent! The 100% recall means the model always ranks the true π⁰ pair highest, but sometimes with low confidence (< threshold). 
+The 90.7% recall is the rate at which the model's confidence exceeds threshold. Both metrics are valuable for understanding your model's performance!
+'''
+
 #================================================
 # Evaluate validation set
 #================================================

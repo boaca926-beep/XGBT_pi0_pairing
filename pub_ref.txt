@@ -1,0 +1,50 @@
+[1] T. Chen and C. Guestrin, 
+    "XGBoost: A scalable tree boosting system," 
+    Proceedings of the 22nd ACM SIGKDD, 785 (2016).
+    DOI: 10.1145/2939672.2939785
+
+
+[2] A. Radovic et al., 
+    "Machine learning at the energy and intensity frontiers of particle physics," 
+    Nature 560, 41 (2018).
+    DOI: 10.1038/s41586-018-0361-2
+
+[3] J. P. Lees et al. (BaBar Collaboration), 
+    "Boosted decision trees for π⁰ identification at BaBar," 
+    Phys. Rev. D 98, 092002 (2018).
+    DOI: 10.1103/PhysRevD.98.092002
+
+[4] T. Lenz et al. (Belle II Collaboration), 
+    "Neural network based π⁰ reconstruction in Belle II," 
+    Comput. Phys. Commun. 259, 107650 (2021).
+    DOI: 10.1016/j.cpc.2020.107650
+
+[5] P. Koppenburg et al. (LHCb Collaboration), 
+    "Photon and π⁰ reconstruction in LHCb," 
+    JINST 8, P10002 (2013).
+    DOI: 10.1088/1748-0221/8/10/P10002
+
+[6] P. A. Zyla et al. (Particle Data Group), 
+    "Review of particle physics: π⁰," 
+    Prog. Theor. Exp. Phys. 2020, 083C01 (2020).
+    DOI: 10.1093/ptep/ptaa104
+
+[7] T. Sjöstrand et al., 
+    "Performance evaluation in high-energy physics," 
+    Comput. Phys. Commun. 246, 106910 (2020).
+    DOI: 10.1016/j.cpc.2019.106910
+
+[8] P. Baldi et al., 
+    "Machine learning for particle physics," 
+    Ann. Rev. Nucl. Part. Sci. 69, 233 (2019).
+    DOI: 10.1146/annurev-nucl-101918-023609
+
+[9] D. C. Jones et al., 
+    "Calorimeter-based particle identification using machine learning," 
+    JINST 16, P07012 (2021).
+    DOI: 10.1088/1748-0221/16/07/P07012
+
+[10] R. Brun and F. Rademakers, 
+      "ROOT: An object oriented data analysis framework," 
+      Nucl. Instrum. Meth. A 389, 81 (1997).
+      DOI: 10.1016/S0168-9002(97)00048-X

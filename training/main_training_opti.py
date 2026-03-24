@@ -19,7 +19,7 @@ import gc
 import warnings
 
 from config import (
-    DATA_DIR,
+    DATA_DIR, MODEL_DIR,
     patched_get_basescore
 )
 
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     initial_mem = check_memory_usage(threshold_gb=50)
     
     # Create output directory
-    model_dir = "./models" 
+    model_dir = MODEL_DIR #"./models" 
 
     import shutil
     if os.path.exists(model_dir):
