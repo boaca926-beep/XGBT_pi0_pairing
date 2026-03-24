@@ -116,8 +116,8 @@ int fill_histos2D(const char* input_filename = "./output_with_bdt.root") {
     
     TCanvas* cv2d_corr_data = plot_corr(HistArray_h2d, hist_type, ch_type[i], "_", cv_title, x_title, x_unit, xmin, xmax, y_title, y_unit, ymin, ymax);
 
-    TH2D *h2d = (TH2D *) HistArray_h2d -> FindObject(hist_type + "_" + ch_type[i]);
-    cout << ch_type[i] << ", entries: " << h2d -> GetEntries() << endl;
+    TH2D *h2d = (TH2D *) HistArray_h2d -> FindObject(hist_type + corr_type + ch_type[i]);
+    cout << ch_type[i] << ", " << h2d -> GetName() << ", entries: " << h2d -> GetEntries() << endl;
   
     TPaveText *pt = set_pt(0.2, 0.86, 0.3, 0.86); //new TPaveText(0.2, 0.8, 0.3, 0.85, "NDC");
     
@@ -125,7 +125,7 @@ int fill_histos2D(const char* input_filename = "./output_with_bdt.root") {
     //pt -> SetFillColor(0);
     //pt -> SetTextAlign(12);
     //pt -> AddText("Relative Error [%]");
-    pt -> AddText(ch_type[i] + " BDT Selection (" + h2d -> GetEntries() + ")");
+    pt -> AddText(ch_type[i] + "_BDT" + corr_type + "(" + h2d -> GetEntries() + ")");
     
     pt -> Draw("Same");
     line1 -> Draw("Same");
@@ -135,8 +135,8 @@ int fill_histos2D(const char* input_filename = "./output_with_bdt.root") {
 
     cv2d_corr_data -> Update();
     cv2d_corr_data -> Modified();
-    //cv2d_corr_data -> SaveAs("h2d_plots/cv2d_corr_bdt_" + ch_type[i] + "_full_mass_range" + ".pdf");
-    cv2d_corr_data -> SaveAs("h2d_plots/cv2d_corr_bdt_" + ch_type[i] + "_mass_cut" + ".pdf");
+    cv2d_corr_data -> SaveAs("h2d_plots/cv2d_corr_bdt_" + ch_type[i] + corr_type + "full_mass_range" + ".pdf");
+    //cv2d_corr_data -> SaveAs("h2d_plots/cv2d_corr_bdt_" + ch_type[i] + corr_type + "_mass_cut" + ".pdf");
     
     cv2d_corr_data -> Close();
     

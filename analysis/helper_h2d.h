@@ -1,5 +1,6 @@
 const TString hist_type = "h2dM3pi_kloeBDT_corr";
 const TString cv_title = "M3pi kloe vs. bdt correlation";
+const TString corr_type = "_";
 
 const TString x_title = "M^{#chi^{2}_{#gamma#gamma}}_{3#pi}";
 const TString y_title = "M^{BDT}_{3#pi} ";
