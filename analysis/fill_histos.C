@@ -228,7 +228,7 @@ int fill_histos(const char* input_filename = "./output_with_bdt.root") {
     TPaveText* pt_cut = set_pt(0.1, 0.92, 0.9, 0.98);
     pt_cut -> SetTextColor(42);
     pt_cut -> AddText(Form(pt_cut_text, omega_mass[0], omega_mass[1]));
-    //pt_cut -> Draw("same");
+    pt_cut -> Draw("same");
     
     TPaveText* pt_tmp = set_pt(0.2, 0.8, 0.3, 0.85);
     pt_tmp -> AddText(ch_type[i]);
@@ -241,7 +241,8 @@ int fill_histos(const char* input_filename = "./output_with_bdt.root") {
     
     cv_M3pi -> Update();
     cv_M3pi -> Modified();
-    cv_M3pi -> SaveAs(hist_type + "_" + ch_type[i] + "_full_mass_range.pdf");
+    //cv_M3pi -> SaveAs("h1d_plots/" + hist_type + "_" + ch_type[i] + "_full_mass_range" + ".pdf");
+    cv_M3pi -> SaveAs("h1d_plots/" + hist_type + "_" + ch_type[i] + "_mass_cut" + ".pdf");
 
     //
     //TCanvas* cv2d_corr = plot_corr("h2dM3pi_kloeBDT_corr_TDATA", "TDATA", "", "Data");

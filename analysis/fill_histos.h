@@ -112,7 +112,7 @@ void check_trees(TFile* file) {
 
       if (classnm_tree == "TH2D") { // list all TH2D
       //if (classnm_tree == "TH1D") { // list all TH1D
-	cout << "classnm = " << classnm_tree << ", objnm = " << objnm_tree << endl;
+	//cout << "classnm = " << classnm_tree << ", objnm = " << objnm_tree << endl;
       }
       
       TTree *tree_tmp = (TTree*)file -> Get(objnm_tree);

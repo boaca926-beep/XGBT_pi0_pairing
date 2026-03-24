@@ -134,8 +134,10 @@ int fill_histos2D(const char* input_filename = "./output_with_bdt.root") {
 
     cv2d_corr_data -> Update();
     cv2d_corr_data -> Modified();
-    cv2d_corr_data -> SaveAs("cv2d_corr_data_" + ch_type[i] + ".pdf");
-    //cv2d_corr_data -> Close();
+    //cv2d_corr_data -> SaveAs("h2d_plots/cv2d_corr_bdt_" + ch_type[i] + "_full_mass_range" + ".pdf");
+    cv2d_corr_data -> SaveAs("h2d_plots/cv2d_corr_bdt_" + ch_type[i] + "_mass_cut" + ".pdf");
+    
+    cv2d_corr_data -> Close();
     
   }
     
