@@ -14,7 +14,7 @@ from sklearn.metrics import confusion_matrix
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from config import DATA_DIR, DATA_LARGE_DIR, PLOT_DIR_VAL, MODEL_DIR
+from config import DATA_DIR, DATA_LARGE_DIR, PLOT_DIR_VAL, PLOT_DIR_APP, MODEL_DIR
 
 
 def load_data_model(data_type):
@@ -393,17 +393,16 @@ if __name__ == '__main__':
     
     #input_data_dir = os.path.join(project_root, f'analysis/dataset')
     #input_model_dir = os.path.join(project_root, f'training/models')
-    input_data_dir = DATA_DIR
+    input_data_dir = DATA_LARGE_DIR #DATA_LARGE_DIR
     input_model_dir = MODEL_DIR
 
-    category_type = 'TCOMB' #'TCOMB' #'TETAGAM', 'TISR3PI_SIG', 'TKSL'
+    category_type = 'TETAGAM' #'TCOMB' #'TETAGAM', 'TISR3PI_SIG', 'TKSL'
 
     phys_map = joblib.load(os.path.join(input_data_dir, f'phys_map.pkl'))
     print(phys_map)
-    
 
     # Create output folder
-    plot_dir = os.path.join(project_root, 'application/plots')
+    plot_dir = PLOT_DIR_APP #os.path.join(project_root, 'application/plots')
 
     # With this (always fresh) plot_dir
     import shutil

@@ -18,6 +18,8 @@ DATA_LARGE_DIR = PROJECT_ROOT / 'analysis' / 'dataset_large'
 MODEL_DIR = PROJECT_ROOT / 'training' / 'models'
 PLOT_DIR_VAL = PROJECT_ROOT / 'validation' / 'plots'
 PLOT_DIR_ANALYSIS = PROJECT_ROOT / 'analysis' / 'plots'
+PLOT_DIR_APP = PROJECT_ROOT / 'application' / 'plots'
+
 
 
 # Initializing configuration
