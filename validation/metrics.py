@@ -34,7 +34,7 @@ def eval_performance(model, X_val, y_val):
 # Evaluating performance
 #================================================
 def event_performance(all_df, model):
-    print("\n* Evaluating performance on test set:")
+    print("\n* Evaluating performance on validation set:")
 
     result_events = all_df
 

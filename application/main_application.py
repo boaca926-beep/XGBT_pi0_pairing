@@ -393,7 +393,7 @@ if __name__ == '__main__':
     
     #input_data_dir = os.path.join(project_root, f'analysis/dataset')
     #input_model_dir = os.path.join(project_root, f'training/models')
-    input_data_dir = DATA_DIR #DATA_LARGE_DIR
+    input_data_dir = DATA_LARGE_DIR #DATA_LARGE_DIR
     input_model_dir = MODEL_DIR
 
     category_type = 'TCOMB' #'TCOMB' #'TETAGAM', 'TISR3PI_SIG', 'TKSL'
@@ -429,12 +429,12 @@ if __name__ == '__main__':
             ## Plot confusion matrix (event-basis)
             
             # Get event-wise prediction
-            event_results = event_wise_prediction(
-                all_df_test, X_test, y_test, model, threshold=0.5
-            )
+            #event_results = event_wise_prediction(
+            #    all_df_test, X_test, y_test, model, threshold=0.5
+            #)
 
             # Plot event confusion matrix
-            plot_event_confusion_matrix(event_results, data_type, plot_dir)
+            #plot_event_confusion_matrix(event_results, data_type, plot_dir)
             
             '''
             all_df_test contains the event column that links pairs to events
@@ -452,30 +452,15 @@ if __name__ == '__main__':
             '''
 
             # Analyze threshold impact
-            threshold_results, best_threshold = analyze_threshold_impact(
-                event_results, data_type, plot_dir
-            )
+            #threshold_results, best_threshold = analyze_threshold_impact(
+            #    event_results, data_type, plot_dir
+            #)
 
-            ## Plot confusion matrix (photon features)
-            fig_cm = plot_nm(X_test, y_test, model, br_title)
-            fig_cm.savefig(f'{plot_dir}/cm_{data_type}.png', dpi=300, bbox_inches='tight')
-            plt.close(fig_cm)
-
-            # Accuracy metrics, event basis
-            score_list, var_list, var_str = event_performance(all_df, model)
-
-            fig_var_score = plot_var_score(var_list, score_list, var_str, f"Mass and Score (test, {br_title})")
-            fig_var_score.savefig(f'{plot_dir}/pi0_mass_score_{data_type}.png', dpi=300, bbox_inches='tight')
-            plt.close(fig_var_score)
-
-            # ROC plot
-            fig_roc = plot_roc(score_list, rf'ROC Curve - $\pi^{0}$ Classifier (test, {br_title})')
-            fig_roc.savefig(f'{plot_dir}/roc_curv_{data_type}.png', dpi=300, bbox_inches='tight')
-            plt.close(fig_roc)
             
             # Save event results
-            event_results.to_csv(f'{plot_dir}/event_results_{data_type}.csv', index=False)
+            #event_results.to_csv(f'{plot_dir}/event_results_{data_type}.csv', index=False)
 
+            r'''
             # Save summary
             with open(f'{plot_dir}/summary_{data_type}.txt', 'w') as f:
                 f.write(f"Dataset: {data_type}\n")
@@ -510,7 +495,13 @@ if __name__ == '__main__':
                 f.write(f"  F1 Score: {f1:.4f}\n")
             
             print(f"\n✓ All results saved to {plot_dir}")
+            '''
 
+            ## Plot confusion matrix (photon features)
+            fig_cm = plot_nm(X_test, y_test, model, br_title)
+            fig_cm.savefig(f'{plot_dir}/cm_{data_type}.png', dpi=300, bbox_inches='tight')
+            plt.close(fig_cm)
+            
             ## Accuracy metrics, event basis
             #score_list, var_list, var_str = event_performance(all_df, model)
 

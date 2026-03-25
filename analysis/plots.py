@@ -357,7 +357,7 @@ def plot_learning_curves(model, plot_title):
     plt.tight_layout()
     #plt.savefig(f'./plots/{plot_nm}.png', dpi=300)
     plt.show(block=False)
-    plt.close()
+    #plt.close()
 
     # Print diagnostics
     final_gap = train_auc[-1] - val_auc[-1]
@@ -384,7 +384,7 @@ def plot_nm(X_test, y_test, model, phys_ch):
     y_pred = model.predict(X_test) # Predcition
     cm = confusion_matrix(y_test, y_pred) # Confusion matrix
     #print(cm)
-    print(X_test.columns)
+    #print(X_test.columns)
 
     # Visualize it
     fig, axes = plt.subplots(1, 1, figsize=(8, 6))

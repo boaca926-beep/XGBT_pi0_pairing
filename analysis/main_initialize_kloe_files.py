@@ -97,27 +97,27 @@ if __name__ == '__main__':
         if base_br_nm == "TISR3PI_SIG":
             br_title = rf"$e^{{+}}e^{{-}}\to\pi^{{+}}\pi^{{-}}\pi^{{0}}\gamma$"
             category = "signal"
-        elif base_br_nm == "TOMEGAPI":
-            br_title = rf"$\omega\pi^{0}$"
-            category = "background"
-        elif base_br_nm == "TKPM":
-            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to K\bar{{K}}$"
-            category = "background"
-        elif base_br_nm == "TKSL":
-            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to K_{{S}}K_{{L}}$"
-            category = "background"
-        elif base_br_nm == "TRHOPI":
-            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to \rho\pi$"
-            category = "background"
-        elif base_br_nm == "TBKGREST":
-            br_title = rf"Others"
-            category = "background"
-        elif base_br_nm == "TEEG":
-            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to e^{{+}}e^{{-}}\gamma$"
-            category = "background"
-        elif base_br_nm == "TETAGAM":
-            br_title = rf"$e^{{+}}e^{{-}}\to\phi\to\eta\gamma$"
-            category = "signal"
+        #elif base_br_nm == "TOMEGAPI":
+        #    br_title = rf"$\omega\pi^{0}$"
+        #    category = "background"
+        #elif base_br_nm == "TKPM":
+        #    br_title = rf"$e^{{+}}e^{{-}}\to\phi\to K\bar{{K}}$"
+        #    category = "background"
+        #elif base_br_nm == "TKSL":
+        #    br_title = rf"$e^{{+}}e^{{-}}\to\phi\to K_{{S}}K_{{L}}$"
+        #    category = "background"
+        #elif base_br_nm == "TRHOPI":
+        #    br_title = rf"$e^{{+}}e^{{-}}\to\phi\to \rho\pi$"
+        #    category = "background"
+        #elif base_br_nm == "TBKGREST":
+        #    br_title = rf"Others"
+        #    category = "background"
+        #elif base_br_nm == "TEEG":
+        #    br_title = rf"$e^{{+}}e^{{-}}\to\phi\to e^{{+}}e^{{-}}\gamma$"
+        #    category = "background"
+        #elif base_br_nm == "TETAGAM":
+        #    br_title = rf"$e^{{+}}e^{{-}}\to\phi\to\eta\gamma$"
+        #    category = "signal"
         else:
             continue
 

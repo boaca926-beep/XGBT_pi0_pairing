@@ -13,6 +13,8 @@ matplotlib.use('TkAgg')  # or 'Qt5Agg' if you have Qt installed
 import matplotlib.pyplot as plt
 plt.show(block=False)
 import pandas as pd
+from analysis.plots import plot_var_score, plot_roc, plot_nm
+
 
 from config import (
     DATA_DIR, DATA_LARGE_DIR, PLOT_DIR_VAL,
@@ -98,7 +100,7 @@ if __name__ == '__main__':
     br_title = info['br_title']
 
     X_val, y_val, all_df = load_data()
-    model = joblib.load(os.path.join(MODEL_DIR, f'pi0_classifier_model_{br_nm}.pkl'))
+    model = joblib.load(os.path.join(MODEL_DIR, f'pi0_classifier_model_{br_nm}.pkl')                 )
     print(f"Loading model from: {model}")
     
     plot_dir = PLOT_DIR_VAL
@@ -122,6 +124,11 @@ if __name__ == '__main__':
     fig_learning = plot_learning_curves(model, rf'Learning Curve (validation, {br_title})')
     fig_learning.savefig(f'{plot_dir}/learning_curves_{br_nm}.png', dpi=300, bbox_inches='tight')
 
+    ## Plot confusion matrix (photon features)
+    fig_cm = plot_nm(X_val, y_val, model, br_title)
+    fig_cm.savefig(f'{plot_dir}/cm_{br_nm}.png', dpi=300, bbox_inches='tight')
+    #plt.close(fig_cm)
+        
     ## Accuracy metrics, event basis
     score_list, var_list, var_str = event_performance(all_df, model)
 
