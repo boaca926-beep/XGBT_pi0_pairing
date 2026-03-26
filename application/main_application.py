@@ -458,7 +458,7 @@ if __name__ == '__main__':
 
             
             # Save event results
-            event_results.to_csv(f'{plot_dir}/event_results_{data_type}.csv', index=False)
+            #event_results.to_csv(f'{plot_dir}/event_results_{data_type}.csv', index=False)
 
             r'''
             # Save summary
