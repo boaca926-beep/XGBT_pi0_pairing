@@ -255,6 +255,95 @@ def plot_event_confusion_matrix(event_results, data_type, plot_dir):
 def analyze_threshold_impact(event_results, data_type, plot_dir):
     """
     Analyze how different thresholds affect event-wise classification
+    """
+    thresholds = np.arange(0.05, 1.0, 0.05)
+    results = []
+    
+    for threshold in thresholds:
+        row_results = {'threshold': threshold}
+        
+        # Recalculate predictions with new threshold
+        # Note: 'any' cannot be properly recalculated here without per-photon predictions
+        # So we use max_proba as a proxy (same as 'max')
+        pred_any = (event_results['max_proba'] >= threshold).astype(int)
+        pred_max = (event_results['max_proba'] >= threshold).astype(int)
+        pred_mean = (event_results['mean_proba'] >= threshold).astype(int)
+        pred_min2 = (event_results['n_photons_with_pred_pi0'] >= 2).astype(int)
+        
+        for strategy, pred in [('any', pred_any), ('min2', pred_min2), 
+                                ('max', pred_max), ('mean', pred_mean)]:
+            tp = ((event_results['true_signal'] == 1) & (pred == 1)).sum()
+            fp = ((event_results['true_signal'] == 0) & (pred == 1)).sum()
+            fn = ((event_results['true_signal'] == 1) & (pred == 0)).sum()
+            
+            precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+            recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+            f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
+            
+            row_results[f'{strategy}_precision'] = precision
+            row_results[f'{strategy}_recall'] = recall
+            row_results[f'{strategy}_f1'] = f1
+        
+        results.append(row_results)
+    
+    results_df = pd.DataFrame(results)
+    
+    # Find best strategy and threshold
+    best_overall_f1 = 0
+    best_strategy = 'any'
+    best_threshold = 0.5
+    
+    strategy_type = ['any', 'min2', 'max', 'mean']
+    for strategy in strategy_type:
+        f1_col = f'{strategy}_f1'
+        if f1_col in results_df.columns:
+            max_idx = results_df[f1_col].idxmax()
+            best_f1 = results_df.loc[max_idx, f1_col]
+            if best_f1 > best_overall_f1:
+                best_overall_f1 = best_f1
+                best_strategy = strategy
+                best_threshold = results_df.loc[max_idx, 'threshold']
+    
+    # Plot - only 3 subplots (no empty 4th)
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+    
+    for strategy in strategy_type:
+        prec_col = f'{strategy}_precision'
+        recall_col = f'{strategy}_recall'
+        f1_col = f'{strategy}_f1'
+        
+        if prec_col in results_df.columns:
+            axes[0, 0].plot(results_df['threshold'], results_df[prec_col], linewidth=2, label=strategy)
+        if recall_col in results_df.columns:
+            axes[0, 1].plot(results_df['threshold'], results_df[recall_col], linewidth=2, label=strategy)
+        if f1_col in results_df.columns:
+            axes[1, 0].plot(results_df['threshold'], results_df[f1_col], linewidth=2, label=strategy)
+    
+    axes[0, 0].set_ylabel('Precision')
+    axes[0, 1].set_ylabel('Recall')
+    axes[1, 0].set_ylabel('F1 Score')
+    axes[1, 1].axis('off')
+    
+    for ax in [axes[0, 0], axes[0, 1], axes[1, 0]]:
+        ax.set_xlabel('Threshold')
+        ax.grid(True, alpha=0.3)
+        handles, labels = ax.get_legend_handles_labels()
+        if labels:
+            ax.legend()
+    
+    plt.suptitle(f'Threshold Impact Analysis - {data_type}')
+    plt.tight_layout()
+    plt.savefig(f'{plot_dir}/threshold_analysis_{data_type}.png', dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    
+    print(f"\nBest overall: Strategy '{best_strategy}' at threshold {best_threshold:.3f} (F1 = {best_overall_f1:.4f})")
+    
+    return results_df, best_strategy, best_threshold
+
+r'''
+def analyze_threshold_impact(event_results, data_type, plot_dir):
+    """
+    Analyze how different thresholds affect event-wise classification
     FIX: Use the actual strategy from event_results
     """
     import matplotlib.pyplot as plt
@@ -370,6 +459,7 @@ def analyze_threshold_impact(event_results, data_type, plot_dir):
     print(f"\nBest overall: Strategy '{best_strategy}' at threshold {best_threshold:.3f} (F1 = {best_overall_f1:.4f})")
     
     return results_df, best_strategy, best_threshold
+'''
 
 if __name__ == '__main__':
     
@@ -454,3 +544,4 @@ if __name__ == '__main__':
         
         else:
             print(f"Skipping {data_type} - not target category")
+            

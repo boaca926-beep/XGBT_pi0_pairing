@@ -379,22 +379,28 @@ def plot_learning_curves(model, plot_title):
 # Plot confusion matrix
 # =================================================================
 def plot_nm(X_test, y_test, model, phys_ch):
-    print("Ploting confusion matrix ...")
+    print("Plotting confusion matrix ...")
 
-    y_pred = model.predict(X_test) # Predcition
+    y_pred = model.predict(X_test) # Prediction
     cm = confusion_matrix(y_test, y_pred) # Confusion matrix
     #print(cm)
     #print(X_test.columns)
 
     # Visualize it
-    fig, axes = plt.subplots(1, 1, figsize=(8, 6))
+    fig, ax = plt.subplots(1, 1, figsize=(8, 6))
 
-    im = axes.imshow(cm, cmap='Blues', interpolation='nearest')
-    plt.colorbar(im, ax=axes) # Add color bar
+    im = ax.imshow(cm, cmap='Blues', interpolation='nearest')
+    plt.colorbar(im, ax=ax) # Add color bar
     
-    axes.set_title(rf'Confusion Matrix (test, {phys_ch})', fontsize=16)
-    axes.set_xlabel('Predicted Label', fontsize=14)
-    axes.set_ylabel('True Label', fontsize=14)
+    ax.set_title(rf'Confusion Matrix (test, {phys_ch})', fontsize=16)
+    ax.set_xlabel('Predicted', fontsize=14)
+    ax.set_ylabel('True', fontsize=14)
+
+    # For the counts plot (ax[0])
+    ax.set_xticks([0, 1])
+    ax.set_yticks([0, 1])
+    ax.set_xticklabels(['Background', 'Signal'])
+    ax.set_yticklabels(['Background', 'Signal'])
 
     # Add text annotations
     for i in range(cm.shape[0]):
