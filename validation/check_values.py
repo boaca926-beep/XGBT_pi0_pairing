@@ -38,8 +38,8 @@ def get_cm(nb_tot, tp, fp, tn, fn):
 #tn = 11450 # false-negative
 #fn = 16349 # true-positive
 
-#cm_val = get_cm(220463, 141385, 31035, 11450, 16349) # tp, fp, tn, fn, event-wise
-cm_val = get_cm(661389, 148905, 42145, 449087, 21252) # tp, fp, tn, fn, pair-wise, theshold=0.5
+cm_val = get_cm(220463, 141385, 31035, 11450, 16349) # tp, fp, tn, fn, event-wise
+#cm_val = get_cm(661389, 148905, 42145, 449087, 21252) # tp, fp, tn, fn, pair-wise, theshold=0.5
 
 print(type(cm_val))
 #fp = cm_evnt_
