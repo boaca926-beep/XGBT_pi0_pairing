@@ -45,7 +45,7 @@ if __name__ == '__main__':
     # MODIFIED: Allow command line argument for input file
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input', type=str, default="../data/kloe_sample.root", 
+    parser.add_argument('--input', type=str, default="../data/ksl_sample.root", 
                        help='Input ROOT file path')
     parser.add_argument('--chunk-size', type=int, default=50000, 
                        help='Number of entries to process at once')
