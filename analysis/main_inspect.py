@@ -12,7 +12,7 @@ import pandas as pd
 
 
 from config import (
-    DATA_DIR, PLOT_DIR_ANALYSIS
+    DATA_DIR, DATA_LARGE_DIR, PLOT_DIR_ANALYSIS
 )
 
 # Inspect features and correlations
@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     #DATA_DIR = 'dataset' 
     #input_data_dir = os.path.join(project_root, f'analysis/{DATA_DIR}')
-    input_data_dir = DATA_DIR
+    input_data_dir = DATA_LARGE_DIR
     phys_map = joblib.load(os.path.join(input_data_dir, f'phys_map.pkl'))
     print(phys_map)
 
