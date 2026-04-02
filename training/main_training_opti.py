@@ -25,8 +25,8 @@ from config import (
 
 '''
 In-memory-optimized approach is much faster, but barely works with large dataset 
-
 '''
+
 def check_memory_usage(threshold_gb=50):
     """Check if we have enough memory before loading"""
     mem = psutil.virtual_memory()
@@ -95,7 +95,7 @@ if __name__ == '__main__':
 
     os.makedirs(model_dir, exist_ok=True)
 
-    input_data_dir = DATA_DIR #DATA_LARGE_DIR
+    input_data_dir = DATA_LARGE_DIR
     phys_map = joblib.load(os.path.join(input_data_dir, f'phys_map.pkl'))
     print(phys_map)
 
