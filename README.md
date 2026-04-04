@@ -15,3 +15,7 @@ python training/main_training.py
 
 # Validate
 cd validation && python main_validation.py
+
+## Citation
+If you use this code, please cite:
+Bo Cao, "XGBT_pi0_pairing", GitHub, 2026, https://github.com/boaca926-beep/XGBT_pi0_pairing
