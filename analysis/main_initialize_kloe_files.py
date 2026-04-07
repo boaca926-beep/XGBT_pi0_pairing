@@ -35,7 +35,11 @@ python main_initialize_kloe_files.py \
   --chunk-size 50000 \
   --output-dir ./dataset_large
 
-python main_initialize_kloe_files.py --input ../data/kloe_sample_full.root --output-dir ./dataset_large --clear
+python main_initialize_kloe_files.py \
+  --input ~/Desktop/KLOE_SAMPLES.root \
+  --chunk-size 50000 \
+  --output-dir ./dataset_large
+
 """
 
 if __name__ == '__main__':
