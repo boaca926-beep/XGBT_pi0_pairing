@@ -157,21 +157,28 @@ if __name__ == '__main__':
 
     # ========== MODIFIED: Parameters with GPU support ==========
     params = {
-         'nthread': -1,                      # Use all available threads
-         'tree_method': 'gpu_hist' if has_gpu else 'hist',  # GPU if available
-         'device': 'cuda' if has_gpu else 'cpu',            # Explicit device
-         'early_stopping_rounds': 50,        # Early stopping
-         'eval_metric': ['auc', 'error'],    # Evaluation metric
-         'verbosity': 1,                     # Show progress
-         'max_depth': optimized_params.get('max_depth', 10),
-         'learning_rate': optimized_params.get('learning_rate', 0.1),
-         'subsample': optimized_params.get('subsample', 0.8),
-         'colsample_bytree': optimized_params.get('colsample_bytree', 0.8),
-         'min_child_weight': optimized_params.get('min_child_weight', 1),
-         'gamma': optimized_params.get('gamma', 0),
-         'reg_alpha': optimized_params.get('reg_alpha', 0),
-         'reg_lambda': optimized_params.get('reg_lambda', 1)
-         }
+        # GPU settings optimized for 35 GPU
+        #'tree_method': 'gpu_hist' if has_gpu else 'hist',  # GPU if available
+        'tree_method': 'hist',  # 'hist' automatically uses GPU when device='cuda'
+        'device': 'cuda' if has_gpu else 'cpu',            # Explicit device
+        #'gpu_id': 0, # XGBoost Version < 3.0
+        'nthread': 4,                      # -1: Use all available threads, don't oversubscribe on low-power GPU
+        'max_bin': 256,                    # Reduce meomory footrpint
+        #'gpu_hist_use_bfloat16': True,     # Use half-precision for efficiency, XGBoost auto-optimizes this
+
+        # Training settings
+        'early_stopping_rounds': 50,        # Early stopping
+        'eval_metric': ['auc', 'error'],    # Evaluation metric
+        'verbosity': 1,                     # Show progress
+        'max_depth': optimized_params.get('max_depth', 10),
+        'learning_rate': optimized_params.get('learning_rate', 0.1),
+        'subsample': optimized_params.get('subsample', 0.8),
+        'colsample_bytree': optimized_params.get('colsample_bytree', 0.8),
+        'min_child_weight': optimized_params.get('min_child_weight', 1),
+        'gamma': optimized_params.get('gamma', 0),
+        'reg_alpha': optimized_params.get('reg_alpha', 0),
+        'reg_lambda': optimized_params.get('reg_lambda', 1)
+        }
     # ============================================================
     
     print("\n" + "="*50)
