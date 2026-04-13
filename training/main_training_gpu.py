@@ -162,8 +162,8 @@ if __name__ == '__main__':
         'tree_method': 'hist',  # 'hist' automatically uses GPU when device='cuda'
         'device': 'cuda' if has_gpu else 'cpu',            # Explicit device
         #'gpu_id': 0, # XGBoost Version < 3.0
-        'nthread': 4,                      # -1: Use all available threads, don't oversubscribe on low-power GPU
-        'max_bin': 256,                    # Reduce meomory footrpint
+        'nthread': 12,                      # -1: Use all available threads, don't oversubscribe on low-power GPU
+        'max_bin': 512,                    # Reduce meomory footrpint
         #'gpu_hist_use_bfloat16': True,     # Use half-precision for efficiency, XGBoost auto-optimizes this
 
         # Training settings
@@ -215,7 +215,7 @@ if __name__ == '__main__':
     model = xgb.XGBClassifier(
         **params,
         max_cat_to_onehot=1,  # Helps with categorical features
-        use_label_encoder=False  # Saves memory
+        #use_label_encoder=False  # Saves memory, deprecated parameters have been removed
     )
     
     print(f"Model will use: {model.get_params().get('nthread', 'default')} threads")
